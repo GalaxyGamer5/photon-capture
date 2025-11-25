@@ -1,0 +1,13 @@
+# Protect config.php from direct access
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Enable error logging
+php_flag log_errors On
+php_flag display_errors Off
+
+# Set upload limits (if needed)
+php_value upload_max_filesize 10M
+php_value post_max_size 10M

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zahlungs-Admin | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="container" style="padding-top: 5rem;">
+        <div class="card" style="max-width: 400px; margin: 0 auto;">
+            <h1 style="text-align: center;">Admin Login</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; text-align: center;">Zahlungsverwaltung</p>
+
+            <div id="login-error" class="error-message" style="display: none;">Falsches Passwort</div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="admin-password">Passwort</label>
+                    <input type="password" id="admin-password" class="form-control" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Anmelden</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" style="display: none;">
+        <div class="admin-container">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);">
+                <div>
+                    <h1>Zahlungsverwaltung</h1>
+                    <p style="color: var(--text-secondary);">Verwalte Buchungen und Zahlungen</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="save-data-btn" class="btn btn-success">💾 Konfiguration Speichern</button>
+                    <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Wichtig:</strong> Änderungen werden nicht automatisch gespeichert. Klicke auf "Konfiguration
+                Speichern",
+                um die neue <code>orders.js</code> Datei herunterzuladen und in <code>payment/data/</code> hochzuladen.
+            </div>
+
+            <!-- Statistics -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div class="card" style="text-align: center;">
+                    <h3 id="total-orders">0</h3>
+                    <p style="color: var(--text-secondary);">Gesamt Bestellungen</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3 id="pending-deposits" style="color: var(--warning-color);">0</h3>
+                    <p style="color: var(--text-secondary);">Ausstehende Anzahlungen</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3 id="pending-finals" style="color: var(--warning-color);">0</h3>
+                    <p style="color: var(--text-secondary);">Ausstehende Restzahlungen</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3 id="total-revenue" style="color: var(--success-color);">0 €</h3>
+                    <p style="color: var(--text-secondary);">Eingenommener Betrag</p>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="card">
+                <h2>Alle Bestellungen</h2>
+                <div id="orders-list" class="orders-list">
+                    <!-- Orders will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/orders.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let orders = [];
+
+        // Auth Check
+        async function checkAuth() {
+            if (AdminAuth.requireAuth()) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                await loadOrdersData();
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('admin-dashboard').style.display = 'none';
+            }
+        }
+
+        // Login
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            if (AdminAuth.login(password)) {
+                checkAuth();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            AdminAuth.logout();
+        });
+
+        // Load Orders
+        async function loadOrdersData() {
+            try {
+                // Load from API
+                const response = await fetch('/payment/api/get-orders.php');
+                const data = await response.json();
+
+                if (data.orders) {
+                    orders = data.orders;
+                } else {
+                    orders = [];
+                }
+
+                console.log('Loaded', orders.length, 'orders from API');
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                orders = [];
+            }
+
+            renderOrders();
+            updateStatistics();
+        }
+
+        // Render Orders
+        function renderOrders() {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = '';
+
+            if (orders.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Noch keine Bestellungen.</p>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedOrders = [...orders].sort((a, b) => new Date(b.created) - new Date(a.created));
+
+            sortedOrders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+
+                const depositStatus = order.depositPaid ?
+                    '<span class="status-badge success">✓ Bezahlt</span>' :
+                    '<span class="status-badge warning">Ausstehend</span>';
+
+                let finalStatus;
+                if (!order.finalPaymentUnlocked) {
+                    finalStatus = '<span class="status-badge">🔒 Gesperrt</span>';
+                } else if (order.finalPaid) {
+                    finalStatus = '<span class="status-badge success">✓ Bezahlt</span>';
+                } else {
+                    finalStatus = '<span class="status-badge warning">Ausstehend</span>';
+                }
+
+                card.innerHTML = `
+                    <div class="order-header">
+                        <div>
+                            <h3>${order.orderId}</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                ${order.customerName} | ${formatDate(order.bookingDate)} | ${order.service}
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.2rem; font-weight: 600; color: var(--accent-color);">
+                                ${formatCurrency(order.totalAmount)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <strong>Anzahlung (${formatCurrency(order.depositAmount)})</strong><br>
+                            ${depositStatus}
+                        </div>
+                        <div>
+                            <strong>Restzahlung (${formatCurrency(order.finalAmount)})</strong><br>
+                            ${finalStatus}
+                        </div>
+                    </div>
+                    
+                    <div class="order-actions">
+                        ${!order.depositPaid ? `
+                            <button class="btn btn-small btn-success" onclick="confirmDeposit('${order.orderId}')">
+                                ✓ Anzahlung bestätigen
+                            </button>
+                        ` : ''}
+                        
+                        ${order.depositPaid && !order.finalPaymentUnlocked ? `
+                            <button class="btn btn-small btn-primary" onclick="unlockFinal('${order.orderId}')">
+                                🔓 Restzahlung freischalten
+                            </button>
+                        ` : ''}
+                        
+                        ${order.finalPaymentUnlocked && !order.finalPaid ? `
+                            <button class="btn btn-small btn-success" onclick="confirmFinal('${order.orderId}')">
+                                ✓ Restzahlung bestätigen
+                            </button>
+                        ` : ''}
+                        
+                        <a href="order.html?id=${order.orderId}" class="btn btn-small btn-secondary" target="_blank">
+                            👁 Ansehen
+                        </a>
+                    </div>
+                `;
+
+                list.appendChild(card);
+            });
+        }
+
+        // Update Statistics
+        function updateStatistics() {
+            const totalOrders = orders.length;
+            const pendingDeposits = orders.filter(o => !o.depositPaid).length;
+            const pendingFinals = orders.filter(o => o.finalPaymentUnlocked && !o.finalPaid).length;
+            const totalRevenue = orders.reduce((sum, o) => {
+                let paid = 0;
+                if (o.depositPaid) paid += o.depositAmount;
+                if (o.finalPaid) paid += o.finalAmount;
+                return sum + paid;
+            }, 0);
+
+            document.getElementById('total-orders').textContent = totalOrders;
+            document.getElementById('pending-deposits').textContent = pendingDeposits;
+            document.getElementById('pending-finals').textContent = pendingFinals;
+            document.getElementById('total-revenue').textContent = formatCurrency(totalRevenue);
+        }
+
+        // Confirm Deposit
+        window.confirmDeposit = async (orderId) => {
+            if (confirm('Anzahlung als bezahlt markieren?')) {
+                const success = await updateOrderViaAPI(orderId, {
+                    depositPaid: true,
+                    depositPaidDate: new Date().toISOString(),
+                    depositPaymentMethod: 'Überweisung'
+                });
+
+                if (success) {
+                    await loadOrdersData();
+                }
+            }
+        };
+
+        // Unlock Final Payment
+        window.unlockFinal = async (orderId) => {
+            if (confirm('Restzahlung freischalten? Der Kunde kann dann den Restbetrag bezahlen.')) {
+                const success = await updateOrderViaAPI(orderId, {
+                    finalPaymentUnlocked: true
+                });
+
+                if (success) {
+                    await loadOrdersData();
+                }
+            }
+        };
+
+        // Confirm Final Payment
+        window.confirmFinal = async (orderId) => {
+            if (confirm('Restzahlung als bezahlt markieren?')) {
+                const success = await updateOrderViaAPI(orderId, {
+                    finalPaid: true,
+                    finalPaidDate: new Date().toISOString(),
+                    finalPaymentMethod: 'Überweisung'
+                });
+
+                if (success) {
+                    await loadOrdersData();
+                }
+            }
+        };
+
+        // Helper to update order via API
+        async function updateOrderViaAPI(orderId, updates) {
+            try {
+                const response = await fetch('/payment/api/update-order.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        updates: updates
+                    })
+                });
+
+                const result = await response.json();
+                return result.success || false;
+            } catch (error) {
+                console.error('Error updating order:', error);
+                alert('Fehler beim Aktualisieren der Bestellung');
+                return false;
+            }
+        }
+
+        // Save Data
+        document.getElementById('save-data-btn').addEventListener('click', () => {
+            const data = { orders };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const jsContent = `window.ordersDatabase = ${jsonStr};`;
+
+            const dataBlob = new Blob([jsContent], { type: 'application/javascript' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'orders.js';
+            link.click();
+
+            URL.revokeObjectURL(url);
+
+            alert('Die Datei orders.js wurde heruntergeladen. Bitte lade sie in den Ordner payment/data/ hoch.');
+        });
+
+        // Init
+        checkAuth();
+    </script>
+</body>
+
+</html>
