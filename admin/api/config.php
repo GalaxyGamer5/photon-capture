@@ -32,4 +32,14 @@ if (!file_exists(dirname(DATA_FILE))) {
 if (!file_exists(DATA_FILE)) {
     file_put_contents(DATA_FILE, '{}');
 }
+
+// CORS Headers
+header("Access-Control-Allow-Origin: *"); // Allow all origins (or specify your main domain)
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// Handle Preflight Request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 ?>

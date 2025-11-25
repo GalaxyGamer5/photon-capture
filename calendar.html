@@ -11,7 +11,7 @@
     <meta property="og:title" content="Booking Calendar | Photon Capture">
     <meta property="og:description" content="Check availability and schedule your photography session.">
 
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
 
     <style>
         /* Google Fonts */
@@ -761,8 +761,12 @@
     <!-- Footer -->
     <footer>
         <div class="footer-links">
-            <a href="agb.html">AGB</a>
-            <a href="impressum.html">Impressum</a>
+            <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank"
+                rel="noopener noreferrer">Instagram</a>
+            <span class="separator">•</span>
+            <a href="agb.html" data-i18n="footer.agb">AGB</a>
+            <span class="separator">•</span>
+            <a href="impressum.html" data-i18n="footer.impressum">Impressum</a>
         </div>
         <p class="copyright">&copy; 2025 Photon-Capture. Alle Rechte vorbehalten.</p>
     </footer>
@@ -830,7 +834,8 @@
         };
 
         // Load availability data from backend API
-        const API_URL = 'admin/api/calendar.php';
+        // Load availability data from backend API
+        const API_URL = 'https://admin.photon-capture.de/api/calendar.php';
         let availabilityData = {};
 
         // Load data from API
@@ -868,11 +873,22 @@
 
         // Initialize calendar
         function initCalendar() {
+            initTheme(); // Initialize theme
             loadAvailabilityData();
             updatePackageDisplay();
             renderCalendar();
             setupEventListeners();
             updateConfirmButton();
+        }
+
+        // Initialize Theme
+        function initTheme() {
+            const currentTheme = localStorage.getItem('theme_pref') || 'dark';
+            if (currentTheme === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
         }
 
         // Update package display

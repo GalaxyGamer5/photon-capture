@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const moonIcon = document.querySelector('.moon');
 
     // Check for saved theme preference or default to dark mode
-    const currentTheme = localStorage.getItem('theme') || 'dark';
+    // Check for saved theme preference or default to dark mode
+    // Changed key to 'theme_pref' to reset users to default dark mode
+    const currentTheme = localStorage.getItem('theme_pref') || 'dark';
 
     if (currentTheme === 'light') {
         document.body.classList.add('light-mode');
@@ -46,11 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('light-mode');
 
         if (document.body.classList.contains('light-mode')) {
-            localStorage.setItem('theme', 'light');
+            localStorage.setItem('theme_pref', 'light');
             sunIcon.style.display = 'block';
             moonIcon.style.display = 'none';
         } else {
-            localStorage.setItem('theme', 'dark');
+            localStorage.setItem('theme_pref', 'dark');
             sunIcon.style.display = 'none';
             moonIcon.style.display = 'block';
         }

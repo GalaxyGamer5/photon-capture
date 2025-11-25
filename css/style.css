@@ -170,6 +170,8 @@ header .container {
     align-items: center;
     gap: 0.5rem;
     margin-left: 2rem;
+    flex-shrink: 0;
+    /* Prevent toggles from being squished */
 }
 
 .lang-toggle,
@@ -484,6 +486,7 @@ section {
 
 .pricing-features {
     margin-bottom: 2.5rem;
+    display: inline-block;
     text-align: left;
 }
 
@@ -492,6 +495,7 @@ section {
     color: var(--text-secondary);
     display: flex;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .pricing-features li::before {
@@ -503,7 +507,9 @@ section {
 
 @media (max-width: 768px) {
     .about-content {
+        display: flex;
         flex-direction: column;
+        gap: 2rem;
     }
 
     .hero h1 {
@@ -522,6 +528,36 @@ section {
     section {
         padding: 4rem 1.5rem;
     }
+
+    /* Mobile Header */
+    header {
+        height: auto;
+        padding: 1rem 0;
+    }
+
+    header .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .nav-links {
+        flex: 1;
+        min-width: 0;
+        /* Allow shrinking for scroll */
+        padding-right: 1rem;
+        /* Space before toggles */
+        padding-left: 1rem;
+        /* Space from left edge */
+        mask-image: linear-gradient(to right, black 90%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    }
+
+
 }
 
 /* Gallery Styles */
@@ -652,8 +688,8 @@ section {
 
 @media (max-width: 768px) {
     .gallery-row .gallery-item {
-        flex: 0 0 200px;
-        height: 200px;
+        flex: 0 0 120px;
+        height: 120px;
     }
 
     .gallery-carousel-wrapper {
@@ -832,6 +868,44 @@ section {
     transform: translateY(20px);
     transition: transform 0.3s ease;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Footer */
+footer {
+    background-color: var(--bg-secondary);
+    padding: 3rem 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.footer-links a:hover {
+    color: var(--accent-color);
+}
+
+.separator {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.copyright {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    opacity: 0.7;
 }
 
 .modal-overlay.active .modal-content {
