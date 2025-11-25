@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Galerie | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="logo">Photon<span>-Capture</span></a>
+            <nav>
+                <div class="nav-actions">
+                    <span id="user-greeting" style="margin-right: 1rem; color: var(--text-secondary);">Willkommen, <span
+                            id="user-name">Kunde</span></span>
+                    <button id="select-mode-btn" class="cta-button"
+                        style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">Bilder auswählen</button>
+                    <button id="favorites-filter-btn" class="btn-logout" style="margin-left: 0.5rem;">❤️
+                        Favoriten</button>
+                    <button id="logout-btn" class="btn-logout" style="margin-left: 0.5rem;">Abmelden</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 100px;">
+        <div class="gallery-title" style="text-align: center; margin-bottom: 2rem;">
+            <h1>Deine persönliche Galerie</h1>
+        </div>
+    </div>
+
+    <!-- Selection Toolbar (hidden by default) -->
+    <div class="selection-toolbar" id="selection-toolbar" style="display: none;">
+        <div class="toolbar-content">
+            <button id="select-all-btn" class="btn-primary">Alle auswählen</button>
+            <button id="deselect-all-btn" class="btn-secondary">Auswahl aufheben</button>
+            <span id="selection-count" class="selection-count">0 Bilder ausgewählt</span>
+            <button id="download-selected-btn" class="btn-success" disabled>Ausgewählte herunterladen</button>
+            <button id="cancel-selection-btn" class="btn-secondary">Abbrechen</button>
+        </div>
+    </div>
+
+    <div class="gallery-grid" id="gallery-grid">
+        <!-- Images will be loaded here -->
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close">&times;</button>
+        <button class="lightbox-nav lightbox-prev">&lsaquo;</button>
+        <button class="lightbox-nav lightbox-next">&rsaquo;</button>
+        <img src="" alt="Gallery Image" id="lightbox-img">
+        <div class="lightbox-actions">
+            <button class="lightbox-favorite" id="lightbox-favorite-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                    </path>
+                </svg>
+            </button>
+            <a href="#" class="lightbox-download" id="lightbox-download" download>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download
+            </a>
+        </div>
+    </div>
+
+    <script src="data/users.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Require Login
+        Auth.requireAuth();
+
+        const user = Auth.getUser();
+        document.getElementById('user-name').textContent = user.name;
+
+        // Favorites State
+        const FAVORITES_KEY = `photon_favorites_${user.id}`;
+        let favorites = new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]'));
+        let showFavoritesOnly = false;
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            Auth.logout();
+        });
+
+        // Load Images
+        const galleryGrid = document.getElementById('gallery-grid');
+        const imageFolder = `assets/${user.folder}`;
+        const imageCount = user.imageCount || 0;
+
+        // Generate grid
+        function renderGallery() {
+            galleryGrid.innerHTML = '';
+
+            if (imageCount > 0) {
+                for (let i = 1; i <= imageCount; i++) {
+                    // Filter if favorites mode is on
+                    if (showFavoritesOnly && !favorites.has(i)) continue;
+
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    const isFavorite = favorites.has(i);
+
+                    // Assuming jpg format for simplicity, could be enhanced to support others
+                    const imgSrc = `${imageFolder}/${i}.jpg`;
+
+                    item.innerHTML = `
+                        <div class="selection-checkbox" style="display: none;">
+                            <input type="checkbox" id="select-${i}" data-image-index="${i}">
+                            <label for="select-${i}"></label>
+                        </div>
+                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}">
+                        <div class="gallery-overlay">
+                            <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${i})" style="margin-right: 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </button>
+                            <button class="btn-icon" onclick="openLightbox(${i})">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                            </button>
+                        </div>
+                    `;
+
+                    // Add click event to image itself too
+                    item.querySelector('img').addEventListener('click', () => openLightbox(i));
+
+                    galleryGrid.appendChild(item);
+                }
+            } else {
+                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 4rem;">Noch keine Bilder verfügbar.</p>';
+            }
+        }
+
+        renderGallery();
+
+        // Favorites Logic
+        window.toggleFavorite = function (event, index) {
+            event.stopPropagation(); // Prevent lightbox opening
+
+            if (favorites.has(index)) {
+                favorites.delete(index);
+            } else {
+                favorites.add(index);
+            }
+
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
+            renderGallery(); // Re-render to update icons
+
+            // Update lightbox button if open
+            const lightboxImg = document.getElementById('lightbox-img');
+            if (lightbox.classList.contains('active') && lightboxImg.src.includes(`${index}.jpg`)) {
+                updateLightboxFavoriteBtn(index);
+            }
+        };
+
+        function updateLightboxFavoriteBtn(index) {
+            const btn = document.getElementById('lightbox-favorite-btn');
+            const isFavorite = favorites.has(index);
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'white'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+            btn.onclick = (e) => toggleFavorite(e, index);
+        }
+
+        // Filter Button
+        const favFilterBtn = document.getElementById('favorites-filter-btn');
+        favFilterBtn.addEventListener('click', () => {
+            showFavoritesOnly = !showFavoritesOnly;
+            favFilterBtn.classList.toggle('active');
+            favFilterBtn.style.borderColor = showFavoritesOnly ? 'var(--accent-color)' : 'var(--glass-border)';
+            favFilterBtn.style.color = showFavoritesOnly ? 'var(--accent-color)' : 'var(--text-primary)';
+            favFilterBtn.textContent = showFavoritesOnly ? '❤️ Alle anzeigen' : '❤️ Favoriten';
+            renderGallery();
+        });
+
+        // Lightbox Logic
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const downloadBtn = document.getElementById('lightbox-download');
+        let currentIndex = 1;
+
+        window.openLightbox = (index) => {
+            currentIndex = index;
+            updateLightbox();
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            updateLightboxFavoriteBtn(index);
+        };
+
+        function updateLightbox() {
+            const imgSrc = `${imageFolder}/${currentIndex}.jpg`;
+            lightboxImg.src = imgSrc;
+            downloadBtn.href = imgSrc;
+            updateLightboxFavoriteBtn(currentIndex);
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+
+        document.querySelector('.lightbox-prev').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentIndex > 1) {
+                currentIndex--;
+                updateLightbox();
+            } else {
+                currentIndex = imageCount; // Loop
+                updateLightbox();
+            }
+        });
+
+        document.querySelector('.lightbox-next').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentIndex < imageCount) {
+                currentIndex++;
+                updateLightbox();
+            } else {
+                currentIndex = 1; // Loop
+                updateLightbox();
+            }
+        });
+
+        // Close on background click
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        // Keyboard nav
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') document.querySelector('.lightbox-prev').click();
+            if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
+        });
+
+        // Selection Mode
+        let selectionMode = false;
+        const selectedImages = new Set();
+
+        document.getElementById('select-mode-btn').addEventListener('click', () => {
+            selectionMode = true;
+            document.getElementById('selection-toolbar').style.display = 'flex';
+            document.getElementById('select-mode-btn').style.display = 'none';
+            document.querySelectorAll('.selection-checkbox').forEach(cb => cb.style.display = 'flex');
+            document.querySelectorAll('.gallery-item').forEach(item => item.classList.add('selection-active'));
+        });
+
+        document.getElementById('cancel-selection-btn').addEventListener('click', () => {
+            exitSelectionMode();
+        });
+
+        function exitSelectionMode() {
+            selectionMode = false;
+            selectedImages.clear();
+            document.getElementById('selection-toolbar').style.display = 'none';
+            document.getElementById('select-mode-btn').style.display = 'block';
+            document.querySelectorAll('.selection-checkbox').forEach(cb => {
+                cb.style.display = 'none';
+                cb.querySelector('input').checked = false;
+            });
+            document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('selection-active'));
+            updateSelectionCount();
+        }
+
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            document.querySelectorAll('.selection-checkbox input').forEach(cb => {
+                cb.checked = true;
+                selectedImages.add(parseInt(cb.dataset.imageIndex));
+            });
+            updateSelectionCount();
+        });
+
+        document.getElementById('deselect-all-btn').addEventListener('click', () => {
+            document.querySelectorAll('.selection-checkbox input').forEach(cb => {
+                cb.checked = false;
+            });
+            selectedImages.clear();
+            updateSelectionCount();
+        });
+
+        // Handle checkbox changes
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('.selection-checkbox input')) {
+                const index = parseInt(e.target.dataset.imageIndex);
+                if (e.target.checked) {
+                    selectedImages.add(index);
+                } else {
+                    selectedImages.delete(index);
+                }
+                updateSelectionCount();
+            }
+        });
+
+        function updateSelectionCount() {
+            const count = selectedImages.size;
+            document.getElementById('selection-count').textContent = `${count} Bild${count !== 1 ? 'er' : ''} ausgewählt`;
+            document.getElementById('download-selected-btn').disabled = count === 0;
+        }
+
+        // Download selected images as ZIP
+        document.getElementById('download-selected-btn').addEventListener('click', async () => {
+            if (selectedImages.size === 0) return;
+
+            // Check for local file protocol
+            if (window.location.protocol === 'file:') {
+                alert('⚠️ WICHTIG:\n\nDer ZIP-Download funktioniert aus Sicherheitsgründen nicht bei lokalen Dateien (file://).\n\nBitte starte einen lokalen Server (z.B. "php -S localhost:8000") oder lade die Website auf einen Server hoch, damit dieses Feature funktioniert.');
+                return;
+            }
+
+            const downloadBtn = document.getElementById('download-selected-btn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Erstelle ZIP-Datei...';
+
+            try {
+                // Create new ZIP file
+                const zip = new JSZip();
+                const imagesToDownload = Array.from(selectedImages).sort((a, b) => a - b);
+                let addedCount = 0;
+
+                // Add each image to the ZIP
+                for (let i = 0; i < imagesToDownload.length; i++) {
+                    const index = imagesToDownload[i];
+                    const imgSrc = `${imageFolder}/${index}.jpg`;
+
+                    downloadBtn.textContent = `Bild ${i + 1}/${imagesToDownload.length} wird hinzugefügt...`;
+
+                    try {
+                        // Fetch the image as blob
+                        const response = await fetch(imgSrc);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const blob = await response.blob();
+
+                        // Add to ZIP with a clean filename
+                        zip.file(`Bild_${String(index).padStart(3, '0')}.jpg`, blob);
+                        addedCount++;
+                    } catch (err) {
+                        console.error(`Error adding image ${index} to ZIP:`, err);
+                    }
+                }
+
+                if (addedCount === 0) {
+                    throw new Error('Keine Bilder konnten geladen werden (CORS/Netzwerkfehler).');
+                }
+
+                // Generate ZIP file
+                downloadBtn.textContent = 'Erstelle Download...';
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+                // Create filename with user name and date
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                const filename = `${user.name}_Bilder_${dateStr}.zip`;
+
+                // Download the ZIP file
+                saveAs(zipBlob, filename);
+
+                downloadBtn.textContent = 'Download abgeschlossen!';
+                setTimeout(() => {
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                    exitSelectionMode();
+                }, 1500);
+
+            } catch (error) {
+                console.error('ZIP creation error:', error);
+                alert('Fehler beim Erstellen der ZIP-Datei.');
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
