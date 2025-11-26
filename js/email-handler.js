@@ -184,8 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             duration: duration
                         }).then((result) => {
                             const successMsg = currentLang === 'en'
-                                ? `Thank you! Your request has been sent successfully.\\nYour Order ID: ${orderId}\\n\\nYou can pay your deposit at: /payment/`
-                                : `Vielen Dank! Deine Anfrage wurde erfolgreich gesendet.\\nDeine Bestellnummer: ${orderId}\\n\\nZahle deine Anzahlung unter: /payment/`;
+                                ? `Thank you! Your booking request has been sent successfully.\\nYour Order ID: ${orderId}\\n\\nI will contact you shortly to confirm the appointment.`
+                                : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.\\nDeine Bestellnummer: ${orderId}\\n\\nIch melde mich in Kürze zur Terminbestätigung.`;
 
                             alert(successMsg);
                             bookingForm.reset();
@@ -202,8 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         // No payment needed or general inquiry
                         const successMsg = currentLang === 'en'
-                            ? `Thank you! Your request has been sent successfully.\\nYour Order ID: ${orderId}`
-                            : `Vielen Dank! Deine Anfrage wurde erfolgreich gesendet.\\nDeine Bestellnummer: ${orderId}`;
+                            ? `Thank you! Your request has been sent successfully.\\nYour Order ID: ${orderId}\\n\\nI will get back to you as soon as possible.`
+                            : `Vielen Dank! Deine Anfrage wurde erfolgreich gesendet.\\nDeine Bestellnummer: ${orderId}\\n\\nIch melde mich so schnell wie möglich bei dir.`;
 
                         alert(successMsg);
                         bookingForm.reset();
