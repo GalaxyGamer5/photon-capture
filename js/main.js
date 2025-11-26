@@ -120,6 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         localStorage.setItem('preferredLang', lang);
         currentLang = lang;
+
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('languageChanged', {
+            detail: { language: lang }
+        }));
     };
 
     // Expose updateContent to global scope for other scripts
@@ -337,9 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (lightbox && lightboxImg) {
             // Update visible images list to match the current carousel content (unique items)
-            // We use the src to find the index in the unique list
-            visibleImages = currentUniqueItems;
-            currentImageIndex = visibleImages.findIndex(item => item.querySelector('img').src === img.src);
+            // Map to img elements to be consistent with grid logic
+            visibleImages = currentUniqueItems.map(item => item.querySelector('img'));
+
+            // Find index by matching src
+            currentImageIndex = visibleImages.findIndex(item => item.src === img.src);
 
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -395,11 +402,12 @@ document.addEventListener('DOMContentLoaded', () => {
         visibleImages = Array.from(galleryImages).filter(img => {
             const item = img.closest('.gallery-item');
             // Check if the item is currently displayed (not hidden by filter)
-            return item.style.display !== 'none';
+            // Use class check instead of style.display for consistency
+            return !item.classList.contains('hide');
         });
     }
 
-    // Open lightbox
+    // Open lightbox (Grid Click Handler)
     galleryImages.forEach((img, index) => {
         img.addEventListener('click', (e) => {
             updateVisibleImages();
@@ -456,8 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentImageIndex < 0) currentImageIndex = visibleImages.length - 1;
         if (currentImageIndex >= visibleImages.length) currentImageIndex = 0;
 
-        const item = visibleImages[currentImageIndex];
-        const img = item.querySelector('img');
+        const img = visibleImages[currentImageIndex];
+        // Note: img is now directly the image element, no querySelector needed
 
         // Reset any inline styles from hero animation
         lightboxImg.style.transform = '';
@@ -604,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cookieBanner = document.getElementById('cookie-banner');
     const acceptCookiesBtn = document.getElementById('accept-cookies');
     const declineCookiesBtn = document.getElementById('decline-cookies');
+    const cookieSettingsBtn = document.getElementById('cookie-settings');
 
     if (cookieBanner) {
         // Check if user has already made a choice
@@ -617,13 +626,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         acceptCookiesBtn.addEventListener('click', () => {
-            localStorage.setItem('cookieConsent', 'accepted');
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.acceptAll();
+            } else {
+                localStorage.setItem('cookieConsent', 'accepted');
+            }
             cookieBanner.classList.remove('show');
         });
 
         declineCookiesBtn.addEventListener('click', () => {
-            localStorage.setItem('cookieConsent', 'declined');
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.declineAll();
+            } else {
+                localStorage.setItem('cookieConsent', 'declined');
+            }
             cookieBanner.classList.remove('show');
+        });
+
+        cookieSettingsBtn.addEventListener('click', () => {
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.showSettings();
+                cookieBanner.classList.remove('show');
+            }
+        });
+    }
+
+    // --- Image Protection ---
+    // Protect gallery images from right-click saving and dragging
+    const protectImages = () => {
+        // Select all images in gallery (both grid and carousel)
+        const allGalleryImages = document.querySelectorAll('.gallery-item img, .gallery-row img, #lightbox-img');
+
+        allGalleryImages.forEach(img => {
+            // Disable right-click context menu
+            img.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showProtectionMessage();
+                return false;
+            });
+
+            // Disable drag-and-drop
+            img.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            // Add CSS protection attributes
+            img.style.userSelect = 'none';
+            img.style.webkitUserSelect = 'none';
+            img.style.mozUserSelect = 'none';
+            img.style.msUserSelect = 'none';
+            img.setAttribute('draggable', 'false');
+        });
+    };
+
+    // Show protection message when user tries to save
+    let protectionMessageTimeout;
+    const showProtectionMessage = () => {
+        // Create message if it doesn't exist
+        let message = document.getElementById('image-protection-message');
+        if (!message) {
+            message = document.createElement('div');
+            message.id = 'image-protection-message';
+            message.className = 'image-protection-message';
+            message.innerHTML = '📷 Image protection active';
+            document.body.appendChild(message);
+        }
+
+        // Show message
+        message.classList.add('show');
+
+        // Hide after 2 seconds
+        clearTimeout(protectionMessageTimeout);
+        protectionMessageTimeout = setTimeout(() => {
+            message.classList.remove('show');
+        }, 2000);
+    };
+
+    // Initial protection
+    protectImages();
+
+    // Re-apply protection after dynamic content loads (carousel)
+    const protectionObserver = new MutationObserver(() => {
+        protectImages();
+    });
+
+    // Observe gallery carousel for new images
+    const carouselWrapper = document.querySelector('.gallery-carousel-wrapper');
+    if (carouselWrapper) {
+        protectionObserver.observe(carouselWrapper, {
+            childList: true,
+            subtree: true
         });
     }
 });

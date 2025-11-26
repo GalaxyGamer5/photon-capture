@@ -180,7 +180,25 @@ const translations = {
         "faq.q4": "Bieten Sie auch Nachbearbeitung an?",
         "faq.a4": "Ja, alle Fotos werden professionell bearbeitet und retuschiert. Premium-Retusche ist als Extra verfügbar.",
         "faq.q5": "Was passiert bei schlechtem Wetter?",
-        "faq.a5": "Bei Outdoor-Shootings können wir bei schlechtem Wetter kostenlos umbuchen oder auf Indoor-Locations ausweichen."
+        "faq.a5": "Bei Outdoor-Shootings können wir bei schlechtem Wetter kostenlos umbuchen oder auf Indoor-Locations ausweichen.",
+
+        // Calendar
+        "calendar.months": ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+        "calendar.weekdays": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+        "calendar.available": "Verfügbar",
+        "calendar.limited": "Begrenzt",
+        "calendar.reserved": "Reserviert",
+        "calendar.booked": "Ausgebucht",
+        "calendar.selected": "Ausgewählt",
+        "calendar.headerTitle": "Buchungskalender",
+        "calendar.headerSubtitle": "Wähle einen verfügbaren Termin und sichere dir deine Session. Verfügbarkeit wird in Echtzeit angezeigt.",
+        "calendar.selectedDatePrefix": "Verfügbare Zeitfenster - ",
+        "calendar.cancelBtn": "Abbrechen",
+        "calendar.confirmBtn": "Weiter zur Buchung",
+        "calendar.viewMonth": "Monat",
+        "calendar.viewWeek": "Woche",
+        "calendar.packageLabel": "Gewähltes Paket:",
+        "calendar.availableMessage": "Dieser Tag ist verfügbar! Klicke auf \"Weiter zur Buchung\", um ihn zu reservieren."
     },
     en: {
         "nav.home": "Home",
@@ -366,6 +384,24 @@ const translations = {
         "faq.q4": "Do you offer post-processing? ",
         "faq.a4": "Yes, all photos are professionally edited and retouched. Premium retouching is available as an extra.",
         "faq.q5": "What happens in bad weather?",
-        "faq.a5": "For outdoor shoots, we can reschedule free of charge in case of bad weather or switch to indoor locations."
+        "faq.a5": "For outdoor shoots, we can reschedule free of charge in case of bad weather or switch to indoor locations.",
+
+        // Calendar
+        "calendar.months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        "calendar.weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "calendar.available": "Available",
+        "calendar.limited": "Limited",
+        "calendar.reserved": "Reserved",
+        "calendar.booked": "Booked",
+        "calendar.selected": "Selected",
+        "calendar.headerTitle": "Booking Calendar",
+        "calendar.headerSubtitle": "Choose an available date and secure your session. Availability is shown in real-time.",
+        "calendar.selectedDatePrefix": "Available Time Slots - ",
+        "calendar.cancelBtn": "Cancel",
+        "calendar.confirmBtn": "Proceed to Booking",
+        "calendar.viewMonth": "Month",
+        "calendar.viewWeek": "Week",
+        "calendar.packageLabel": "Selected Package:",
+        "calendar.availableMessage": "This day is available! Click \"Proceed to Booking\" to reserve it."
     }
 };
