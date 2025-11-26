@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photon Capture | Authentische Fotografie für Porträts, Events & Haustiere</title>
+    <meta name="description"
+        content="Professionelle Fotografie in [Deine Stadt]. Authentische Porträts, lebendige Eventreportagen und charakterstarke Tierfotografie. Jetzt Termin sichern!">
+    <meta name="keywords"
+        content="Fotograf, Porträtfotografie, Eventfotografie, Tierfotografie, Hochzeitsfotograf, [Deine Stadt], Fotoshooting">
+    <meta name="author" content="Jonathan Weidner">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://photon-capture.de/">
+    <meta property="og:title" content="Photon Capture | Authentische Fotografie">
+    <meta property="og:description" content="Eure schönsten Momente für die Ewigkeit. Porträts, Events & Haustiere.">
+    <meta property="og:image"
+        content="https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://photon-capture.de/">
+    <meta property="twitter:title" content="Photon Capture | Authentische Fotografie">
+    <meta property="twitter:description"
+        content="Eure schönsten Momente für die Ewigkeit. Porträts, Events & Haustiere.">
+    <meta property="twitter:image"
+        content="https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1">
+
+    <!-- Schema Markup (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Photon Capture",
+      "image": "https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1",
+      "description": "Authentische Fotografie für Porträts, Events und Haustiere.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "[Musterstraße 1]",
+        "addressLocality": "[Musterstadt]",
+        "postalCode": "[12345]",
+        "addressCountry": "DE"
+      },
+      "priceRange": "€€",
+      "telephone": "[Telefonnummer]",
+      "email": "Photon.Capture.Fotografie@gmail.com",
+      "url": "https://photon-capture.de/"
+    }
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-progress">
+        <div class="scroll-progress-bar"></div>
+    </div>
+
+    <!-- Navigation -->
+    <header>
+        <div class="container">
+            <a href="#" class="logo">Photon<span>-Capture</span></a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#hero" class="active" data-i18n="nav.home">Startseite</a></li>
+                    <li><a href="#about" data-i18n="nav.about">Über mich</a></li>
+                    <li><a href="#services" data-i18n="nav.services">Leistungen</a></li>
+                    <li><a href="#gallery" data-i18n="nav.gallery">Galerie</a></li>
+                    <li><a href="#pricing" data-i18n="nav.pricing">Preise</a></li>
+                    <li><a href="#contact" data-i18n="nav.contact">Kontakt</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="lang-toggle" aria-label="Switch Language">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </button>
+                    <button class="dark-mode-toggle" aria-label="Toggle Dark Mode">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path class="sun"
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                            <path class="moon" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" style="display: none;">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="container hero-content">
+            <h1 data-i18n="hero.title">Eure schönsten Momente<br>für die Ewigkeit</h1>
+            <p data-i18n="hero.subtitle">Authentische Fotografie für Porträts, Events & Haustiere</p>
+            <a href="#gallery" class="cta-button" data-i18n="hero.btn">Zur Galerie</a>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="section-title" data-i18n="about.title">Über mich</div>
+            <div class="about-content">
+                <div class="about-image">
+                    <!-- Placeholder for photographer image -->
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOUTZYg7KUOj6ei5JFQgOY4USQk3SZ8KvRKzq_yaNSBCx3Zz7UPO4GGEIG8Hb7vn90uAqSO7IkUnYnVQ_XE4eNl7LcoIuxfr-isB5xVH0YZCKRIq1U8-ixPfo0V449cQCJwcTK7cY4CE2QhuW2tOza1=w1006-h670-s-no-gm?authuser=0"
+                        alt="Photon-Capture">
+                </div>
+                <div class="about-text">
+                    <h2 data-i18n="about.intro">Schön, dass du da bist!</h2>
+                    <p data-i18n="about.p1">Ich bin Jonathan, und ich liebe es, echte Emotionen und einzigartige
+                        Augenblicke einzufangen. Seit vielen Jahren begleite ich Menschen mit meiner Kamera –
+                        angefangen hat alles mit einem alten Handy und der Faszination für visuelles
+                        Geschichtenerzählen.</p>
+                    <p data-i18n="about.p2">Mein Ziel ist es, Bilder zu schaffen, die berühren und bleiben. Egal ob es
+                        um einen Moment mit dem geliebten Vierbeiner geht, ein ehrliches Porträt oder die lebendige
+                        Stimmung eines Events – ich möchte den Moment so festhalten, wie er sich angefühlt hat.</p>
+                    <p data-i18n="about.p3">Wenn ich nicht fotografiere, bin ich am liebsten draußen in der Natur
+                        unterwegs, immer auf der Suche nach neuem Licht und Inspiration, um meine Arbeit für euch stetig
+                        weiterzuentwickeln.</p>
+                    <a href="#contact" class="cta-button" data-i18n="about.btn">Lass uns sprechen</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services-section">
+        <div class="container">
+            <div class="section-title" data-i18n="services.title">Meine Leistungen</div>
+            <div class="services-grid">
+                <div class="service-card" data-category="portrait">
+                    <div class="service-icon">👤</div>
+                    <h3 data-i18n="services.portrait.title">Porträt-Sitzungen</h3>
+                    <p data-i18n="services.portrait.desc">Ob für dich selbst, als Paar oder mit der Familie – wir
+                        kreieren entspannte Bilder, auf denen du dich wohlfühlst.</p>
+                </div>
+                <div class="service-card" data-category="event">
+                    <div class="service-icon">🎉</div>
+                    <h3 data-i18n="services.event.title">Event-Begleitung</h3>
+                    <p data-i18n="services.event.desc">Firmenfeiern, Geburtstage oder Jubiläen. Ich sorge dafür, dass
+                        die Stimmung und die besonderen Momente unvergessen bleiben.</p>
+                </div>
+                <div class="service-card" data-category="pet">
+                    <div class="service-icon">🐾</div>
+                    <h3 data-i18n="services.pet.title">Tierfotografie</h3>
+                    <p data-i18n="services.pet.desc">Charakterstarke Porträts deiner Vierbeiner. Mit viel Geduld und
+                        Ruhe fange ich das Wesen deines Tieres ein.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery-section">
+        <div class="container">
+            <div class="section-title" data-i18n="gallery.title">Portfolio</div>
+
+            <!-- Filter Menu -->
+            <div class="gallery-filters">
+                <button class="filter-btn active" data-filter="all" data-i18n="gallery.filter.all">Alle</button>
+                <button class="filter-btn" data-filter="portrait" data-i18n="gallery.filter.portrait">Porträt</button>
+                <button class="filter-btn" data-filter="event" data-i18n="gallery.filter.event">Event</button>
+                <button class="filter-btn" data-filter="pet" data-i18n="gallery.filter.pet">Tier</button>
+            </div>
+
+            <!-- Auto-Scrolling Carousel Wrapper -->
+            <div class="gallery-carousel-wrapper">
+                <div class="gallery-row gallery-row-right" id="gallery-row-1">
+                    <!-- Top row - scrolls right -->
+                </div>
+                <div class="gallery-row gallery-row-left" id="gallery-row-2">
+                    <!-- Bottom row - scrolls left -->
+                </div>
+            </div>
+
+            <!-- Gallery Grid (hidden - source for carousel) -->
+            <div class="gallery-grid" style="display: none;">
+                <!-- Portrait Images -->
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczNFydOWWwjUSIz1Fug9a2j3yJ_wLHSiprc0AH-3n6czHd0l2TAjsLDG0-c8SQoDsiVSB-50iat2Ftr3X38F_QZnLkwPOPjkYmd5ecbbUD2MgL1K2LK2n9xy1ejqmndd0pDx8VkRrhH0H9lqw5wxZ7Ru=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczO00WL5uRfAzzlOGMPQLxgbyJRjFMB5PtQIbfHltYc1fDed6oGpOEpidil5r61x3i7p0UEOq2L-55QEDqw6sBwkadZ2lYp7-iViP9pCZg_klEHecFWzxQ-rKMKSm_Hrp2uFT-5tzK8FP7L5FKf_e9pf=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMmeH7qU6lb4n1aCRzjAtvcboKXMtZnyrpjFujUnnbgjPuV-PKDbHJPLyzoWqX1d6aQxL4KhR64CfI759Sx8-XsTjhwEx_7J_QkquFV_HYgzpd-j9yRiHdrv1BSg-oRv3SRJ9fvmRUTXpYiqhW-tYTB=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMdpeFbvIQQUg3apqe9dpGktj5N2jMrUMRKgHlnkFJxe860dc6nRslbneRUtDg-i60qUEh_MC0sWxVCaDurLpc-SCAzEvx1-mn6RiOObHg_sHxdQiDtzV9T0cRV6h5n5OIGStyOwM6q9egZ4eY6wuk3=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPBjAih0xRnpfgB2pplcrf_0d0QCOdqY01SNsw65cCBKwNR-vt8E2fGSQ67ZjLPelr6f0uG-doTuly1TCNcCw6wqppVj-PUkXyuU-1XWPg4e3Xn0lKPqkvJRBu3saPjAf7D32owNXYMEgpJVLzmkbPk=w2512-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczP9MT4qxIfnyM17IHqe122XsYLG9aYLSXFBZWRn8OKzxijdACwGZDivSH2xWXgqM3ONPuo--pe47smZI16LpaXl3hIxHo47naekrjI4jAtdYL5Su8e2MK_yxhfZnCRCjgCwR__V4Ns0VNYmWOeH4tZZ=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Portrait">
+                </div>
+                <!-- <div class="gallery-item" data-category="portrait">
+                    <img src="" alt="portrait">
+                </div> -->
+
+
+                <!-- Event Images -->
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMAxlx6yI9vWbOLSlU67td9d7F_h0epojqBG3xyF57bbpURMr6TSWUdKs01eKdeYy9vXtbWaxoUUFo49KqeI4PLm8j78sME7D5BkX6y4xKjpTowLM6aVaDp0-yIERmV5FW81DfVvuMaqhzrnkMPquXz1g=w1006-h930-s-no-gm?authuser=0"
+                        alt="Event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMk1_4qygC0oSLmnSOEO83ChBJR-OSoo_ge-RmOFLDhFcGniaJdwQYTShU68vHMzwVfSOgXN68jOhg5wybV-HPUkQI1B9i4wZIuvTAMsj4ftgJdhXzTHRvnxpn2ejk8vYwHoKZbMfgOR0xcd7-PE89r=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPdYvza5DsGhVBVFWbkhwBvYITGY2xdLnkRf9qpXdyUOaCuplyo5kHhDJnz3yw0zmgUJnEk7dlyKDOgYggiK3EqrLUAvZYW5eh8NZPyBqSAU1cHCKsl0odpYxXwtYJ6uLEcC1VhM3uXrUSMd0tHDr3H=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOJVETPNapFKKsijSDaFDJej-CYB_KeO2_un85GLOhGlLNYDs899wwuoQkkA6uz_z4LmFF_rPCsMCYRkgwdR2P9C4Dp7j7fHaZnc7WNoc_oNTpOefnkmgLBGTfCbHKwR3K4rDxtqzmi8Fqn1l16rtyg=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOzZfV7b_0KM4uBZtTiWHQwkiLQnQySZwWW2qUXplBrdp2K1LslnvbJ4GqF3h0KBWaawrWIYPhBe2Ed9QCX4Hv4VDu36WvYkdYDZmdCbHCvVGOWSdO9Q55FiWWcKS34gXkkqxzdIwuBmFsXvc9oAJXF=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOFps0-0pZvlZHncEmJe1q2n28GtMJ3R36RTglEZixbKwmDqQKMmAU18wS_cJQ7DipZHITsYJMZG0ehNIUNxz-ZvCLSarmJIVFMGqR6yZfdrkGW9L0FLkYf_1mup-Ide3ePR2VfdIw0GgBucQDESj10=w1006-h1510-s-no-gm?authuser=1"
+                        alt="event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczN8ONsraz2cq1zXhkemYiqDg5bVT0iMxPFw66d7om46a6hkXgezd-hHvEGJkplUwBGNDXd5c6ZhpMZ5G8Tfn1nQKOP-gReWRZ7py5wXRXW9Ga_g-9WI2IfcLkGtLqT_gfxD7Pw4O0eIplCVead4LwIg=w1006-h1506-s-no-gm?authuser=1"
+                        alt="event">
+                </div>
+                <div class="gallery-item" data-category="event">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPKLZRvbTU_BPTtPyHivnhiLzTApAoc23-Sht5H4InBfm0QeHnQMRfkxcaqMJcV9EMdyvY-2ubjWUfXLt_I1JZ2psIRTfFSXesHd3aCqeY1oAoPO2zWSYBBwUXJ3H_f5h5o1_poOBaO9M3yocmOY6ww=w1006-h670-s-no-gm?authuser=1"
+                        alt="event">
+                </div>
+                <!-- <div class="gallery-item" data-category="event">
+                    <img src="" alt="event">
+                </div> -->
+
+                <!-- Pet Images -->
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPSYT8TmKnkSlvJSm5AzF71lgP-PRwgxrMVKHP8iQGWj7sv2tiAOAVBqk7x8AS7iIRD9nrJtXC3-Eiazi-gS_fI1fw8O1VGsfu51RaRL_Dcu3PU-rb7UpvxbSZiCkVT-nSX0DDXq105kfisaoinnDHX=w1006-h670-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMe744z3TRHFRm-ahXBF5ZGFq4MMdSRvvm48dknRcGC9BvS0UxjOEWdZil5PGHGEjxL7UgX-5pg4NDlaZX45oBWzv1Sr8u8img7WJI97B3cfU9rifMoTnYT7rVKku_Zq_jpE-1FJXVqwI_25tPnNlIa=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMGixNQ5pUZusdux_rU3rJky5P69L5VmFOzW60qdJPh4mmPlODdkK0TTblcG6dJTBPQ-G00NJyJVRA1W7vR0RtpmJUHmzmQIwio1SxEZeOA26K0NP2e2FLJ65gagf6WGe1sOI6gCdPCoyFg-OOso5x5=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMP203nwiVbb4y6HoFb8mXJ7CmOlUWFz2PdZN2XcKIFlAFcVu2J4UwDmUUrim2mKm8WPc23rknqlroL7Q79LQIyzXrOTerfR6Ec3lvLIAcy4yB0an_ldu9dWuKJ3AyRmPjt9U9Owe1v2fugtgJzDBrH=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <!-- <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPOzIGkm9998UpOq8KJfH2pc0sQ_fZpOwzDAsSoq-O1deHNGJGSquYvNlO5W4oqL4vxv7gY8E1j-KtfOvAKKTpAHxwHsVktomHlskimI6ZjQO-yonNzvOGWjFo_QE4QgVzSKZ39BqJxesd1ghm2G5uc=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div> -->
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMO5axEwJtImW4JXPO8XitMABD-BpbGuhPMLKHY2SQgSKdbMIEbTsUDFD8bZcquYJ01bjnbXDOcbPTBveVL-FvQzCnpYnLXYSZu1ahaVwc-h7BHZ_3z7C44ln9KEEcLzI4jlfhMXyBct3AR8P3a5jd5=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPSYT8TmKnkSlvJSm5AzF71lgP-PRwgxrMVKHP8iQGWj7sv2tiAOAVBqk7x8AS7iIRD9nrJtXC3-Eiazi-gS_fI1fw8O1VGsfu51RaRL_Dcu3PU-rb7UpvxbSZiCkVT-nSX0DDXq105kfisaoinnDHX=w2526-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMrpsp4g7p3WeE8NUBa7pR6LfBbMzX1CaqRTai4uMJe9v8XOo49ZwzoSCNR9DmGvhS1p77bn57Pp7PaSA0XURDAY2cGzwrPlm65Q18maCRDE1vxq6C6awdoQoOXNwVienmKoeQw0Q40O9YXFhDp6Ac0=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOLjJlTzCtN81NUUkKSD9pMVBNPLe9S-cogXMEyPGOMYmzNJFCesqyG7vnzLhlolvO_lciLpbuga2zoxdk9gdZRRKlCUziVJpSieCwx7DWiHuXl6_O3O4Ds41Eo7HgWmu8kI7Tm7-WbFj0lymvSw4Ie=w1122-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczPY4qx84EVZwE48yFzY8sFneI_aoVvdhYXZgk_jI-TFTj5SrOtOmJOQwRmUU-W1zD_BJlf6by4BCvTxhnw3lamMDOxUC9DFKYvBRGmz5kDMQKuLtG2dmWQRles1sKJrhNJidn3Re48TPoDdRBkOlDgL=w1006-h574-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczMd6klPOKJRlo5BsF4NkXstl55_3NWhJFIxbqkC-Rvuc0zHFCVA3m1TZyZ0sCNrnKY07CVuM5KmQGEkWU1TjecUUm5itmlP6jWBZyvyaPhyaWh1L8LQ4cu-hohvq9LMYkG8Co7GJprMeWG45GQDPdpe=w1290-h1684-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <div class="gallery-item" data-category="pet">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczNDsqOYADT72njcJrH6udgvkPfet8HpzPp24yNa9d1NCNGpu5BxvBDuAke1G1y7fKEHkfhHiiyY4oTNNle34x0MCCkdVqH1FYw0MP3vw2bnotsaMGA8DwNrsT_Tczc4hRhaJgnUOUcomPsloUpafSaN=w1006-h670-s-no-gm?authuser=1"
+                        alt="Pet" loading="lazy">
+                </div>
+                <!-- <div class="gallery-item" data-category="pet">
+                    <img src="" alt="Pet">
+                </div> -->
+            </div>
+
+            <!-- Carousel Navigation (hidden for auto-scroll) -->
+            <div class="gallery-nav" style="display: none;">
+                <button class="gallery-nav-btn gallery-prev" aria-label="Previous">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <span class="gallery-page-indicator"></span>
+                <button class="gallery-nav-btn gallery-next" aria-label="Next">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing-section">
+        <div class="container">
+            <div class="section-title" data-i18n="pricing.title">Pakete & Preise</div>
+            <div class="pricing-grid">
+                <!-- Portrait Package -->
+                <div class="pricing-card">
+                    <h3 data-i18n="pricing.portrait.title">Porträt-Session</h3>
+                    <div class="price">125€</div>
+                    <ul class="pricing-features">
+                        <li data-i18n="pricing.portrait.features.1">1 Stunde Shooting</li>
+                        <li data-i18n="pricing.portrait.features.2">1 Location nach Wahl</li>
+                        <li data-i18n="pricing.portrait.features.3">50 liebevoll bearbeitete Bilder</li>
+                        <li data-i18n="pricing.portrait.features.4">Online-Galerie zum Download</li>
+                        <li data-i18n="pricing.portrait.features.5">Private Nutzungsrechte</li>
+                    </ul>
+                    <a href="javascript:void(0)" class="customize-link" data-package="portrait"
+                        data-i18n="pricing.customize">Paket
+                        anpassen (Extras)</a>
+                    <a href="calendar.html?package=portrait" class="cta-button"
+                        style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);"
+                        data-i18n="pricing.btn">Anfrage senden</a>
+                </div>
+
+                <!-- Event Package -->
+                <div class="pricing-card">
+                    <h3 data-i18n="pricing.event.title">Event-Begleitung</h3>
+                    <div class="price">100€<span data-i18n="pricing.event.price_unit">/Stunde</span></div>
+                    <ul class="pricing-features">
+                        <li data-i18n="pricing.event.features.1">Ab 2 Stunden buchbar</li>
+                        <li data-i18n="pricing.event.features.2">Reportage & Highlights</li>
+                        <li data-i18n="pricing.event.features.3">Alle besten Bilder bearbeitet</li>
+                        <li data-i18n="pricing.event.features.4">Schnelle Bereitstellung</li>
+                        <li data-i18n="pricing.event.features.5">Kommerzielle Nutzungsrechte</li>
+                    </ul>
+                    <a href="javascript:void(0)" class="customize-link" data-package="event"
+                        data-i18n="pricing.customize">Paket
+                        anpassen (Extras)</a>
+                    <a href="calendar.html?package=event" class="cta-button"
+                        style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);"
+                        data-i18n="pricing.btn">Anfrage senden</a>
+                </div>
+
+                <!-- Pet Package -->
+                <div class="pricing-card">
+                    <h3 data-i18n="pricing.pet.title">Tierfotografie</h3>
+                    <div class="price">125€</div>
+                    <ul class="pricing-features">
+                        <li data-i18n="pricing.pet.features.1">1 Stunde Shooting</li>
+                        <li data-i18n="pricing.pet.features.2">1 Location nach Wahl</li>
+                        <li data-i18n="pricing.pet.features.3">50 liebevoll bearbeitete Bilder</li>
+                        <li data-i18n="pricing.pet.features.4">Online-Galerie zum Download</li>
+                        <li data-i18n="pricing.pet.features.5">Private Nutzungsrechte</li>
+                    </ul>
+                    <a href="javascript:void(0)" class="customize-link" data-package="pet"
+                        data-i18n="pricing.customize">Paket
+                        anpassen (Extras)</a>
+                    <a href="calendar.html?package=pet" class="cta-button"
+                        style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);"
+                        data-i18n="pricing.btn">Anfrage senden</a>
+                </div>
+            </div>
+
+            <!-- Custom Request Option -->
+            <div class="custom-request-card"
+                style="margin-top: 2rem; text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <h3 data-i18n="pricing.custom.title" style="margin-bottom: 0.5rem;">Individuelle Anfrage</h3>
+                <p data-i18n="pricing.custom.desc"
+                    style="color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Nicht das Passende dabei? Kein Problem! Schreib mir einfach deine Wünsche und wir finden gemeinsam
+                    eine Lösung.
+                </p>
+                <a href="booking.html?package=other" class="cta-button"
+                    style="background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary);"
+                    data-i18n="pricing.custom.btn">
+                    Individuelles Angebot anfragen
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Customization Info Modal -->
+    <div id="customization-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 data-i18n="pricing.extras.title">Verfügbare Extras</h3>
+            <div id="modal-text" class="modal-text"></div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <span class="lightbox-prev">&#10094;</span>
+        <span class="lightbox-next">&#10095;</span>
+        <img class="lightbox-content" id="lightbox-img" alt="">
+        <div class="lightbox-caption"></div>
+    </div>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq-section">
+        <div class="container">
+            <div class="section-title" data-i18n="faq.title">Häufig gestellte Fragen</div>
+
+            <div class="faq-container">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span data-i18n="faq.q1">Wie lange dauert ein Fotoshooting?</span>
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p data-i18n="faq.a1">Ein typisches Fotoshooting dauert zwischen 1-2 Stunden, abhängig vom
+                            gewählten Paket und der Anzahl der gewünschten Aufnahmen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span data-i18n="faq.q2">Wann erhalte ich meine Fotos?</span>
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p data-i18n="faq.a2">Die bearbeiteten Fotos werden innerhalb von 7-10 Werktagen per
+                            Online-Galerie zugestellt.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span data-i18n="faq.q3">Kann ich den Shooting-Ort selbst wählen?</span>
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p data-i18n="faq.a3">Ja, wir können das Shooting an einem Ort Ihrer Wahl durchführen.
+                            Zusätzliche Reisekosten können anfallen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span data-i18n="faq.q4">Bieten Sie auch Nachbearbeitung an?</span>
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p data-i18n="faq.a4">Ja, alle Fotos werden professionell bearbeitet und retuschiert.
+                            Premium-Retusche ist als Extra verfügbar.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span data-i18n="faq.q5">Was passiert bei schlechtem Wetter?</span>
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p data-i18n="faq.a5">Bei Outdoor-Shootings können wir bei schlechtem Wetter kostenlos umbuchen
+                            oder auf Indoor-Locations ausweichen.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container contact-container">
+            <div class="contact-info">
+                <h3 data-i18n="contact.title">Kontakt</h3>
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <h4 data-i18n="contact.info.location">Standort</h4>
+                        <p>Dresden, Germany</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">📧</div>
+                    <div class="info-content">
+                        <h4 data-i18n="contact.info.email">E-Mail</h4>
+                        <p>Photon.Capture.Fotografie@gmail.com</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">📞</div>
+                    <div class="info-content">
+                        <h4 data-i18n="contact.info.phone">Telefon</h4>
+                        <p>+49 1590 6786 209</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-form">
+                <form id="contact-form">
+                    <div class="form-group">
+                        <label for="name" data-i18n="contact.form.name">Dein Name</label>
+                        <input type="text" id="name" class="form-control" placeholder="Wie heißt du?"
+                            data-i18n="contact.form.name.placeholder">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" data-i18n="contact.form.email">Deine E-Mail</label>
+                        <input type="email" id="email" class="form-control" placeholder="Wie kann ich dich erreichen?"
+                            data-i18n="contact.form.email.placeholder">
+                    </div>
+                    <div class="form-group">
+                        <label for="service" data-i18n="contact.form.service">Worum geht es?</label>
+                        <select id="service" class="form-control">
+                            <option value="portrait" data-i18n="contact.form.service.portrait">Porträt-Session</option>
+                            <option value="event" data-i18n="contact.form.service.event">Event-Begleitung</option>
+                            <option value="pet" data-i18n="contact.form.service.pet">Tierfotografie</option>
+                            <option value="other" data-i18n="contact.form.service.other">Sonstiges / Allgemeine Frage
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message" data-i18n="contact.form.message">Deine Nachricht</label>
+                        <textarea id="message" class="form-control"
+                            placeholder="Erzähl mir ein bisschen von deinen Plänen..."
+                            data-i18n="contact.form.message.placeholder"></textarea>
+                    </div>
+                    <button type="submit" class="cta-button" style="border: none; cursor: pointer; width: 100%;"
+                        data-i18n="contact.btn">Nachricht abschicken</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank"
+                    rel="noopener noreferrer">Instagram</a>
+                <span class="separator">•</span>
+                <a href="agb.html" data-i18n="footer.agb">AGB</a>
+                <span class="separator">•</span>
+                <a href="impressum.html" data-i18n="footer.impressum">Impressum</a>
+            </div>
+            <p class="copyright" data-i18n="footer.copyright">&copy; 2025 Photon-Capture. Alle Rechte vorbehalten.</p>
+        </div>
+    </footer>
+
+    <!-- Cookie Banner -->
+    <div id="cookie-banner" class="cookie-banner">
+        <img src="assets/cookie-aperture.svg" alt="Cookie Icon" class="cookie-icon">
+        <div class="cookie-content">
+            <h4 data-i18n="cookie.title">Cookies & Datenschutz</h4>
+            <p data-i18n="cookie.text">Wir nutzen Cookies, um dir das beste Erlebnis auf unserer Website zu bieten.</p>
+            <div class="cookie-actions">
+                <button id="accept-cookies" class="cookie-btn accept" data-i18n="cookie.accept">Akzeptieren</button>
+                <button id="decline-cookies" class="cookie-btn decline" data-i18n="cookie.decline">Ablehnen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/translations.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/email-handler.js"></script>
+</body>
+
+</html>

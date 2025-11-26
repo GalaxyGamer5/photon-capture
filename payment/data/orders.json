@@ -1,0 +1,29 @@
+{
+    "orders": [
+        {
+            "orderId": "ORD-20251125-001",
+            "customerName": "Demo Kunde",
+            "email": "demo@example.com",
+            "phone": "0123456789",
+            "bookingDate": "2025-12-15",
+            "service": "Hochzeit",
+            "duration": 8,
+            "extras": [
+                "Extra Stunde",
+                "Bearbeitung"
+            ],
+            "totalAmount": 500,
+            "depositAmount": 50,
+            "depositPaid": false,
+            "depositPaidDate": null,
+            "depositPaymentMethod": null,
+            "finalPaymentUnlocked": false,
+            "finalAmount": 450,
+            "finalPaid": false,
+            "finalPaidDate": null,
+            "finalPaymentMethod": null,
+            "created": "2025-11-25T12:00:00.000Z",
+            "notes": ""
+        }
+    ]
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zahlung | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="payment-header">
+            <a href="../index.html" class="logo">Photon<span>-Capture</span></a>
+            <h1>Bestellung bezahlen</h1>
+            <p style="color: var(--text-secondary);">Gib deine Bestellnummer ein, um fortzufahren</p>
+        </div>
+
+        <div class="card">
+            <form id="lookup-form">
+                <div class="form-group">
+                    <label for="order-id">Bestellnummer</label>
+                    <input type="text" id="order-id" class="form-control" placeholder="z.B. ORD-20251125-001" required
+                        autofocus>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        Die Bestellnummer findest du in deiner Bestätigungs-E-Mail
+                    </small>
+                </div>
+
+                <div id="error-msg" class="error-message" style="display: none;">
+                    Bestellung nicht gefunden. Bitte überprüfe die Bestellnummer.
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Bestellung anzeigen
+                </button>
+            </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="admin.html" style="color: var(--text-secondary); font-size: 0.85rem; text-decoration: none;">
+                Admin Login
+            </a>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        const form = document.getElementById('lookup-form');
+        const errorMsg = document.getElementById('error-msg');
+        const orderIdInput = document.getElementById('order-id');
+
+        // Check for order ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlOrderId = urlParams.get('id');
+        if (urlOrderId) {
+            orderIdInput.value = urlOrderId;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const orderId = orderIdInput.value.trim().toUpperCase();
+
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Suche...';
+
+            try {
+                const order = await getOrder(orderId);
+
+                if (order) {
+                    window.location.href = `order.html?id=${orderId}`;
+                } else {
+                    errorMsg.style.display = 'block';
+                    orderIdInput.focus();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (error) {
+                console.error('Error looking up order:', error);
+                errorMsg.textContent = 'Fehler beim Laden der Bestellung. Bitte versuche es erneut.';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    </script>
+</body>
+
+</html>
