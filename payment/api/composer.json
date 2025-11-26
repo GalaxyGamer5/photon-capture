@@ -1,7 +1,0 @@
-{
-    "name": "photon-capture/payment-api",
-    "description": "Payment API for Photon Capture",
-    "require": {
-        "stripe/stripe-php": "^13.0"
-    }
-}
