@@ -183,20 +183,25 @@ document.addEventListener('DOMContentLoaded', () => {
                             extras: extrasList,
                             duration: duration
                         }).then((result) => {
-                            const successMsg = currentLang === 'en'
-                                ? `Thank you! Your booking request has been sent successfully.\\nYour Order ID: ${orderId}\\n\\nI will contact you shortly to confirm the appointment.`
-                                : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.\\nDeine Bestellnummer: ${orderId}\\n\\nIch melde mich in Kürze zur Terminbestätigung.`;
+                            if (result && result.success) {
+                                // Order created successfully - Redirect to payment
+                                const redirectMsg = currentLang === 'en'
+                                    ? `Booking received! Redirecting to payment...`
+                                    : `Buchung empfangen! Weiterleitung zur Zahlung...`;
 
-                            alert(successMsg);
-                            bookingForm.reset();
-                            submitBtn.innerText = originalBtnText;
-                            submitBtn.disabled = false;
-
-                            // Log result
-                            if (result) {
-                                console.log('Payment order created:', result.orderId);
+                                // Use the URL from the API or fallback to constructing it
+                                const paymentUrl = result.paymentUrl || `/payment/order.html?id=${orderId}`;
+                                window.location.href = paymentUrl;
                             } else {
-                                console.warn('Payment order creation failed - check console for details');
+                                // Fallback if order creation failed but email sent
+                                const successMsg = currentLang === 'en'
+                                    ? `Thank you! Your booking request has been sent successfully.\nYour Order ID: ${orderId}\n\nI will contact you shortly to confirm the appointment.`
+                                    : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.\nDeine Bestellnummer: ${orderId}\n\nIch melde mich in Kürze zur Terminbestätigung.`;
+
+                                alert(successMsg);
+                                bookingForm.reset();
+                                submitBtn.innerText = originalBtnText;
+                                submitBtn.disabled = false;
                             }
                         });
                     } else {

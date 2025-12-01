@@ -14,7 +14,7 @@ function initializeAnalytics() {
     if (cookieConsent === 'accepted') {
         // Load Google Analytics
         gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX', {
+        gtag('config', 'G-7N54W9ZVVV', {
             'anonymize_ip': true,
             'cookie_flags': 'SameSite=None;Secure'
         });

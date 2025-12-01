@@ -1,118 +1,186 @@
 <?php
 /**
- * Create Order from Booking
+ * Create Order API Endpoint
  * 
- * This endpoint creates a new order when a booking is submitted
+ * Creates new orders in orders.json when bookings are submitted
+ * Called automatically by the booking form after email is sent
  */
 
-define('PAYMENT_API', true);
-require_once 'config.php';
-
-// Set headers
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Origin: *'); // Adjust in production
+header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
-    exit();
+    exit;
 }
 
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+
+// Read and validate input
+$input = file_get_contents('php://input');
+$data = json_decode($input, true);
+
+if (!$data) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON']);
+    exit;
+}
+
+// Validate required fields
+$required = ['orderId', 'name', 'email', 'service', 'totalAmount'];
+foreach ($required as $field) {
+    if (!isset($data[$field]) || empty($data[$field])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => "Missing required field: $field"]);
+        exit;
+    }
+}
+
+// Sanitize and prepare order data
+$order = [
+    'orderId' => sanitize($data['orderId']),
+    'customerName' => sanitize($data['name']),
+    'email' => filter_var($data['email'], FILTER_SANITIZE_EMAIL),
+    'phone' => isset($data['phone']) ? sanitize($data['phone']) : '',
+    'bookingDate' => isset($data['date']) ? sanitize($data['date']) : '',
+    'service' => sanitize($data['service']),
+    'duration' => isset($data['duration']) ? intval($data['duration']) : 0,
+    'extras' => isset($data['extras']) && is_array($data['extras']) ? array_map('sanitize', $data['extras']) : [],
+    'totalAmount' => floatval($data['totalAmount']),
+    'depositAmount' => round(floatval($data['totalAmount']) * 0.1, 2), // 10% deposit
+    'depositPaid' => false,
+    'depositPaidDate' => null,
+    'depositPaymentMethod' => null,
+    'finalPaymentUnlocked' => false,
+    'finalAmount' => round(floatval($data['totalAmount']) * 0.9, 2), // Remaining 90%
+    'finalPaid' => false,
+    'finalPaidDate' => null,
+    'finalPaymentMethod' => null,
+    'created' => date('c'), // ISO 8601 format
+    'notes' => isset($data['notes']) ? sanitize($data['notes']) : ''
+];
+
+// Validate email
+if (!filter_var($order['email'], FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid email address']);
+    exit;
+}
+
+// Path to orders.json
+$ordersFile = __DIR__ . '/../data/orders.json';
+
+// Ensure data directory exists
+if (!file_exists(dirname($ordersFile))) {
+    mkdir(dirname($ordersFile), 0755, true);
+}
+
+// Initialize orders.json if it doesn't exist
+if (!file_exists($ordersFile)) {
+    file_put_contents($ordersFile, json_encode(['orders' => []], JSON_PRETTY_PRINT));
+}
+
+// Lock file for concurrent access safety
+$lockFile = $ordersFile . '.lock';
+$lock = fopen($lockFile, 'w');
+if (!flock($lock, LOCK_EX)) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Could not acquire lock']);
+    fclose($lock);
+    exit;
 }
 
 try {
-    // Get request data
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
+    // Read existing orders
+    $ordersJson = file_get_contents($ordersFile);
+    $ordersData = json_decode($ordersJson, true);
     
-    if (!$data) {
-        throw new Exception('Invalid request data');
+    if (!$ordersData || !isset($ordersData['orders'])) {
+        $ordersData = ['orders' => []];
     }
     
-    // Extract booking data
-    $orderId = $data['orderId'] ?? null;
-    $customerName = $data['name'] ?? '';
-    $email = $data['email'] ?? '';
-    $service = $data['service'] ?? '';
-    $bookingDate = $data['date'] ?? '';
-    $totalAmount = $data['totalAmount'] ?? 0;
-    $extras = $data['extras'] ?? [];
-    $duration = $data['duration'] ?? 0;
-    
-    if (!$orderId || !$customerName || !$email || !$totalAmount) {
-        throw new Exception('Missing required booking information');
+    // Check if order ID already exists
+    foreach ($ordersData['orders'] as $existingOrder) {
+        if ($existingOrder['orderId'] === $order['orderId']) {
+            // Order already exists, return success (idempotent)
+            flock($lock, LOCK_UN);
+            fclose($lock);
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Order already exists',
+                'orderId' => $order['orderId'],
+                'paymentUrl' => getPaymentUrl($order['orderId'])
+            ]);
+            exit;
+        }
     }
-    
-    // Check if order already exists
-    $existingOrder = findOrder($orderId);
-    if ($existingOrder) {
-        // Order already exists, just return success
-        echo json_encode([
-            'success' => true,
-            'message' => 'Order already exists',
-            'orderId' => $orderId
-        ]);
-        exit();
-    }
-    
-    // Create new order
-    $depositAmount = DEPOSIT_AMOUNT; // 50€
-    $finalAmount = max(0, $totalAmount - $depositAmount);
-    
-    $newOrder = [
-        'orderId' => $orderId,
-        'customerName' => $customerName,
-        'email' => $email,
-        'phone' => $data['phone'] ?? '',
-        'bookingDate' => $bookingDate,
-        'service' => $service,
-        'duration' => $duration,
-        'extras' => $extras,
-        'totalAmount' => $totalAmount,
-        'depositAmount' => $depositAmount,
-        'depositPaid' => false,
-        'depositPaidDate' => null,
-        'depositPaymentMethod' => null,
-        'finalPaymentUnlocked' => false,
-        'finalAmount' => $finalAmount,
-        'finalPaid' => false,
-        'finalPaidDate' => null,
-        'finalPaymentMethod' => null,
-        'created' => date('c'),
-        'notes' => ''
-    ];
-    
-    // Load existing orders
-    $ordersData = loadOrders();
     
     // Add new order
-    $ordersData['orders'][] = $newOrder;
+    $ordersData['orders'][] = $order;
     
-    // Save orders
-    if (!saveOrders($ordersData)) {
-        throw new Exception('Failed to save order');
+    // Write back to file
+    $result = file_put_contents($ordersFile, json_encode($ordersData, JSON_PRETTY_PRINT));
+    
+    if ($result === false) {
+        throw new Exception('Failed to write orders file');
     }
     
-    // Return success
+    // Release lock
+    flock($lock, LOCK_UN);
+    fclose($lock);
+    
+    // Return success response
+    http_response_code(201);
     echo json_encode([
         'success' => true,
         'message' => 'Order created successfully',
-        'orderId' => $orderId,
-        'depositAmount' => $depositAmount,
-        'finalAmount' => $finalAmount
+        'orderId' => $order['orderId'],
+        'depositAmount' => $order['depositAmount'],
+        'paymentUrl' => getPaymentUrl($order['orderId'])
     ]);
     
 } catch (Exception $e) {
-    http_response_code(400);
+    // Release lock on error
+    flock($lock, LOCK_UN);
+    fclose($lock);
+    
+    // Log error
+    error_log('Order creation error: ' . $e->getMessage());
+    
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => 'Failed to create order: ' . $e->getMessage()
     ]);
+}
+
+/**
+ * Sanitize input string
+ */
+function sanitize($str) {
+    return htmlspecialchars(strip_tags(trim($str)), ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Generate payment URL for an order
+ */
+function getPaymentUrl($orderId) {
+    // Adjust domain based on your setup
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    
+    // If you're using subdomains:
+    // return "$protocol://payment.$host/order.html?id=$orderId";
+    
+    // If using single domain with folders:
+    return "$protocol://$host/payment/order.html?id=$orderId";
 }
