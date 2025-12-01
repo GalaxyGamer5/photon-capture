@@ -12,7 +12,22 @@ function initializeAnalytics() {
     const cookieConsent = localStorage.getItem('cookieConsent');
 
     if (cookieConsent === 'accepted') {
-        // Load Google Analytics
+        // Check if script is already loaded
+        if (document.querySelector('script[src*="googletagmanager.com"]')) {
+            return true;
+        }
+
+        // Dynamically load Google Analytics script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-7N54W9ZVVV';
+        document.head.appendChild(script);
+
+        // Initialize dataLayer
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        window.gtag = gtag; // Make globally available
+
         gtag('js', new Date());
         gtag('config', 'G-7N54W9ZVVV', {
             'anonymize_ip': true,
