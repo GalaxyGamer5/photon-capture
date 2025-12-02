@@ -306,38 +306,41 @@
             btn.disabled = true;
 
             try {
-                // Use local script
-                const apiUrl = 'save-users.php';
+                // Use main domain API
+                const apiUrl = 'https://photon-capture.de/payment/api/save-users.php';
                 console.log('Saving to:', apiUrl);
 
-                // TEST: Check if PHP works
+                // TEST: Check if PHP works on the main domain (using create-order.php as baseline)
+                try {
+                    const baselineUrl = 'https://photon-capture.de/payment/api/create-order.php';
+                    console.log('Testing baseline PHP (create-order.php)...');
+                    const baselineResp = await fetch(baselineUrl, { method: 'GET' }); // Should return 405 or JSON error
+                    const baselineText = await baselineResp.text();
+                    console.log('Baseline PHP response:', baselineText);
+
+                    if (baselineText.includes('<?php')) {
+                        alert('WARNUNG: Selbst create-order.php wird als Quellcode geladen! PHP ist auf dem Hauptserver deaktiviert oder fehlerhaft.');
+                    }
+                } catch (e) {
+                    console.error('Baseline PHP test failed:', e);
+                }
+
+                // TEST: Check our script
                 try {
                     const testResp = await fetch(apiUrl, { method: 'GET' });
                     const testText = await testResp.text();
-                    console.log('PHP Test response:', testText);
+                    console.log('Script Test response:', testText);
 
-                    if (!testResp.ok) {
-                        throw new Error(`HTTP ${testResp.status}`);
+                    if (!testResp.ok && testResp.status !== 405) { // 405 is fine for GET if script expects POST
+                        // throw new Error(`HTTP ${testResp.status}`);
                     }
 
-                    // Check if we got JSON (PHP executed) or HTML/Text (Source code download)
-                    try {
-                        const jsonCheck = JSON.parse(testText);
-                        if (jsonCheck.status === 'ok') {
-                            console.log('PHP execution verified.');
-                        }
-                    } catch (e) {
-                        if (testText.includes('<?php')) {
-                            throw new Error('Server liefert PHP-Quellcode statt ihn auszuführen. Bitte PHP aktivieren.');
-                        }
+                    if (testText.includes('<?php')) {
+                        throw new Error('Server liefert PHP-Quellcode statt ihn auszuführen.');
                     }
-
                 } catch (e) {
-                    console.error('PHP test failed:', e);
-                    alert('Fehler: Das PHP-Script konnte nicht ausgeführt werden.\n' + e.message);
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    return;
+                    console.error('Script test failed:', e);
+                    alert('Fehler beim Verbindungstest: ' + e.message);
                 }
 
                 const response = await fetch(apiUrl, {

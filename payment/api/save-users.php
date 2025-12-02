@@ -1,5 +1,5 @@
 <?php
-// admin/api/save-users.php
+// payment/api/save-users.php
 
 // Helper function for JSON response
 function jsonResponse($data, $status = 200) {
@@ -22,6 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    // If GET, return a status message to verify PHP execution
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        jsonResponse(['status' => 'ok', 'message' => 'PHP script is running']);
+    }
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
 
@@ -33,7 +37,7 @@ if (!isset($data['users']) || !is_array($data['users'])) {
     jsonResponse(['error' => 'Invalid data format'], 400);
 }
 
-// Path to users.js (Relative to admin/api/ -> ../../customers/data/users.js)
+// Path to users.js (Relative to payment/api/save-users.php -> ../../customers/data/users.js)
 $usersFile = __DIR__ . '/../../customers/data/users.js';
 
 // Create data directory if it doesn't exist
