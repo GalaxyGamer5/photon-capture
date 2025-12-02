@@ -314,13 +314,24 @@
                     body: JSON.stringify({ users })
                 });
 
-                const result = await response.json();
+                const text = await response.text();
 
-                if (response.ok && result.success) {
-                    alert('Konfiguration erfolgreich gespeichert!');
-                } else {
-                    throw new Error(result.error || 'Unbekannter Fehler');
+                if (!response.ok) {
+                    throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
                 }
+
+                try {
+                    const result = JSON.parse(text);
+                    if (result.success) {
+                        alert('Konfiguration erfolgreich gespeichert!');
+                    } else {
+                        throw new Error(result.error || 'Unbekannter Fehler');
+                    }
+                } catch (e) {
+                    console.error('Raw response:', text);
+                    throw new Error(`Ungültige Server-Antwort: ${text.substring(0, 100)}...`);
+                }
+
             } catch (error) {
                 console.error('Error saving config:', error);
                 alert('Fehler beim Speichern: ' + error.message);
