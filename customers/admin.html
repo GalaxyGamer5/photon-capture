@@ -306,7 +306,20 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('../admin/api/save-users.php', {
+                // Determine API URL based on hostname
+                let apiUrl = '/payment/api/save-users.php';
+                if (window.location.hostname === 'gallery.photon-capture.de') {
+                    apiUrl = 'https://photon-capture.de/payment/api/save-users.php';
+                } else if (window.location.hostname === 'www.gallery.photon-capture.de') {
+                    apiUrl = 'https://www.photon-capture.de/payment/api/save-users.php';
+                }
+
+                // Adjust for local development if needed (optional, but good for safety)
+                // If we are in a subfolder locally, /payment might need adjustment, but usually / works for root.
+
+                console.log('Saving to:', apiUrl);
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
