@@ -306,7 +306,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('api/save-users.php', {
+                const response = await fetch('../admin/api/save-users.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
