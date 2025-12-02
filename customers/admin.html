@@ -129,12 +129,10 @@
                 </div>
             </div>
 
-            <div class="warning-box">
-                <strong>Wichtig:</strong> Da dies eine statische Seite ist, werden Änderungen nicht automatisch auf dem
-                Server gespeichert.
-                Nachdem du Änderungen vorgenommen hast, klicke auf "Konfiguration Speichern", um die neue
-                <code>users.js</code> Datei herunterzuladen.
-                Lade diese Datei dann per FTP in den Ordner <code>customers/data/</code> hoch.
+            <div class="warning-box"
+                style="background: rgba(16, 185, 129, 0.1); border-color: var(--success-color); color: var(--success-color);">
+                <strong>Info:</strong> Änderungen werden nun direkt auf dem Server gespeichert.
+                Klicke auf "Konfiguration Speichern", um die Änderungen zu übernehmen.
             </div>
 
             <div class="card">
@@ -300,23 +298,36 @@
             }
         };
 
-        // Save Data (Download JS)
-        document.getElementById('save-data-btn').addEventListener('click', () => {
-            const data = { users };
-            const jsonStr = JSON.stringify(data, null, 2);
-            const jsContent = `window.usersDatabase = ${jsonStr};`;
+        // Save Data (Send to Server)
+        document.getElementById('save-data-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('save-data-btn');
+            const originalText = btn.innerText;
+            btn.innerText = 'Speichere...';
+            btn.disabled = true;
 
-            const dataBlob = new Blob([jsContent], { type: 'application/javascript' });
-            const url = URL.createObjectURL(dataBlob);
+            try {
+                const response = await fetch('api/save-users.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ users })
+                });
 
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'users.js';
-            link.click();
+                const result = await response.json();
 
-            URL.revokeObjectURL(url);
-
-            alert('Die Datei users.js wurde heruntergeladen. Bitte lade sie nun in den Ordner customers/data/ auf deinem Server hoch.');
+                if (response.ok && result.success) {
+                    alert('Konfiguration erfolgreich gespeichert!');
+                } else {
+                    throw new Error(result.error || 'Unbekannter Fehler');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                alert('Fehler beim Speichern: ' + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         });
 
         // Init
