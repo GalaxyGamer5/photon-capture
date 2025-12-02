@@ -319,6 +319,19 @@
 
                 console.log('Saving to:', apiUrl);
 
+                // TEST: Try to hit the test endpoint first
+                try {
+                    const testUrl = apiUrl.replace('save-users.php', 'test.php');
+                    console.log('Testing connection to:', testUrl);
+                    const testResp = await fetch(testUrl);
+                    const testText = await testResp.text();
+                    console.log('Test response:', testText);
+                    // alert('Test connection successful: ' + testText); // Optional: Uncomment to verify success
+                } catch (e) {
+                    console.error('Test connection failed:', e);
+                    alert('Test-Verbindung fehlgeschlagen: ' + e.message);
+                }
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {

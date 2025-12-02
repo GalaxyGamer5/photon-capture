@@ -10,25 +10,13 @@ function jsonResponse($data, $status = 200) {
 }
 
 // CORS Headers
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowed_origins = [
-    'https://gallery.photon-capture.de',
-    'https://www.gallery.photon-capture.de',
-    'http://localhost:3000', // For local testing
-    'http://127.0.0.1:3000'
-];
-
-if (in_array($origin, $allowed_origins) || empty($origin)) {
-    header("Access-Control-Allow-Origin: $origin");
-} else {
-    header("Access-Control-Allow-Origin: *"); // Fallback
-}
-
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
 // Handle Preflight Request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit(0);
 }
 
