@@ -319,17 +319,34 @@
 
                 console.log('Saving to:', apiUrl);
 
-                // TEST: Try to hit the test endpoint first
+                // TEST 1: Check if PHP works locally on the subdomain
+                try {
+                    console.log('Testing local PHP execution...');
+                    const localTestResp = await fetch('test_php.php');
+                    const localTestText = await localTestResp.text();
+                    console.log('Local PHP response:', localTestText);
+                    // If this works, we should use local PHP!
+                    if (localTestText.includes('PHP works')) {
+                        alert('Info: PHP funktioniert auf der Gallery-Domain! Wir können das Script hierhin verschieben.');
+                    }
+                } catch (e) {
+                    console.error('Local PHP test failed:', e);
+                }
+
+                // TEST 2: Check CORS connection to main domain
                 try {
                     const testUrl = apiUrl.replace('save-users.php', 'test.php');
-                    console.log('Testing connection to:', testUrl);
+                    console.log('Testing CORS connection to:', testUrl);
                     const testResp = await fetch(testUrl);
                     const testText = await testResp.text();
-                    console.log('Test response:', testText);
-                    // alert('Test connection successful: ' + testText); // Optional: Uncomment to verify success
+                    console.log('CORS Test response:', testText);
+
+                    if (!testResp.ok) {
+                        throw new Error(`HTTP ${testResp.status}`);
+                    }
                 } catch (e) {
-                    console.error('Test connection failed:', e);
-                    alert('Test-Verbindung fehlgeschlagen: ' + e.message);
+                    console.error('CORS connection failed:', e);
+                    alert('Verbindungstest fehlgeschlagen: ' + e.message + '\nURL: ' + apiUrl);
                 }
 
                 const response = await fetch(apiUrl, {
