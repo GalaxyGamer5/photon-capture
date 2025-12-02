@@ -30,10 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Get POST data
+// We use file_get_contents('php://input') which works for text/plain too
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
+if (!$data && !empty($_POST['users'])) {
+    // Fallback for form-data if needed
+    $data = ['users' => $_POST['users']];
+}
+
 if (!isset($data['users']) || !is_array($data['users'])) {
+    // Log the raw input for debugging
+    error_log("Invalid data received: " . substr($input, 0, 100));
     jsonResponse(['error' => 'Invalid data format'], 400);
 }
 
