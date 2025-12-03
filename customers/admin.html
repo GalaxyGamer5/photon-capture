@@ -306,8 +306,8 @@
             btn.disabled = true;
 
             try {
-                // Use main domain API
-                const apiUrl = 'https://photon-capture.de/payment/api/save-users.php';
+                // Use root-relative path (avoids SSL certificate issues)
+                const apiUrl = '/payment/api/save-users.php';
                 console.log('Saving to:', apiUrl);
 
                 // TEST: Check if PHP works on the main domain (using create-order.php as baseline)
@@ -372,7 +372,24 @@
 
             } catch (error) {
                 console.error('Error saving config:', error);
-                alert('Fehler beim Speichern: ' + error.message);
+
+                // Fallback to manual download
+                if (confirm('Automatisches Speichern fehlgeschlagen (' + error.message + ').\n\nMöchtest du die Datei stattdessen herunterladen und manuell hochladen?')) {
+                    const data = { users };
+                    const jsonStr = JSON.stringify(data, null, 2);
+                    const jsContent = `window.usersDatabase = ${jsonStr};`;
+
+                    const dataBlob = new Blob([jsContent], { type: 'application/javascript' });
+                    const url = URL.createObjectURL(dataBlob);
+
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'users.js';
+                    link.click();
+
+                    URL.revokeObjectURL(url);
+                    alert('Datei heruntergeladen. Bitte lade sie manuell in customers/data/ hoch.');
+                }
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
