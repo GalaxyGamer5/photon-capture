@@ -13,6 +13,7 @@ function requireAuth() {
 
 // Handle GET request (Read data - Public)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    ensureDataDirectory();
     if (file_exists(DATA_FILE)) {
         $data = file_get_contents(DATA_FILE);
         header('Content-Type: application/json');
