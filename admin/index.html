@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #aaa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .card-desc {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <p style="color: #888;">Verwalte alle Aspekte deiner Website an einem Ort</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <a href="calendar.html" class="dashboard-card">
+                <div class="card-icon">📅</div>
+                <div class="card-title">Kalender</div>
+                <div class="card-desc">Verwalte Verfügbarkeiten und Termine</div>
+            </a>
+
+            <a href="orders.html" class="dashboard-card">
+                <div class="card-icon">💳</div>
+                <div class="card-title">Bestellungen</div>
+                <div class="card-desc">Verwalte Buchungen und Zahlungen</div>
+            </a>
+
+            <a href="users.html" class="dashboard-card">
+                <div class="card-icon">👥</div>
+                <div class="card-title">Kunden</div>
+                <div class="card-desc">Erstelle und verwalte Kundenzugänge</div>
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 4rem;">
+            <a href="../index.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Zurück zur
+                Website</a>
+        </div>
+    </div>
+</body>
+
+</html>

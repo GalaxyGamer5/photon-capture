@@ -75,7 +75,7 @@ const AdminAuth = {
 
     logout() {
         sessionStorage.removeItem('photon_payment_admin_auth');
-        window.location.href = 'admin.html';
+        window.location.href = 'orders.html';
     },
 
     requireAuth() {
