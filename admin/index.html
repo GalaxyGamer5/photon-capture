@@ -75,37 +75,69 @@
 </head>
 
 <body>
-    <div class="dashboard-container">
-        <div class="dashboard-header">
-            <h1>Admin Dashboard</h1>
-            <p style="color: #888;">Verwalte alle Aspekte deiner Website an einem Ort</p>
-        </div>
+    <!-- Auth Check -->
+    <script>
+        fetch('api/auth.php')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.loggedIn) {
+                    window.location.href = 'login.html';
+                } else {
+                    document.getElementById('dashboard-content').style.display = 'block';
+                }
+            })
+            .catch(() => window.location.href = 'login.html');
+    </script>
 
-        <div class="dashboard-grid">
-            <a href="calendar.html" class="dashboard-card">
-                <div class="card-icon">📅</div>
-                <div class="card-title">Kalender</div>
-                <div class="card-desc">Verwalte Verfügbarkeiten und Termine</div>
-            </a>
+    <div id="dashboard-content" style="display: none;">
+        <nav class="admin-nav">
+            <div class="nav-container">
+                <div class="logo">Photon<span>-Capture</span> <span
+                        style="font-size: 0.8rem; color: var(--text-secondary);">Admin</span></div>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link active">Dashboard</a>
+                    <a href="calendar.html" class="nav-link">Kalender</a>
+                    <a href="orders.html" class="nav-link">Bestellungen</a>
+                    <a href="users.html" class="nav-link">Kunden</a>
+                </div>
+                <button id="logout-btn" class="btn-logout">Abmelden</button>
+            </div>
+        </nav>
 
-            <a href="orders.html" class="dashboard-card">
-                <div class="card-icon">💳</div>
-                <div class="card-title">Bestellungen</div>
-                <div class="card-desc">Verwalte Buchungen und Zahlungen</div>
-            </a>
+        <div class="dashboard-container">
+            <header style="text-align: center; margin-bottom: 4rem;">
+                <h1>Admin Dashboard</h1>
+                <p>Willkommen zurück. Was möchtest du heute tun?</p>
+            </header>
 
-            <a href="users.html" class="dashboard-card">
-                <div class="card-icon">👥</div>
-                <div class="card-title">Kunden</div>
-                <div class="card-desc">Erstelle und verwalte Kundenzugänge</div>
-            </a>
-        </div>
+            <div class="cards-grid">
+                <a href="calendar.html" class="dashboard-card">
+                    <div class="card-icon">📅</div>
+                    <h2>Kalender</h2>
+                    <p>Verwalte verfügbare Termine und blockiere Tage.</p>
+                </a>
 
-        <div style="text-align: center; margin-top: 4rem;">
-            <a href="../index.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Zurück zur
-                Website</a>
+                <a href="orders.html" class="dashboard-card">
+                    <div class="card-icon">💳</div>
+                    <h2>Bestellungen</h2>
+                    <p>Überprüfe Zahlungen und verwalte Buchungen.</p>
+                </a>
+
+                <a href="users.html" class="dashboard-card">
+                    <div class="card-icon">👥</div>
+                    <h2>Kunden</h2>
+                    <p>Erstelle Zugänge für die Kundengalerie.</p>
+                </a>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await fetch('api/auth.php?action=logout');
+            window.location.href = 'login.html';
+        });
+    </script>
 </body>
 
 </html>

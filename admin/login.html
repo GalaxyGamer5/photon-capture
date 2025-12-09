@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>Admin Login</h1>
+            <p>Bitte melde dich an, um fortzufahren.</p>
+
+            <div id="login-error" class="error-message">Falsches Passwort</div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Passwort</label>
+                    <input type="password" id="password" class="form-control" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary">Anmelden</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        fetch('api/auth.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.loggedIn) {
+                    window.location.href = 'index.html';
+                }
+            });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('api/auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Set session storage for legacy checks (just in case)
+                    sessionStorage.setItem('photon_admin_portal_auth', 'true');
+                    sessionStorage.setItem('photon_payment_admin_auth', 'true');
+
+                    window.location.href = 'index.html';
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                document.getElementById('login-error').textContent = 'Serverfehler';
+                document.getElementById('login-error').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -733,6 +733,50 @@ section {
     flex-shrink: 0;
 }
 
+/* Admin Navigation */
+.admin-nav {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: var(--header-height);
+}
+
+.nav-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all var(--transition-speed) ease;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.active {
+    color: var(--accent-color);
+    background: rgba(255, 51, 102, 0.1);
+}
+
 @media (max-width: 768px) {
     .about-content {
         display: flex;
@@ -2083,7 +2127,9 @@ body.loading {
     border-color: var(--text-primary);
     color: var(--text-primary);
     background: var(--bg-secondary);
-}/* ========================================
+}
+
+/* ========================================
    CALENDAR PAGE STYLES
    ======================================== */
 

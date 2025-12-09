@@ -96,49 +96,48 @@
 </head>
 
 <body>
-    <!-- Login Screen -->
-    <div id="login-screen" class="auth-container">
-        <div class="auth-box">
-            <h1>Admin Login</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 2rem;">Kunden-Verwaltung</p>
-
-            <div id="login-error" class="error-message">Falsches Passwort</div>
-
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="admin-password">Passwort</label>
-                    <input type="password" id="admin-password" class="form-control" required autofocus>
-                </div>
-                <button type="submit" class="btn">Anmelden</button>
-            </form>
-        </div>
-    </div>
+    <!-- Auth Check -->
+    <script>
+        fetch('api/auth.php')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.loggedIn) {
+                    window.location.href = 'login.html';
+                } else {
+                    document.getElementById('admin-dashboard').style.display = 'block';
+                    loadUsers();
+                }
+            })
+            .catch(() => window.location.href = 'login.html');
+    </script>
 
     <!-- Admin Dashboard -->
     <div id="admin-dashboard" style="display: none;">
-        <div class="admin-container">
-            <div class="admin-header">
-                <div>
-                    <h1>Kunden-Verwaltung</h1>
-                    <p style="color: var(--text-secondary);">Erstelle und verwalte Kundenzugänge</p>
+        <nav class="admin-nav">
+            <div class="nav-container">
+                <div class="logo">Photon<span>-Capture</span> <span
+                        style="font-size: 0.8rem; color: var(--text-secondary);">Admin</span></div>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="calendar.html" class="nav-link">Kalender</a>
+                    <a href="orders.html" class="nav-link">Bestellungen</a>
+                    <a href="users.html" class="nav-link active">Kunden</a>
                 </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button id="save-data-btn" class="btn" style="background: var(--success-color);">💾 Konfiguration
-                        Speichern</button>
-                    <button id="logout-btn" class="btn-logout">Abmelden</button>
-                </div>
+                <button id="logout-btn" class="btn-logout">Abmelden</button>
+            </div>
+        </nav>
+
+        <main>
+            <div class="page-header">
+                <h1>Kunden-Verwaltung</h1>
+                <p>Erstelle und verwalte Zugänge für die Kundengalerie</p>
             </div>
 
-            <div class="warning-box"
-                style="background: rgba(16, 185, 129, 0.1); border-color: var(--success-color); color: var(--success-color);">
-                <strong>Info:</strong> Änderungen werden nun direkt auf dem Server gespeichert.
-                Klicke auf "Konfiguration Speichern", um die Änderungen zu übernehmen.
-            </div>
-
-            <div class="card">
-                <h2>Neuen Kunden anlegen</h2>
-                <form id="create-user-form">
-                    <div class="form-row">
+            <div class="admin-grid">
+                <!-- Create User Form -->
+                <div class="admin-card">
+                    <h2>Neuen Kunden anlegen</h2>
+                    <form id="create-user-form">
                         <div class="form-group">
                             <label for="new-name">Name des Kunden</label>
                             <input type="text" id="new-name" class="form-control" required
@@ -146,43 +145,42 @@
                         </div>
                         <div class="form-group">
                             <label for="new-username">Benutzername</label>
-                            <input type="text" id="new-username" class="form-control" required placeholder="z.B. maxm">
+                            <input type="text" id="new-username" class="form-control" required
+                                placeholder="z.B. max2024">
                         </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group">
                             <label for="new-password">Passwort</label>
                             <input type="text" id="new-password" class="form-control" required
-                                placeholder="Passwort für den Kunden">
+                                placeholder="Wird automatisch gehasht">
                         </div>
                         <div class="form-group">
                             <label for="new-folder">Ordner-Name</label>
                             <input type="text" id="new-folder" class="form-control" required
-                                placeholder="z.B. max_mustermann_2025">
-                            <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Erstelle
-                                diesen Ordner unter <code>customers/assets/</code></small>
+                                placeholder="z.B. max_mustermann">
+                            <small style="color: var(--text-secondary);">Muss exakt mit dem Ordnernamen auf dem Server
+                                übereinstimmen.</small>
                         </div>
+                        <div class="form-group">
+                            <label for="new-count">Anzahl Bilder</label>
+                            <input type="number" id="new-count" class="form-control" required value="0">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Kunden erstellen</button>
+                    </form>
+                </div>
+
+                <!-- User List -->
+                <div class="admin-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2>Bestehende Kunden</h2>
+                        <button id="save-data-btn" class="btn btn-success">Konfiguration Speichern</button>
                     </div>
-
-                    <div class="form-group">
-                        <label for="new-count">Anzahl der Bilder</label>
-                        <input type="number" id="new-count" class="form-control" required min="1" value="10">
-                        <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Bilder müssen
-                            1.jpg, 2.jpg, etc. heißen</small>
+                    <div class="user-list" id="user-list">
+                        <!-- Generated by JS -->
                     </div>
-
-                    <button type="submit" class="btn">Kunden erstellen</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h2>Bestehende Kunden</h2>
-                <div id="user-list" class="user-list">
-                    <!-- Users will be loaded here -->
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- users.js removed -->
@@ -191,33 +189,90 @@
         // State
         let users = [];
 
-        // Auth Check
-        function checkAuth() {
-            if (sessionStorage.getItem('photon_admin_portal_auth') === 'true') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-dashboard').style.display = 'block';
-                loadUsers();
-            } else {
-                document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('admin-dashboard').style.display = 'none';
-            }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                await fetch('api/auth.php?action=logout');
+                window.location.href = 'login.html';
+            });
+
+            // Create User
+            document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const name = document.getElementById('new-name').value;
+                const username = document.getElementById('new-username').value;
+                const password = document.getElementById('new-password').value;
+                const folder = document.getElementById('new-folder').value;
+                const count = parseInt(document.getElementById('new-count').value);
+
+                // Check if username exists
+                if (users.find(u => u.username === username)) {
+                    alert('Benutzername existiert bereits!');
+                    return;
+                }
+
+                const passwordHash = await sha1(password);
+
+                const newUser = {
+                    id: Date.now().toString(36),
+                    username,
+                    passwordHash,
+                    name,
+                    folder,
+                    imageCount: count,
+                    created: new Date().toISOString()
+                };
+
+                users.push(newUser);
+                renderUsers();
+                e.target.reset();
+                alert('Benutzer erstellt! Vergiss nicht, die Konfiguration zu speichern.');
+            });
+
+            // Save Data (Send to Server)
+            document.getElementById('save-data-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('save-data-btn');
+                const originalText = btn.innerText;
+                btn.innerText = 'Speichere...';
+                btn.disabled = true;
+
+                try {
+                    // Use local API
+                    const apiUrl = 'api/users.php';
+                    console.log('Saving to:', apiUrl);
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ users })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Erfolgreich gespeichert!');
+                    } else {
+                        throw new Error(result.error || 'Unbekannter Fehler');
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    alert('Fehler beim Speichern: ' + error.message);
+                } finally {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            });
         }
-
-        // Login
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const password = document.getElementById('admin-password').value;
-            if (AdminAuth.login(password)) {
-                checkAuth();
-            } else {
-                document.getElementById('login-error').style.display = 'block';
-            }
-        });
-
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('photon_admin_portal_auth');
-            checkAuth();
-        });
 
         // Load Users
         async function loadUsers() {
@@ -237,73 +292,43 @@
             }
         }
 
-        // ... (Render Users and Create User skipped, they are fine) ...
+        // Render Users
+        function renderUsers() {
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
 
-        // Save Data (Send to Server)
-        document.getElementById('save-data-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('save-data-btn');
-            const originalText = btn.innerText;
-            btn.innerText = 'Speichere...';
-            btn.disabled = true;
+            users.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'user-item';
+                item.innerHTML = `
+                    <div class="user-info">
+                        <h3>${user.name} (${user.username})</h3>
+                        <div class="user-meta">
+                            Ordner: ${user.folder} | Bilder: ${user.imageCount} | Erstellt: ${new Date(user.created).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteUser('${user.id}')">Löschen</button>
+                `;
+                list.appendChild(item);
+            });
+        }
 
-            try {
-                // Use local API
-                const apiUrl = 'api/users.php';
-                console.log('Saving to:', apiUrl);
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ users })
-                });
-
-                const text = await response.text();
-
-                if (!response.ok) {
-                    throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
-                }
-
-                try {
-                    const result = JSON.parse(text);
-                    if (result.success) {
-                        alert('Konfiguration erfolgreich gespeichert!');
-                    } else {
-                        throw new Error(result.error || 'Unbekannter Fehler');
-                    }
-                } catch (e) {
-                    console.error('Raw response:', text);
-                    throw new Error(`Ungültige Server-Antwort: ${text.substring(0, 100)}...`);
-                }
-
-            } catch (error) {
-                console.error('Error saving config:', error);
-
-                // Fallback to manual download
-                if (confirm('Automatisches Speichern fehlgeschlagen (' + error.message + ').\n\nMöchtest du die Datei stattdessen herunterladen und manuell hochladen?')) {
-                    const data = { users };
-                    const jsonStr = JSON.stringify(data, null, 2);
-
-                    const dataBlob = new Blob([jsonStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(dataBlob);
-
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'users.json';
-                    link.click();
-
-                    URL.revokeObjectURL(url);
-                    alert('Datei heruntergeladen. Bitte lade sie manuell in customers/data/ hoch.');
-                }
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
+        // Delete User
+        window.deleteUser = (id) => {
+            if (confirm('Benutzer wirklich löschen?')) {
+                users = users.filter(u => u.id !== id);
+                renderUsers();
             }
-        });
+        };
 
-        // Init
-        checkAuth();
+        // SHA-1 Helper (Client-side hashing for now)
+        async function sha1(str) {
+            const buffer = new TextEncoder().encode(str);
+            const hash = await crypto.subtle.digest('SHA-1', buffer);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
     </script>
 </body>
 
