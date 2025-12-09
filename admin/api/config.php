@@ -2,6 +2,10 @@
 // admin/api/config.php
 
 // Constants
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 define('DATA_FILE', __DIR__ . '/../data/availability.json');
 define('ADMIN_PASSWORD_HASH', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); // Hash for 'password' (change this in production!)
 // Note: For this demo, I'm using a simple hash. In production, use password_hash('your_password', PASSWORD_DEFAULT) to generate.
