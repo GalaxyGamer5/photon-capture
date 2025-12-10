@@ -45,4 +45,4 @@ try {
     error_log("Auth Fatal Error: " . $e->getMessage());
     jsonResponse(['success' => false, 'message' => 'Server fatal error'], 500);
 }
-?>
+
