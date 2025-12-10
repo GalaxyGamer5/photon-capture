@@ -156,16 +156,23 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(usersData)
                 });
-                const result = await response.json();
+
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server Return Invalid JSON: ' + text.substring(0, 100)); // Show start of error
+                }
+
                 if (result.success) {
-                    // Silent success or toast
                     console.log("Users saved successfully");
                 } else {
-                    alert("Fehler beim Speichern!");
+                    alert("Server Error: " + (result.message || "Unknown Error"));
                 }
             } catch (e) {
                 console.error("Save error", e);
-                alert("Verbindungsfehler");
+                alert("Fehler: " + e.message);
             }
         }
 

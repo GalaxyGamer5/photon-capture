@@ -221,7 +221,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(calendarData)
                 });
-                const result = await response.json();
+
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server Return Invalid JSON: ' + text.substring(0, 100));
+                }
 
                 if (result.success) {
                     alert('Änderungen erfolgreich gespeichert!');
