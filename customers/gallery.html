@@ -20,6 +20,9 @@
                 <div class="nav-actions">
                     <span id="user-greeting" style="margin-right: 1rem; color: var(--text-secondary);">Willkommen, <span
                             id="user-name">Kunde</span></span>
+                    <button id="change-pw-btn" class="btn-logout"
+                        style="margin-right: 0.5rem; background: rgba(0, 242, 255, 0.1); color: var(--text-primary); border: 1px solid rgba(0, 242, 255, 0.3);">Passwort
+                        ändern</button>
                     <button id="select-mode-btn" class="cta-button"
                         style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">Bilder auswählen</button>
                     <button id="favorites-filter-btn" class="btn-logout" style="margin-left: 0.5rem;">❤️
@@ -29,6 +32,42 @@
             </nav>
         </div>
     </header>
+
+    <!-- Password Change Modal -->
+    <div id="pw-modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: var(--bg-secondary); padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Passwort ändern</h3>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Aktuelles
+                    Passwort</label>
+                <input type="password" id="old-pw"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: white;">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Neues
+                    Passwort</label>
+                <input type="password" id="new-pw"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: white;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Bestätigen</label>
+                <input type="password" id="confirm-pw"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: white;">
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button id="cancel-pw-btn"
+                    style="flex: 1; padding: 0.8rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; cursor: pointer;">Abbrechen</button>
+                <button id="save-pw-btn"
+                    style="flex: 1; padding: 0.8rem; background: var(--accent-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Speichern</button>
+            </div>
+        </div>
+    </div>
 
     <div class="container" style="padding-top: 100px;">
         <div class="gallery-title" style="text-align: center; margin-bottom: 2rem;">
@@ -380,6 +419,81 @@
                 alert('Fehler beim Erstellen der ZIP-Datei.');
                 downloadBtn.textContent = originalText;
                 downloadBtn.disabled = false;
+            }
+        });
+
+        // --- Password Change Logic ---
+        const pwModal = document.getElementById('pw-modal');
+        const changePwBtn = document.getElementById('change-pw-btn');
+        const cancelPwBtn = document.getElementById('cancel-pw-btn');
+        const savePwBtn = document.getElementById('save-pw-btn');
+
+        changePwBtn.addEventListener('click', () => {
+            pwModal.style.display = 'flex';
+        });
+
+        cancelPwBtn.addEventListener('click', () => {
+            pwModal.style.display = 'none';
+        });
+
+        savePwBtn.addEventListener('click', async () => {
+            const oldPw = document.getElementById('old-pw').value;
+            const newPw = document.getElementById('new-pw').value;
+            const confirmPw = document.getElementById('confirm-pw').value;
+
+            if (!oldPw || !newPw || !confirmPw) {
+                alert("Bitte alle Felder ausfüllen.");
+                return;
+            }
+
+            if (newPw !== confirmPw) {
+                alert("Die neuen Passwörter stimmen nicht überein.");
+                return;
+            }
+
+            // Client-side hashing (SHA-1 to match existing system)
+            async function sha1(message) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            savePwBtn.disabled = true;
+            savePwBtn.textContent = "Speichert...";
+
+            try {
+                const oldHash = await sha1(oldPw);
+                const newHash = await sha1(newPw);
+
+                const response = await fetch('api/change_password.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        oldPasswordHash: oldHash,
+                        newPasswordHash: newHash
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("Passwort erfolgreich geändert!");
+                    pwModal.style.display = 'none';
+                    // Clear fields
+                    document.getElementById('old-pw').value = '';
+                    document.getElementById('new-pw').value = '';
+                    document.getElementById('confirm-pw').value = '';
+                } else {
+                    alert("Fehler: " + (result.message || "Unbekannter Fehler"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Verbindungsfehler beim Speichern.");
+            } finally {
+                savePwBtn.disabled = false;
+                savePwBtn.textContent = "Speichern";
             }
         });
     </script>

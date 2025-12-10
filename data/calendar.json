@@ -1,0 +1,12 @@
+{
+    "2025-11-15": { "status": "booked" },
+    "2025-11-18": { "status": "limited" },
+    "2025-11-20": { "status": "reserved" },
+    "2025-11-25": { "status": "available" },
+    "2025-11-26": { "status": "available" },
+    "2025-11-28": { "status": "limited" },
+    "2025-12-05": { "status": "available" },
+    "2025-12-10": { "status": "limited" },
+    "2025-12-15": { "status": "booked" },
+    "2025-12-20": { "status": "available" }
+}

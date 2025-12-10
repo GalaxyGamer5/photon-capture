@@ -4,331 +4,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kunden-Admin | Photon Capture</title>
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <title>Galerie Benutzer | Photon Admin</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .admin-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .card h2 {
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            color: var(--accent-color);
-        }
-
         .user-list {
             display: grid;
             gap: 1rem;
+            margin-top: 2rem;
         }
 
-        .user-item {
-            background: var(--bg-secondary);
-            padding: 1rem;
+        .user-card {
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid var(--glass-border);
-        }
-
-        .user-info h3 {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .user-meta {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .btn-delete {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .btn-delete:hover {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .warning-box {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid var(--warning-color);
-            color: var(--warning-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
         }
     </style>
 </head>
 
 <body>
-    <!-- Auth Check -->
-    <script>
-        fetch('api/auth.php')
-            .then(res => res.json())
-            .then(data => {
-                if (!data.loggedIn) {
-                    window.location.href = 'login.html';
-                } else {
-                    document.getElementById('admin-dashboard').style.display = 'block';
-                    loadUsers();
-                }
-            })
-            .catch(() => window.location.href = 'login.html');
-    </script>
-
-    <!-- Admin Dashboard -->
-    <div id="admin-dashboard" style="display: none;">
-        <nav class="admin-nav">
-            <div class="nav-container">
-                <div class="logo">Photon<span>-Capture</span> <span
-                        style="font-size: 0.8rem; color: var(--text-secondary);">Admin</span></div>
-                <div class="nav-links">
-                    <a href="index.html" class="nav-link">Dashboard</a>
-                    <a href="calendar.html" class="nav-link">Kalender</a>
-                    <a href="orders.html" class="nav-link">Bestellungen</a>
-                    <a href="users.html" class="nav-link active">Kunden</a>
-                </div>
-                <button id="logout-btn" class="btn-logout">Abmelden</button>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Galerie Benutzer</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
+                        Dashboard</a></p>
             </div>
-        </nav>
+            <button onclick="showAddUser()" class="btn" style="width: auto;">+ Neuer Benutzer</button>
+        </header>
 
-        <main>
-            <div class="page-header">
-                <h1>Kunden-Verwaltung</h1>
-                <p>Erstelle und verwalte Zugänge für die Kundengalerie</p>
+        <div class="user-list" id="userList">
+            <!-- JS Generated -->
+        </div>
+
+        <!-- Simple Add User Modal (Hardcoded for simplicity in this file) -->
+        <div id="addUserForm"
+            style="display:none; background: var(--surface-dark); padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+            <h3>Neuen Benutzer anlegen</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newUserName" class="form-control">
             </div>
-
-            <div class="admin-grid">
-                <!-- Create User Form -->
-                <div class="admin-card">
-                    <h2>Neuen Kunden anlegen</h2>
-                    <form id="create-user-form">
-                        <div class="form-group">
-                            <label for="new-name">Name des Kunden</label>
-                            <input type="text" id="new-name" class="form-control" required
-                                placeholder="z.B. Max Mustermann">
-                        </div>
-                        <div class="form-group">
-                            <label for="new-username">Benutzername</label>
-                            <input type="text" id="new-username" class="form-control" required
-                                placeholder="z.B. max2024">
-                        </div>
-                        <div class="form-group">
-                            <label for="new-password">Passwort</label>
-                            <input type="text" id="new-password" class="form-control" required
-                                placeholder="Wird automatisch gehasht">
-                        </div>
-                        <div class="form-group">
-                            <label for="new-folder">Ordner-Name</label>
-                            <input type="text" id="new-folder" class="form-control" required
-                                placeholder="z.B. max_mustermann">
-                            <small style="color: var(--text-secondary);">Muss exakt mit dem Ordnernamen auf dem Server
-                                übereinstimmen.</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="new-count">Anzahl Bilder</label>
-                            <input type="number" id="new-count" class="form-control" required value="0">
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Kunden erstellen</button>
-                    </form>
-                </div>
-
-                <!-- User List -->
-                <div class="admin-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h2>Bestehende Kunden</h2>
-                        <button id="save-data-btn" class="btn btn-success">Konfiguration Speichern</button>
-                    </div>
-                    <div class="user-list" id="user-list">
-                        <!-- Generated by JS -->
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="newUserUsername" class="form-control">
             </div>
-        </main>
+            <div class="form-group">
+                <label>Passwort</label>
+                <input type="text" id="newUserPassword" class="form-control" placeholder="Passwort eingeben">
+                <small style="color: var(--text-secondary)">Wird automatisch verschlüsselt (SHA1)</small>
+            </div>
+            <button onclick="addUser()" class="btn">Hinzufügen</button>
+            <button onclick="document.getElementById('addUserForm').style.display='none'" class="btn"
+                style="background: transparent; border: 1px solid var(--border); margin-top: 0.5rem;">Abbrechen</button>
+        </div>
     </div>
 
-    <!-- users.js removed -->
-    <script src="js/customers-main.js"></script>
     <script>
-        // State
-        let users = [];
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-        });
+        let usersData = { users: [] };
 
-        function setupEventListeners() {
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                await fetch('api/auth.php?action=logout');
-                window.location.href = 'login.html';
-            });
-
-            // Create User
-            document.getElementById('create-user-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const name = document.getElementById('new-name').value;
-                const username = document.getElementById('new-username').value;
-                const password = document.getElementById('new-password').value;
-                const folder = document.getElementById('new-folder').value;
-                const count = parseInt(document.getElementById('new-count').value);
-
-                // Check if username exists
-                if (users.find(u => u.username === username)) {
-                    alert('Benutzername existiert bereits!');
-                    return;
-                }
-
-                const passwordHash = await sha1(password);
-
-                const newUser = {
-                    id: Date.now().toString(36),
-                    username,
-                    passwordHash,
-                    name,
-                    folder,
-                    imageCount: count,
-                    created: new Date().toISOString()
-                };
-
-                users.push(newUser);
-                renderUsers();
-                e.target.reset();
-                alert('Benutzer erstellt! Vergiss nicht, die Konfiguration zu speichern.');
-            });
-
-            // Save Data (Send to Server)
-            document.getElementById('save-data-btn').addEventListener('click', async () => {
-                const btn = document.getElementById('save-data-btn');
-                const originalText = btn.innerText;
-                btn.innerText = 'Speichere...';
-                btn.disabled = true;
-
-                try {
-                    // Use local API
-                    const apiUrl = 'api/users.php';
-                    console.log('Saving to:', apiUrl);
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ users })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.success) {
-                        alert('Erfolgreich gespeichert!');
-                    } else {
-                        throw new Error(result.error || 'Unbekannter Fehler');
-                    }
-                } catch (error) {
-                    console.error('Save error:', error);
-                    alert('Fehler beim Speichern: ' + error.message);
-                } finally {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }
-            });
+        // Simple SHA-1 function (same as in main.js)
+        async function sha1(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Load Users
         async function loadUsers() {
             try {
-                const response = await fetch('api/users.php');
-                if (!response.ok) {
-                    throw new Error('Failed to load users');
-                }
-                const data = await response.json();
-                users = data.users || [];
+                const response = await fetch('../customers/data/users.js');
+                const text = await response.text();
+                // Extract JSON part from "window.usersDatabase = { ... };"
+                const jsonStr = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/)[1];
+                usersData = JSON.parse(jsonStr);
                 renderUsers();
-            } catch (error) {
-                console.error('Error loading users:', error);
-                // If file doesn't exist yet (first run), users is empty
-                users = [];
-                renderUsers();
+            } catch (e) {
+                console.error("Error loading users", e);
             }
         }
 
-        // Render Users
         function renderUsers() {
-            const list = document.getElementById('user-list');
-            list.innerHTML = '';
-
-            users.forEach(user => {
-                const item = document.createElement('div');
-                item.className = 'user-item';
-                item.innerHTML = `
-                    <div class="user-info">
-                        <h3>${user.name} (${user.username})</h3>
-                        <div class="user-meta">
-                            Ordner: ${user.folder} | Bilder: ${user.imageCount} | Erstellt: ${new Date(user.created).toLocaleDateString()}
+            const container = document.getElementById('userList');
+            container.innerHTML = usersData.users.map((user, index) => `
+                <div class="user-card">
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">${user.name}</h3>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Username: ${user.username} <br>
+                            Folder: ${user.folder}
                         </div>
                     </div>
-                    <button class="btn-delete" onclick="deleteUser('${user.id}')">Löschen</button>
-                `;
-                list.appendChild(item);
-            });
+                    <div style="text-align: right;">
+                        <span style="display: block; margin-bottom: 0.5rem; color: var(--accent);">${user.imageCount} Bilder</span>
+                        <button onclick="deleteUser(${index})" class="btn" style="background: rgba(255, 77, 77, 0.2); color: var(--danger); font-size: 0.8rem; padding: 0.5rem;">Löschen</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Delete User
-        window.deleteUser = (id) => {
-            if (confirm('Benutzer wirklich löschen?')) {
-                users = users.filter(u => u.id !== id);
+        function showAddUser() {
+            document.getElementById('addUserForm').style.display = 'block';
+        }
+
+        async function addUser() {
+            const name = document.getElementById('newUserName').value;
+            const username = document.getElementById('newUserUsername').value;
+            const password = document.getElementById('newUserPassword').value;
+
+            if (name && username && password) {
+                const hash = await sha1(password);
+
+                usersData.users.push({
+                    id: Date.now().toString(),
+                    username: username,
+                    passwordHash: hash,
+                    name: name,
+                    folder: username + '-gallery',
+                    imageCount: 0
+                });
                 renderUsers();
-            }
-        };
+                document.getElementById('addUserForm').style.display = 'none';
+                saveUsers();
 
-        // SHA-1 Helper (Client-side hashing for now)
-        async function sha1(str) {
-            const buffer = new TextEncoder().encode(str);
-            const hash = await crypto.subtle.digest('SHA-1', buffer);
-            return Array.from(new Uint8Array(hash))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+                // Reset form
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserUsername').value = '';
+                document.getElementById('newUserPassword').value = '';
+            } else {
+                alert("Bitte alle Felder ausfüllen");
+            }
         }
+
+        function deleteUser(index) {
+            if (confirm('Benutzer wirklich löschen?')) {
+                usersData.users.splice(index, 1);
+                renderUsers();
+                saveUsers();
+            }
+        }
+
+        async function saveUsers() {
+            try {
+                const response = await fetch('api/save_users.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usersData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    // Silent success or toast
+                    console.log("Users saved successfully");
+                } else {
+                    alert("Fehler beim Speichern!");
+                }
+            } catch (e) {
+                console.error("Save error", e);
+                alert("Verbindungsfehler");
+            }
+        }
+
+        loadUsers();
     </script>
 </body>
 

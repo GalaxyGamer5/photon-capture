@@ -4,138 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Photon Capture</title>
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <title>Admin Login | Photon Capture</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-
-        .dashboard-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .dashboard-header h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(to right, #fff, #aaa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .dashboard-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.05);
-            border-color: var(--accent-color);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        .card-desc {
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- Auth Check -->
-    <script>
-        fetch('api/auth.php')
-            .then(res => res.json())
-            .then(data => {
-                if (!data.loggedIn) {
-                    window.location.href = 'login.html';
-                } else {
-                    document.getElementById('dashboard-content').style.display = 'block';
-                }
-            })
-            .catch(() => window.location.href = 'login.html');
-    </script>
+    <div class="auth-container">
+        <div class="auth-box">
+            <a href="#" class="logo">Photon<span>-Admin</span></a>
 
-    <div id="dashboard-content" style="display: none;">
-        <nav class="admin-nav">
-            <div class="nav-container">
-                <div class="logo">Photon<span>-Capture</span> <span
-                        style="font-size: 0.8rem; color: var(--text-secondary);">Admin</span></div>
-                <div class="nav-links">
-                    <a href="index.html" class="nav-link active">Dashboard</a>
-                    <a href="calendar.html" class="nav-link">Kalender</a>
-                    <a href="orders.html" class="nav-link">Bestellungen</a>
-                    <a href="users.html" class="nav-link">Kunden</a>
+            <div id="error-msg" class="error-message">
+                Zugriff verweigert
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Administrator Passwort</label>
+                    <input type="password" id="password" class="form-control" placeholder="Passwort eingeben" required
+                        autofocus>
                 </div>
-                <button id="logout-btn" class="btn-logout">Abmelden</button>
-            </div>
-        </nav>
-
-        <div class="dashboard-container">
-            <header style="text-align: center; margin-bottom: 4rem;">
-                <h1>Admin Dashboard</h1>
-                <p>Willkommen zurück. Was möchtest du heute tun?</p>
-            </header>
-
-            <div class="cards-grid">
-                <a href="calendar.html" class="dashboard-card">
-                    <div class="card-icon">📅</div>
-                    <h2>Kalender</h2>
-                    <p>Verwalte verfügbare Termine und blockiere Tage.</p>
-                </a>
-
-                <a href="orders.html" class="dashboard-card">
-                    <div class="card-icon">💳</div>
-                    <h2>Bestellungen</h2>
-                    <p>Überprüfe Zahlungen und verwalte Buchungen.</p>
-                </a>
-
-                <a href="users.html" class="dashboard-card">
-                    <div class="card-icon">👥</div>
-                    <h2>Kunden</h2>
-                    <p>Erstelle Zugänge für die Kundengalerie.</p>
-                </a>
-            </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
         </div>
     </div>
 
     <script>
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            await fetch('api/auth.php?action=logout');
-            window.location.href = 'login.html';
+        const form = document.getElementById('login-form');
+        const errorMsg = document.getElementById('error-msg');
+
+        // Check if already logged in
+        if (sessionStorage.getItem('photon_admin_auth') === 'true') {
+            window.location.href = 'dashboard.html';
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+
+            // Simple client-side check for this static setup
+            // In a real PHP environment, this would post to an API
+            if (password === 'photon2024') {
+                sessionStorage.setItem('photon_admin_auth', 'true');
+                window.location.href = 'dashboard.html';
+            } else {
+                errorMsg.style.display = 'block';
+                form.reset();
+            }
         });
     </script>
 </body>

@@ -12,23 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     selectedPackage = urlParams.get('package') || null;
 
-    // Mock availability data (replace with API call later)
-    const availabilityData = {
-        "2025-11-15": { status: "booked" },
-        "2025-11-18": { status: "limited" },
-        "2025-11-20": { status: "reserved" },
-        "2025-11-25": { status: "available" },
-        "2025-11-26": { status: "available" },
-        "2025-11-28": { status: "limited" },
-        "2025-12-05": { status: "available" },
-        "2025-12-10": { status: "limited" },
-        "2025-12-15": { status: "booked" },
-        "2025-12-20": { status: "available" }
-    };
+    // Calendar Data
+    let availabilityData = {};
+
+    // Fetch availability data
+    async function loadAvailabilityData() {
+        try {
+            const response = await fetch('data/calendar.json');
+            if (!response.ok) throw new Error('Network response was not ok');
+            availabilityData = await response.json();
+            renderCalendar(); // Re-render after data load
+        } catch (error) {
+            console.error('Error loading calendar data:', error);
+            // Fallback empty data is already set
+        }
+    }
 
     // Initialize calendar
     function initCalendar() {
-        renderCalendar();
+        loadAvailabilityData(); // Fetch real data
         setupEventListeners();
         updatePackageDisplay();
     }
