@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Diagnostics</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #111;
+            color: white;
+            padding: 2rem;
+        }
+
+        .card {
+            background: #222;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #333;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .success {
+            color: #00fa9a;
+        }
+
+        .error {
+            color: #ff4d4d;
+        }
+
+        .warning {
+            color: #ffd700;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>System Diagnosis</h1>
+
+    <div class="card">
+        <h2>1. Protocol Check</h2>
+        <p>Current Protocol: <span id="protocol-status">Checking...</span></p>
+    </div>
+
+    <div class="card">
+        <h2>2. PHP Server Check</h2>
+        <p>PHP Status: <span id="php-status">Checking...</span></p>
+        <p>PHP Version: <span id="php-version">-</span></p>
+    </div>
+
+    <div class="card">
+        <h2>3. File Permission Check</h2>
+        <p>Data File Writable: <span id="perm-status">Checking...</span></p>
+    </div>
+
+    <script>
+        // 1. Check Protocol
+        const protocol = window.location.protocol;
+        const protoEl = document.getElementById('protocol-status');
+        if (protocol === 'file:') {
+            protoEl.textContent = 'Failed (file:// detected)';
+            protoEl.className = 'status error';
+            alert("Warning: You are opening this file directly. PHP functionality will NOT work.");
+        } else {
+            protoEl.textContent = 'OK (' + protocol + ')';
+            protoEl.className = 'status success';
+        }
+
+        // 2 & 3. Check PHP
+        async function checkPHP() {
+            const phpEl = document.getElementById('php-status');
+            const verEl = document.getElementById('php-version');
+            const permEl = document.getElementById('perm-status');
+
+            try {
+                const response = await fetch('api/status.php');
+
+                // If we get the PHP code back as text, PHP is not running
+                const text = await response.text();
+                if (text.includes('<?php')) {
+                    throw new Error("Server returned PHP source code (PHP not active)");
+                }
+
+                // Try parsing JSON
+                const data = JSON.parse(text);
+
+                if (data.status === 'ok') {
+                    phpEl.textContent = 'Active';
+                    phpEl.className = 'status success';
+                    verEl.textContent = data.php_version;
+
+                    if (data.writable_data) {
+                        permEl.textContent = 'Writable';
+                        permEl.className = 'status success';
+                    } else {
+                        permEl.textContent = 'Not Writable (Check Permissions)';
+                        permEl.className = 'status error';
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                phpEl.textContent = 'Failed: ' + e.message;
+                phpEl.className = 'status error';
+                permEl.textContent = 'Unknown';
+            }
+        }
+
+        if (protocol !== 'file:') {
+            checkPHP();
+        }
+    </script>
+</body>
+
+</html>
