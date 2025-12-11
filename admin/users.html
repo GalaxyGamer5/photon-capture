@@ -78,7 +78,7 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch('../customers/data/users.js');
+                const response = await fetch('api/get_users.php');
                 const text = await response.text();
                 // Extract JSON part from "window.usersDatabase = { ... };"
                 const jsonStr = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/)[1];
