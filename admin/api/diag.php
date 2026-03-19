@@ -51,6 +51,24 @@ foreach ($targets as $name => $path) {
     ];
 }
 
+// --- Mediathek Debug ---
+$mediathek_test = [];
+$scanDirs = [
+    'Portfolio' => __DIR__ . '/../../assets/portfolio/',
+    'Gallerien' => __DIR__ . '/../../gallery/assets/'
+];
+
+foreach ($scanDirs as $source => $dir) {
+    if (is_dir($dir)) {
+        $mediathek_test[$source] = [
+            'status' => 'exists',
+            'files' => array_slice(scandir($dir), 0, 5) // Just first 5 to see
+        ];
+    } else {
+        $mediathek_test[$source] = 'not_found';
+    }
+}
+
 echo json_encode([
     'php_user' => ($u = posix_getpwuid(posix_geteuid())) ? $u['name'] : 'unknown',
     'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
@@ -60,5 +78,6 @@ echo json_encode([
         'memory_limit' => ini_get('memory_limit'),
         'max_execution_time' => ini_get('max_execution_time')
     ],
-    'diagnostics' => $diag
+    'diagnostics' => $diag,
+    'mediathek_test' => $mediathek_test
 ], JSON_PRETTY_PRINT);
