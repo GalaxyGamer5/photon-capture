@@ -288,7 +288,8 @@
                 const photo = allPhotos.find(p => p.path === path);
                 if (!photo) continue;
                 try {
-                    const res = await fetch(absUrl(photo.url));
+                    // Fetch via local proxy to bypass CORS
+                    const res = await fetch('api/download-media.php?path=' + encodeURIComponent(photo.path));
                     if (!res.ok) continue;
                     const blob = await res.blob();
                     zip.file(photo.name, blob);
