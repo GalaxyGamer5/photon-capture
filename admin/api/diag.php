@@ -2,19 +2,25 @@
 // admin/api/diag.php
 header('Content-Type: application/json');
 
-function get_perms($path) {
-    if (!file_exists($path)) return 'N/A';
+function get_perms($path)
+{
+    if (!file_exists($path))
+        return 'N/A';
     return substr(sprintf('%o', fileperms($path)), -4);
 }
 
-function get_owner($path) {
-    if (!file_exists($path)) return 'N/A';
+function get_owner($path)
+{
+    if (!file_exists($path))
+        return 'N/A';
     $owner = posix_getpwuid(fileowner($path));
     return $owner ? $owner['name'] : 'unknown';
 }
 
-function get_group($path) {
-    if (!file_exists($path)) return 'N/A';
+function get_group($path)
+{
+    if (!file_exists($path))
+        return 'N/A';
     $group = posix_getgrgid(filegroup($path));
     return $group ? $group['name'] : 'unknown';
 }
@@ -52,9 +58,7 @@ echo json_encode([
         'upload_max_filesize' => ini_get('upload_max_filesize'),
         'post_max_size' => ini_get('post_max_size'),
         'memory_limit' => ini_get('memory_limit'),
-        'max_execution_time' => ini_get('max_execution_time'),
-        'session_save_path' => session_save_path(),
-        'session_path_writable' => is_writable(session_save_path() ?: '/tmp')
+        'max_execution_time' => ini_get('max_execution_time')
     ],
     'diagnostics' => $diag
 ], JSON_PRETTY_PRINT);
