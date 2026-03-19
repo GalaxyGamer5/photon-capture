@@ -194,7 +194,8 @@
                             <input type="checkbox" id="select-${i}" data-image-index="${i}">
                             <label for="select-${i}"></label>
                         </div>
-                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}">
+                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}"
+                             onerror="tryNextExtension(this)">
                         <div class="gallery-overlay">
                             <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${i})" style="margin-right: 0.5rem;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -217,6 +218,18 @@
 
             renderGallery();
 
+            // Try alternative image extensions if the default .jpg fails
+            window.tryNextExtension = function(img) {
+                const src = img.src;
+                if (src.match(/\.jpg(\?.*)?$/i)) {
+                    img.src = src.replace(/\.jpg(\?.*)?$/i, '.png');
+                } else if (src.match(/\.png(\?.*)?$/i)) {
+                    img.src = src.replace(/\.png(\?.*)?$/i, '.webp');
+                } else {
+                    // All extensions tried — hide broken image
+                    img.style.opacity = '0';
+                }
+            };
             // Favorites Logic
             window.toggleFavorite = async function (event, index) {
                 event.stopPropagation(); // Prevent lightbox opening
@@ -282,6 +295,7 @@
             function updateLightbox() {
                 const imgSrc = `${imageFolder}/${currentIndex}.jpg`;
                 lightboxImg.src = imgSrc;
+                lightboxImg.onerror = function() { tryNextExtension(this); };
                 downloadBtn.href = imgSrc;
                 updateLightboxFavoriteBtn(currentIndex);
             }
