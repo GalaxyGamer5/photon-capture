@@ -76,7 +76,10 @@
             
             grid.innerHTML = filtered.map(p => `
                 <div class="photo-card">
-                    <img src="${p.url}" class="photo-img" onclick="openModal('${p.url}')" loading="lazy">
+                    <img src="${p.url}" class="photo-img" 
+                         onclick="openModal('${p.url}')" 
+                         onerror="this.parentElement.innerHTML += '<div style=\'padding:1rem;color:#ff6b6b;font-size:0.7rem;word-break:break-all;\'>Pfad kaputt:<br>${p.url}</div>'; this.style.display='none';"
+                         loading="lazy">
                     <div class="photo-info">
                         <div class="photo-name" title="${p.name}">${p.name}</div>
                         <div class="photo-meta">

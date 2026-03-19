@@ -33,8 +33,10 @@ if (is_dir($galleryPath)) {
         $files = scandir($subPath);
         foreach ($files as $file) {
             if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
+                $url = '../gallery/assets/' . $folder . '/' . $file;
+                $url = str_replace('\\', '/', $url); // Ensure forward slashes
                 $allPhotos[] = [
-                    'url' => '../gallery/assets/' . $folder . '/' . $file,
+                    'url' => $url,
                     'name' => $folder . ' - ' . $file,
                     'source' => 'Gallerien',
                     'date' => date("Y-m-d H:i:s", filemtime($subPath . $file)),
