@@ -1,12 +1,4 @@
-# Data files
-data/*.json
-data/.htaccess
-gallery/data/*.json
-gallery/data/orders.js
-gallery/data/.htaccess
-
 # Assets
-gallery/assets/demo/*.jpg
 assets/uploads/
 
 # OS specific files
