@@ -88,8 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (result && result.success) {
-                        const paymentUrl = result.paymentUrl || `/payment/order.html?id=${orderId}`;
-                        window.location.href = paymentUrl;
+                        const successMsg = currentLang === 'en'
+                            ? `Thank you! Your booking request has been sent successfully.`
+                            : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.`;
+                        alert(successMsg);
+                        bookingForm.reset();
+                        // If there's a back button to reset the UI, trigger it
+                        const backBtn = document.getElementById('backToCalendarBtn');
+                        if (backBtn) backBtn.click();
                         return;
                     } else {
                         throw new Error(result ? result.error : 'Unknown backend error');
