@@ -377,7 +377,7 @@
                 </div>
                 <div class="detail-body">${escHtml(inq.message || 'Keine Nachricht.')}</div>
                 <div class="detail-actions">
-                    <a href="mailto:${escHtml(inq.email)}?subject=Re: ${encodeURIComponent(inq.service)}" class="btn-reply">✉️ Antworten</a>
+                    <a href="mailto:${escHtml(inq.email)}?subject=Re: Anfrage: ${encodeURIComponent(inq.service)}&body=${encodeURIComponent('\n\n\n---\nUrsprüngliche Nachricht von ' + inq.name + ':\n' + inq.message)}" class="btn-reply">✉️ Antworten</a>
                     <button class="btn-delete-detail" onclick="deleteInquiry('${escHtml(inq.id)}')">Löschen</button>
                 </div>
             `;
