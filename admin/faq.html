@@ -87,7 +87,7 @@
 
         async function loadFaq() {
             try {
-                const res = await fetch('../api/get-faq.php');
+                const res = await fetch('api/get-faq.php');
                 faqData = await res.json();
                 renderEditor();
             } catch (e) {

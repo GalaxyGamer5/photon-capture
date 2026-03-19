@@ -100,7 +100,7 @@
 
         async function loadPricing() {
             try {
-                const res = await fetch('../api/get-pricing.php');
+                const res = await fetch('api/get-pricing.php');
                 pricingData = await res.json();
                 renderEditor();
             } catch (e) {
