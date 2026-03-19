@@ -73,7 +73,13 @@ ${message}`;
                 const res = await fetch('api/save-inquiry.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, service: serviceName, message: fullMessage })
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        service: serviceName, 
+                        message: fullMessage,
+                        bookingDate: date // Added for automated calendar reservation
+                    })
                 });
 
                 if (res.ok) {
