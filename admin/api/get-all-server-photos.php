@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 $baseDir = realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR;
 $allPhotos = [];
 
-// 1. Load Portfolio from JSON
+// 1. Portfolio (from JSON)
 $portfolioFile = $baseDir . 'data/portfolio.json';
 if (file_exists($portfolioFile)) {
     $data = json_decode(file_get_contents($portfolioFile), true);
@@ -15,38 +15,31 @@ if (file_exists($portfolioFile)) {
                 'url' => '../assets/portfolio/' . $img['filename'],
                 'name' => $img['filename'],
                 'source' => 'Portfolio',
-                'date' => $img['date'] ?? date("Y-m-d H:i:s", filemtime($baseDir . 'assets/portfolio/' . $img['filename'])),
-                'size' => file_exists($baseDir . 'assets/portfolio/' . $img['filename']) ? round(filesize($baseDir . 'assets/portfolio/' . $img['filename']) / 1024 / 1024, 2) . ' MB' : 'N/A'
+                'date' => $img['date'] ?? date("Y-m-d H:i:s", @filemtime($baseDir . 'assets/portfolio/' . $img['filename'])),
+                'size' => @file_exists($baseDir . 'assets/portfolio/' . $img['filename']) ? round(filesize($baseDir . 'assets/portfolio/' . $img['filename']) / 1024 / 1024, 2) . ' MB' : '–'
             ];
         }
     }
 }
 
-// 2. Load Gallerien from users.js
-$usersFile = $baseDir . 'gallery/data/users.js';
-if (file_exists($usersFile)) {
-    $content = file_get_contents($usersFile);
-    if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches)) {
-        $usersData = json_decode($matches[1], true);
-        if (isset($usersData['users'])) {
-            foreach ($usersData['users'] as $user) {
-                $folder = $user['folder'];
-                $count = $user['imageCount'] ?? 0;
-                for ($i = 1; $i <= $count; $i++) {
-                    $filename = $i . '.jpg';
-                    $relPath = 'gallery/assets/' . $folder . '/' . $filename;
-                    $fullPath = $baseDir . $relPath;
-                    
-                    // Note: We don't use file_exists() here to avoid hanging if the filesystem is slow.
-                    // We assume that if it's in the database, it exists.
-                    $allPhotos[] = [
-                        'url' => '../' . $relPath,
-                        'name' => $user['name'] . ' - #' . $i,
-                        'source' => 'Gallerien',
-                        'date' => @date("Y-m-d H:i:s", @filemtime($fullPath)) ?: 'N/A',
-                        'size' => '–'
-                    ];
-                }
+// 2. Gallerien (Filesystem-First to avoid folder name mismatches)
+$galleryPath = $baseDir . 'gallery/assets/';
+if (is_dir($galleryPath)) {
+    $folders = scandir($galleryPath);
+    foreach ($folders as $folder) {
+        if ($folder === '.' || $folder === '..' || !is_dir($galleryPath . $folder)) continue;
+        
+        $subPath = $galleryPath . $folder . DIRECTORY_SEPARATOR;
+        $files = scandir($subPath);
+        foreach ($files as $file) {
+            if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
+                $allPhotos[] = [
+                    'url' => '../gallery/assets/' . $folder . '/' . $file,
+                    'name' => $folder . ' - ' . $file,
+                    'source' => 'Gallerien',
+                    'date' => date("Y-m-d H:i:s", filemtime($subPath . $file)),
+                    'size' => round(filesize($subPath . $file) / 1024 / 1024, 2) . ' MB'
+                ];
             }
         }
     }
