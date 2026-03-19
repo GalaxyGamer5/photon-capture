@@ -674,22 +674,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 500);
     }
 
-    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxClose && lightboxClose.addEventListener('click', closeLightbox);
 
     // Click outside image to close
-    lightbox.addEventListener('click', (e) => {
+    lightbox && lightbox.addEventListener('click', (e) => {
         if (e.target === lightbox) {
             closeLightbox();
         }
     });
 
     // Navigation
-    lightboxPrev.addEventListener('click', (e) => {
+    lightboxPrev && lightboxPrev.addEventListener('click', (e) => {
         e.stopPropagation();
         showImage(currentImageIndex - 1, 'prev');
     });
 
-    lightboxNext.addEventListener('click', (e) => {
+    lightboxNext && lightboxNext.addEventListener('click', (e) => {
         e.stopPropagation();
         showImage(currentImageIndex + 1, 'next');
     });
@@ -707,11 +707,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    lightbox.addEventListener('touchstart', (e) => {
+    lightbox && lightbox.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
 
-    lightbox.addEventListener('touchend', (e) => {
+    lightbox && lightbox.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
         handleSwipe();
     }, { passive: true });
