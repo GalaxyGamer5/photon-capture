@@ -1,24 +1,3 @@
-// Helper function to create payment order
-async function createPaymentOrder(orderData) {
-    try {
-        console.log('Creating payment order:', orderData);
-        // Updated path from portal to gallery
-        const response = await fetch('gallery/api/create-order.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        });
-
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error || 'Failed to create order');
-
-        return result;
-    } catch (error) {
-        console.error('Error creating payment order:', error);
-        return null; // Don't block if billing fails
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const bookingForm = document.getElementById('booking-form');
     const generateOrderId = () => {
@@ -80,59 +59,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentLang = localStorage.getItem('preferredLang') || 'de';
 
-            // --- 2. Create Order in Backend FIRST (Critical Path) ---
-            if (totalAmount > 0 && service !== 'other') {
-                try {
-                    const result = await createPaymentOrder({
-                        orderId, name, email, service: serviceName, date, totalAmount, extras: extrasList, duration
-                    });
+            // Combine all booking details into the message payload
+            const fullMessage = `Gewünschtes Paket: ${serviceName}
+Datum: ${date}
+Uhrzeit: ${time}
+Preis: ${totalPriceStr}
+Extras: ${extrasString}
 
-                    if (result && result.success) {
-                        const successMsg = currentLang === 'en'
-                            ? `Thank you! Your booking request has been sent successfully.`
-                            : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.`;
-                        alert(successMsg);
-                        bookingForm.reset();
-                        // If there's a back button to reset the UI, trigger it
-                        const backBtn = document.getElementById('backToCalendarBtn');
-                        if (backBtn) backBtn.click();
-                        return;
-                    } else {
-                        throw new Error(result ? result.error : 'Unknown backend error');
-                    }
-                } catch (error) {
-                    console.error('Backend order creation failed:', error);
-                    alert(currentLang === 'en' ? 'Error creating booking. Please try again.' : 'Fehler bei der Buchung. Bitte versuche es erneut.');
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                    return;
+Nachricht vom Kunden:
+${message}`;
+
+            try {
+                const res = await fetch('api/save-inquiry.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, service: serviceName, message: fullMessage })
+                });
+
+                if (res.ok) {
+                    const successMsg = currentLang === 'en'
+                        ? `Thank you! Your booking request has been sent successfully.`
+                        : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.`;
+                    alert(successMsg);
+                    bookingForm.reset();
+                    // If there's a back button to reset the UI, trigger it
+                    const backBtn = document.getElementById('backToCalendarBtn');
+                    if (backBtn) backBtn.click();
+                } else {
+                    throw new Error('Server error');
                 }
-            } else {
-                // --- Fallback for "Other" inquiries (No Payment) ---
-                try {
-                    const fullMessage = `Datum: ${date}\nZeit: ${time}\nExtras: ${extrasString}\n\nNachricht: ${message}`;
-                    const res = await fetch('api/save-inquiry.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, email, service: serviceName, message: fullMessage })
-                    });
-                    
-                    if (res.ok) {
-                        const successMsg = currentLang === 'en'
-                            ? `Thank you! Your request has been sent successfully.`
-                            : `Vielen Dank! Deine Anfrage wurde erfolgreich gesendet.`;
-                        alert(successMsg);
-                        bookingForm.reset();
-                    } else {
-                        throw new Error('Server error');
-                    }
-                } catch(err) {
-                    console.error('Failed to save inquiry to DB:', err);
-                    alert('Fehler beim Senden.');
-                } finally {
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                }
+            } catch (err) {
+                console.error('Failed to save inquiry to DB:', err);
+                const errorMsg = currentLang === 'en' ? 'Error creating booking. Please try again.' : 'Fehler bei der Buchung. Bitte versuche es erneut.';
+                alert(errorMsg);
+            } finally {
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
             }
         });
     }
