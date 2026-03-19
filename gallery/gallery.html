@@ -221,12 +221,20 @@
             // Try alternative image extensions if the default .jpg fails
             window.tryNextExtension = function(img) {
                 const src = img.src;
+                let newSrc = null;
                 if (src.match(/\.jpg(\?.*)?$/i)) {
-                    img.src = src.replace(/\.jpg(\?.*)?$/i, '.png');
+                    newSrc = src.replace(/\.jpg(\?.*)?$/i, '.png');
                 } else if (src.match(/\.png(\?.*)?$/i)) {
-                    img.src = src.replace(/\.png(\?.*)?$/i, '.webp');
+                    newSrc = src.replace(/\.png(\?.*)?$/i, '.webp');
+                }
+                
+                if (newSrc) {
+                    img.src = newSrc;
+                    // If this is the lightbox image, also update the download button URL
+                    if (img.id === 'lightbox-img') {
+                        document.getElementById('download-btn').href = newSrc;
+                    }
                 } else {
-                    // All extensions tried — hide broken image
                     img.style.opacity = '0';
                 }
             };
