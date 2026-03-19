@@ -83,54 +83,26 @@ for ($i = 0; $i < $fileCount; $i++) {
     $mimeType = finfo_file($finfo, $files['tmp_name'][$i]);
     finfo_close($finfo);
     
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!in_array($mimeType, $allowedTypes)) {
-        $errors[] = "File {$files['name'][$i]}: Invalid type (only JPG/PNG/GIF/WEBP allowed)";
+        $errors[] = "File {$files['name'][$i]}: Invalid type (only JPG/PNG allowed)";
         continue;
     }
     
-    // New filename (auto-increment), always saved as .jpg
+    // Determine file extension
+    $ext = ($mimeType === 'image/png') ? 'png' : 'jpg';
+    
+    // New filename (auto-increment)
     $currentCount++;
-    $targetFile = $targetDir . $currentCount . '.jpg';
-    $tmpFile = $files['tmp_name'][$i];
-    $img = null;
+    $newFilename = $currentCount . '.' . $ext;
+    $targetPath = $targetDir . $newFilename;
     
-    // Open source image with GD based on MIME type
-    switch ($mimeType) {
-        case 'image/jpeg':
-        case 'image/jpg':
-            $img = imagecreatefromjpeg($tmpFile);
-            break;
-        case 'image/png':
-            // Preserve transparency on white background
-            $src = imagecreatefrompng($tmpFile);
-            if ($src) {
-                $img = imagecreatetruecolor(imagesx($src), imagesy($src));
-                $white = imagecolorallocate($img, 255, 255, 255);
-                imagefill($img, 0, 0, $white);
-                imagecopy($img, $src, 0, 0, 0, 0, imagesx($src), imagesy($src));
-                imagedestroy($src);
-            }
-            break;
-        case 'image/gif':
-            $img = imagecreatefromgif($tmpFile);
-            break;
-        case 'image/webp':
-            $img = imagecreatefromwebp($tmpFile);
-            break;
-    }
-    
-    if ($img) {
-        if (imagejpeg($img, $targetFile, 92)) {
-            $uploadedCount++;
-        } else {
-            $errors[] = "File {$files['name'][$i]}: Failed to save as JPG";
-            $currentCount--;
-        }
-        imagedestroy($img);
+    // Move uploaded file
+    if (moveImage($files['tmp_name'][$i], $targetPath)) {
+        $uploadedCount++;
     } else {
-        $errors[] = "File {$files['name'][$i]}: Failed to process image";
-        $currentCount--;
+        $errors[] = "File {$files['name'][$i]}: Failed to compress or save";
+        $currentCount--; // Rollback counter
     }
 }
 

@@ -58,46 +58,24 @@ for ($i = 0; $i < $fileCount; $i++) {
         continue;
     }
     
-    $extension = 'jpg';
-    $filename = uniqid('portfolio_') . '.' . $extension;
-    $targetFile = $targetDir . $filename;
+    $ext = 'jpg';
+    if ($mimeType === 'image/png') $ext = 'png';
+    if ($mimeType === 'image/webp') $ext = 'webp';
     
-    // Convert to JPG if possible
-    $tmpFile = $tmp_name; // Use the already extracted $tmp_name
-    $info = getimagesize($tmpFile);
-    $mime = $info['mime'];
+    $id = uniqid();
+    $filename = $id . '_' . time() . '.' . $ext;
+    $targetPath = $targetDir . $filename;
     
-    $img = null;
-    if ($mime == 'image/jpeg') $img = imagecreatefromjpeg($tmpFile);
-    elseif ($mime == 'image/png') $img = imagecreatefrompng($tmpFile);
-    elseif ($mime == 'image/webp') $img = imagecreatefromwebp($tmpFile);
-    
-    if ($img) {
-        if (imagejpeg($img, $targetFile, 90)) {
-            $uploadedCount++;
-            $portfolioData['images'][] = [
-                'id' => uniqid(),
-                'filename' => $filename,
-                'category' => $category,
-                'date' => date('Y-m-d H:i:s') // Changed to H:i:s for consistency with original
-            ];
-        } else {
-            $errors[] = "File {$name}: Failed to save converted image"; // More specific error
-        }
-        imagedestroy($img);
+    if (move_uploaded_file($tmp_name, $targetPath)) {
+        $uploadedCount++;
+        $portfolioData['images'][] = [
+            'id' => $id,
+            'filename' => $filename,
+            'category' => $category,
+            'date' => date('Y-m-d H:i:s')
+        ];
     } else {
-        // Fallback if image conversion failed or type not supported by GD
-        if (move_uploaded_file($tmpFile, $targetFile)) {
-            $uploadedCount++;
-            $portfolioData['images'][] = [
-                'id' => uniqid(),
-                'filename' => $filename,
-                'category' => $category,
-                'date' => date('Y-m-d H:i:s') // Changed to H:i:s for consistency with original
-            ];
-        } else {
-            $errors[] = "File {$name}: Failed to move uploaded file (fallback)"; // More specific error
-        }
+        $errors[] = "File {$name}: Failed to compress or save";
     }
 }
 
