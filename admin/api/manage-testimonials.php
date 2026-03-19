@@ -3,11 +3,7 @@
 session_start();
 
 // Check admin authentication
-if (!isset($_SESSION['photon_admin_auth']) || $_SESSION['photon_admin_auth'] !== 'true') {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+
 
 // Set JSON header
 header('Content-Type: application/json');

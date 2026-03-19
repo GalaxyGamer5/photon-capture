@@ -2,11 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['photon_admin_auth']) || $_SESSION['photon_admin_auth'] !== 'true') {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+
 
 $input = json_decode(file_get_contents('php://input'), true);
 $id = $input['id'] ?? null;

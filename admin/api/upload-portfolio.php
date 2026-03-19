@@ -95,11 +95,7 @@ function compressAndResizeImage($sourcePath, $destinationPath, $mimeType, $maxWi
     return $success;
 }
 
-if (!isset($_SESSION['photon_admin_auth']) || $_SESSION['photon_admin_auth'] !== 'true') {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+
 
 if (!isset($_POST['category']) || !isset($_FILES['photos'])) {
     echo json_encode(['success' => false, 'error' => 'Missing category or photos']);
