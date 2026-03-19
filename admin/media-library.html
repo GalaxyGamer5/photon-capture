@@ -150,6 +150,16 @@
     <script>
         if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
 
+        // Resolve image URLs on the main domain even when admin is on a subdomain
+        function mainOrigin() {
+            const host = window.location.hostname;
+            const mainHost = host.startsWith('admin.') ? host.slice('admin.'.length) : host;
+            return window.location.protocol + '//' + mainHost;
+        }
+        function absUrl(rootRelativeUrl) {
+            return mainOrigin() + rootRelativeUrl;
+        }
+
         let allPhotos = [];
         let filteredPhotos = [];
         let currentFilter = 'all';
@@ -189,7 +199,7 @@
                             <path d="M1 4.5L5 8.5L12 1" stroke="#0a0a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <img src="${p.url}" class="photo-img" loading="lazy"
+                    <img src="${absUrl(p.url)}" class="photo-img" loading="lazy"
                          onerror="this.style.background='#1a1a2e';this.style.minHeight='160px';">
                     <div class="photo-info">
                         <div class="photo-name" title="${p.name}">${p.name}</div>
@@ -213,7 +223,7 @@
                 toggleSelect(photo.path);
                 renderPhotos();
             } else {
-                openModal(photo.url);
+                openModal(absUrl(photo.url));
             }
         }
 
@@ -278,7 +288,7 @@
                 const photo = allPhotos.find(p => p.path === path);
                 if (!photo) continue;
                 try {
-                    const res = await fetch(photo.url);
+                    const res = await fetch(absUrl(photo.url));
                     if (!res.ok) continue;
                     const blob = await res.blob();
                     zip.file(photo.name, blob);
