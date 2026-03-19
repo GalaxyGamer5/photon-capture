@@ -23,9 +23,22 @@ $galleryId = $_POST['galleryId'];
 
 // Load users database to get folder name
 $usersFile = __DIR__ . '/../../gallery/data/users.js';
+if (!file_exists($usersFile)) {
+    echo json_encode(['success' => false, 'error' => 'User database file missing']);
+    exit;
+}
+
 $usersContent = file_get_contents($usersFile);
-preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
+if (!$usersContent || !preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches)) {
+    echo json_encode(['success' => false, 'error' => 'Invalid user database format']);
+    exit;
+}
+
 $usersData = json_decode($matches[1], true);
+if (!$usersData || !isset($usersData['users'])) {
+    echo json_encode(['success' => false, 'error' => 'Failed to parse user database']);
+    exit;
+}
 
 // Find the gallery
 $gallery = null;
@@ -44,7 +57,10 @@ if (!$gallery) {
 // Target directory
 $targetDir = __DIR__ . '/../../gallery/assets/' . $gallery['folder'] . '/';
 if (!file_exists($targetDir)) {
-    mkdir($targetDir, 0755, true);
+    if (!@mkdir($targetDir, 0775, true)) {
+        echo json_encode(['success' => false, 'error' => 'Failed to create gallery directory. Check permissions.']);
+        exit;
+    }
 }
 
 // Get current image count

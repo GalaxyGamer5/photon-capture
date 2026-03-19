@@ -21,7 +21,10 @@ if (!in_array($category, $allowedCategories)) {
 
 $targetDir = '../../assets/portfolio/';
 if (!file_exists($targetDir)) {
-    mkdir($targetDir, 0755, true);
+    if (!@mkdir($targetDir, 0775, true)) {
+        echo json_encode(['success' => false, 'error' => 'Failed to create portfolio directory. Check permissions of assets/ folder.']);
+        exit;
+    }
 }
 
 $portfolioFile = __DIR__ . '/../../data/portfolio.json';
