@@ -16,6 +16,7 @@ $action = $input['action'] ?? null;
 
 if (!file_exists($file)) {
     file_put_contents($file, json_encode(['testimonials' => []], JSON_PRETTY_PRINT));
+    chmod($file, 0664);
 }
 
 $data = json_decode(file_get_contents($file), true);
@@ -35,7 +36,8 @@ switch ($action) {
             'approved' => $input['approved'] ?? true
         ];
         $data['testimonials'][] = $testimonial;
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        chmod($file, 0664);
         echo json_encode(['success' => true, 'testimonial' => $testimonial]);
         break;
     
@@ -45,7 +47,8 @@ switch ($action) {
             return $t['id'] !== $id;
         });
         $data['testimonials'] = array_values($data['testimonials']);
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        chmod($file, 0664);
         echo json_encode(['success' => true]);
         break;
     
@@ -57,7 +60,8 @@ switch ($action) {
                 break;
             }
         }
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        chmod($file, 0664);
         echo json_encode(['success' => true]);
         break;
     

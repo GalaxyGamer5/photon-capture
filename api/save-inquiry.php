@@ -32,7 +32,8 @@ $inquiry = [
 // Prepend to top
 array_unshift($db['inquiries'], $inquiry);
 
-if (file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT))) {
+if (file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+    chmod($file, 0664);
     // Optional: send alert email to admin
     // @mail("admin@photoncapture.com", "Neue Nachricht im Dashboard", "Du hast eine neue ungelesene Nachricht.");
     

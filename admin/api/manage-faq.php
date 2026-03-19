@@ -13,7 +13,8 @@ if (!$data) {
 
 $file = __DIR__ . '/../../data/faq.json';
 
-if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT))) {
+if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+    chmod($file, 0664);
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'error' => 'Failed to write FAQ data']);

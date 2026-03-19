@@ -22,7 +22,12 @@ function readOrders($file) {
 
 // --- Helper: write orders ---
 function writeOrders($file, $data) {
-    return file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false;
+    $result = file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    if ($result !== false) {
+        chmod($file, 0664);
+        return true;
+    }
+    return false;
 }
 
 // --- Helper: generate next order ID ---

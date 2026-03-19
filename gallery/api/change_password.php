@@ -48,10 +48,11 @@ if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches
                 $user['passwordHash'] = $newHash;
                 
                 // Save back to file
-                $newJsonStr = json_encode($userData, JSON_PRETTY_PRINT);
+                $newJsonStr = json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 $newContent = "window.usersDatabase = " . $newJsonStr . ";";
                 
                 if (file_put_contents($usersFile, $newContent)) {
+                    chmod($usersFile, 0664);
                     echo json_encode(['success' => true]);
                 } else {
                     http_response_code(500);

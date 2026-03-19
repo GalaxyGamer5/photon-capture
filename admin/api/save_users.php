@@ -23,7 +23,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 // Format as JS file content
 $jsContent = "// Client-side user database\n";
 $jsContent .= "// In a real application, this would be a server-side database\n";
-$jsContent .= "window.usersDatabase = " . json_encode($data, JSON_PRETTY_PRINT) . ";";
+$jsContent .= "window.usersDatabase = " . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";";
 
 // Path to data file
 $file = __DIR__ . '/../../gallery/data/users.js';
@@ -37,6 +37,7 @@ if (file_exists($file) && !is_writable($file)) {
 
 // Save to file
 if (file_put_contents($file, $jsContent)) {
+    chmod($file, 0664);
     echo json_encode(['success' => true]);
 } else {
     http_response_code(500);

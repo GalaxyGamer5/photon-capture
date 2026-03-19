@@ -96,12 +96,13 @@ $gallery['imageCount'] = $currentCount;
 // Save updated users.js
 $jsContent = "// Client-side user database\n";
 $jsContent .= "// In a real application, this would be a server-side database\n";
-$jsContent .= "window.usersDatabase = " . json_encode($usersData, JSON_PRETTY_PRINT) . ";\n";
+$jsContent .= "window.usersDatabase = " . json_encode($usersData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
 
 if (file_put_contents($usersFile, $jsContent) === false) {
     echo json_encode(['success' => false, 'error' => 'Failed to update user database']);
     exit;
 }
+chmod($usersFile, 0664);
 
 echo json_encode([
     'success' => true,

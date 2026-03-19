@@ -22,7 +22,9 @@ if (!is_dir($logDir)) {
 function logWebhook($message) {
     global $logFile;
     $timestamp = date('Y-m-d H:i:s');
-    @file_put_contents($logFile, "[{$timestamp}] {$message}\n", FILE_APPEND);
+    if (@file_put_contents($logFile, "[{$timestamp}] {$message}\n", FILE_APPEND) !== false) {
+        chmod($logFile, 0664);
+    }
 }
 
 try {
