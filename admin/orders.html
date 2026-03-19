@@ -7,35 +7,228 @@
     <title>Bestellungen | Photon Admin</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        /* ── Table ─────────────── */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 2rem;
         }
 
-        th,
-        td {
+        th, td {
             text-align: left;
-            padding: 1rem;
+            padding: 1rem 1.2rem;
             border-bottom: 1px solid var(--border);
+            vertical-align: middle;
         }
 
         th {
             color: var(--text-secondary);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        tr:hover {
-            background: var(--surface-light);
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .empty-row td {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 3rem;
         }
 
-        .status-paid {
-            color: var(--success);
+        /* ── Status badges ─────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+        .badge-neu          { background: rgba(0,200,255,0.1);  color: #00c8ff; }
+        .badge-neu::before  { background: #00c8ff; }
+
+        .badge-shooting_fertig         { background: rgba(255,160,50,0.12); color: #ffa032; }
+        .badge-shooting_fertig::before { background: #ffa032; }
+
+        .badge-geliefert         { background: rgba(0,200,120,0.12); color: #00c878; }
+        .badge-geliefert::before { background: #00c878; }
+
+        .badge-abgeschlossen         { background: rgba(150,100,255,0.12); color: #a66fff; }
+        .badge-abgeschlossen::before { background: #a66fff; }
+
+        /* ── Action buttons ─────── */
+        .btn-action {
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-family: var(--font-body);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .btn-edit {
+            background: transparent;
+            border-color: var(--glass-border);
+            color: var(--text-secondary);
+        }
+        .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
+
+        .btn-status {
+            background: transparent;
+            border-color: rgba(150,100,255,0.4);
+            color: #a66fff;
+            margin-left: 0.4rem;
+        }
+        .btn-status:hover { background: rgba(150,100,255,0.1); }
+
+        /* ── Modals ─────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #111;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1);
         }
 
-        .status-pending {
-            color: var(--accent);
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        .modal-box h2 {
+            font-size: 1.6rem;
+            margin-bottom: 1.8rem;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1.2rem;
+            right: 1.4rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+        .modal-close-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 2rem;
+        }
+        .modal-actions .btn { width: auto; flex: 1; padding: 0.85rem 1.5rem; font-size: 0.9rem; }
+        .btn-danger {
+            background: rgba(255,77,77,0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255,77,77,0.3);
+        }
+        .btn-danger:hover { background: rgba(255,77,77,0.2); box-shadow: none; transform: none; }
+
+        /* ── Status Stepper ─────── */
+        .status-stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 0.5rem;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            width: 100%;
+            font-family: var(--font-body);
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .step-item:hover { border-color: var(--accent); color: var(--text-primary); background: rgba(0,242,255,0.03); }
+
+        .step-item.active {
+            border-color: var(--accent);
+            background: rgba(0,242,255,0.07);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .step-item.active .step-dot { background: currentColor; }
+
+        .step-item.step-neu { color: #00c8ff; border-color: rgba(0,200,255,0.2); }
+        .step-item.step-shooting_fertig { color: #ffa032; border-color: rgba(255,160,50,0.2); }
+        .step-item.step-geliefert { color: #00c878; border-color: rgba(0,200,120,0.2); }
+        .step-item.step-abgeschlossen { color: #a66fff; border-color: rgba(150,100,255,0.2); }
+
+        .step-item.active.step-neu { background: rgba(0,200,255,0.07); border-color: #00c8ff; }
+        .step-item.active.step-shooting_fertig { background: rgba(255,160,50,0.07); border-color: #ffa032; }
+        .step-item.active.step-geliefert { background: rgba(0,200,120,0.07); border-color: #00c878; }
+        .step-item.active.step-abgeschlossen { background: rgba(150,100,255,0.07); border-color: #a66fff; }
+
+        .step-label { flex: 1; }
+        .step-check { font-size: 1rem; opacity: 0; }
+        .step-item.active .step-check { opacity: 1; }
+
+        /* ── Create/Edit form note field ── */
+        .notes-count { font-size: 0.75rem; color: var(--text-secondary); text-align: right; margin-top: 0.3rem; }
+
+        /* ── Responsive ────────── */
+        @media (max-width: 768px) {
+            td:nth-child(3), th:nth-child(3) { display: none; } /* hide date */
+            .modal-box { padding: 1.8rem; }
         }
     </style>
 </head>
@@ -45,59 +238,374 @@
         <header class="header">
             <div class="welcome-text">
                 <h1>Bestellungen</h1>
-                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
-                        Dashboard</a></p>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">← Zurück zum Dashboard</a></p>
             </div>
-            <button onclick="location.reload()" class="btn" style="width: auto;">Aktualisieren</button>
+            <button class="btn" style="width: auto;" onclick="openCreateModal()">+ Neue Bestellung</button>
         </header>
 
         <div class="card">
+            <div class="section-header">
+                <span id="order-count" style="color: var(--text-secondary); font-size: 0.9rem;"></span>
+                <button onclick="loadOrders()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.85rem;">↻ Aktualisieren</button>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>Bestell-Nr.</th>
                         <th>Datum</th>
+                        <th>Name</th>
                         <th>Paket</th>
                         <th>Betrag</th>
                         <th>Status</th>
+                        <th>Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTable">
-                    <!-- JS Generated -->
+                    <tr class="empty-row"><td colspan="7">Lade Bestellungen…</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- ────────────────────────── CREATE MODAL ────────────────────────── -->
+    <div id="createModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" onclick="closeModal('createModal')">×</button>
+            <h2>Neue Bestellung</h2>
+
+            <div class="form-group">
+                <label>Kundenname *</label>
+                <input type="text" id="c-name" class="form-control" placeholder="Max Mustermann">
+            </div>
+
+            <div class="form-group">
+                <label>Paket *</label>
+                <select id="c-package" class="form-control" onchange="onPackageChange('c')">
+                    <option value="">– Paket wählen –</option>
+                    <option value="portrait" data-label="Porträt-Session" data-price="125€">Porträt-Session (125€)</option>
+                    <option value="event" data-label="Event-Begleitung" data-price="100€/h">Event-Begleitung (100€/h)</option>
+                    <option value="pet" data-label="Tierfotografie" data-price="125€">Tierfotografie (125€)</option>
+                    <option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Betrag *</label>
+                <input type="text" id="c-price" class="form-control" placeholder="z.B. 125€">
+            </div>
+
+            <div class="form-group">
+                <label>Notiz (optional)</label>
+                <textarea id="c-notes" class="form-control" rows="3" placeholder="Interne Notiz zum Auftrag…" maxlength="500" oninput="updateCount('c-notes','c-notes-count')"></textarea>
+                <div class="notes-count"><span id="c-notes-count">0</span>/500</div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn" style="background:transparent; border:1px solid var(--glass-border); color:var(--text-secondary);" onclick="closeModal('createModal')">Abbrechen</button>
+                <button class="btn" onclick="createOrder()">Erstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ────────────────────────── EDIT MODAL ─────────────────────────── -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" onclick="closeModal('editModal')">×</button>
+            <h2>Bestellung bearbeiten</h2>
+
+            <input type="hidden" id="e-id">
+
+            <div class="form-group">
+                <label>Kundenname *</label>
+                <input type="text" id="e-name" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Paket *</label>
+                <select id="e-package" class="form-control" onchange="onPackageChange('e')">
+                    <option value="">– Paket wählen –</option>
+                    <option value="portrait" data-label="Porträt-Session" data-price="125€">Porträt-Session (125€)</option>
+                    <option value="event" data-label="Event-Begleitung" data-price="100€/h">Event-Begleitung (100€/h)</option>
+                    <option value="pet" data-label="Tierfotografie" data-price="125€">Tierfotografie (125€)</option>
+                    <option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Betrag *</label>
+                <input type="text" id="e-price" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Notiz (optional)</label>
+                <textarea id="e-notes" class="form-control" rows="3" maxlength="500" oninput="updateCount('e-notes','e-notes-count')"></textarea>
+                <div class="notes-count"><span id="e-notes-count">0</span>/500</div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="deleteOrder()">Löschen</button>
+                <button class="btn" style="background:transparent; border:1px solid var(--glass-border); color:var(--text-secondary);" onclick="closeModal('editModal')">Abbrechen</button>
+                <button class="btn" onclick="updateOrder()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────── STATUS MODAL ──────────────────────────── -->
+    <div id="statusModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 440px;">
+            <button class="modal-close-btn" onclick="closeModal('statusModal')">×</button>
+            <h2>Status setzen</h2>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;" id="statusModalOrderName"></p>
+
+            <div class="status-stepper">
+                <button class="step-item step-neu"              onclick="setStatus('neu')"             id="step-neu">
+                    <span class="step-dot"></span>
+                    <span class="step-label">🔵 Neu</span>
+                    <span class="step-check">✓</span>
+                </button>
+                <button class="step-item step-shooting_fertig"  onclick="setStatus('shooting_fertig')" id="step-shooting_fertig">
+                    <span class="step-dot"></span>
+                    <span class="step-label">🟠 Shooting fertig</span>
+                    <span class="step-check">✓</span>
+                </button>
+                <button class="step-item step-geliefert"        onclick="setStatus('geliefert')"       id="step-geliefert">
+                    <span class="step-dot"></span>
+                    <span class="step-label">🟢 Geliefert</span>
+                    <span class="step-check">✓</span>
+                </button>
+                <button class="step-item step-abgeschlossen"    onclick="setStatus('abgeschlossen')"   id="step-abgeschlossen">
+                    <span class="step-dot"></span>
+                    <span class="step-label">✅ Abgeschlossen</span>
+                    <span class="step-check">✓</span>
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
 
+        const STATUSES = ['neu', 'shooting_fertig', 'geliefert', 'abgeschlossen'];
+
+        const STATUS_LABELS = {
+            neu: 'Neu',
+            shooting_fertig: 'Shooting fertig',
+            geliefert: 'Geliefert',
+            abgeschlossen: 'Abgeschlossen',
+        };
+
+        let currentStatusOrderId = null;
+
+        // ── Load & render orders ───────────────────────────────────────
         async function loadOrders() {
+            const tbody = document.getElementById('ordersTable');
             try {
-                const response = await fetch('../gallery/data/orders.json');
-                const data = await response.json();
-                const tbody = document.getElementById('ordersTable');
+                const res = await fetch('api/manage-orders.php?action=list');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
 
-                // Convert object to array if needed, assuming array based on previous files
-                const orders = Array.isArray(data) ? data : (data.orders || []);
+                const orders = data.orders;
+                document.getElementById('order-count').textContent = `${orders.length} Bestellung${orders.length !== 1 ? 'en' : ''}`;
 
-                tbody.innerHTML = orders.map(order => `
+                if (orders.length === 0) {
+                    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Noch keine Bestellungen. Klicke auf "+ Neue Bestellung".</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = orders.map(o => `
                     <tr>
-                        <td>${order.id || order.orderId}</td>
-                        <td>${order.date || new Date().toLocaleDateString()}</td>
-                        <td>${order.package || '-'}</td>
-                        <td>${(order.amount / 100).toFixed(2)} €</td>
-                        <td class="${order.status === 'paid' ? 'status-paid' : 'status-pending'}">
-                            ${order.status === 'paid' ? 'Bezahlt' : 'Offen'}
+                        <td style="font-family:monospace; font-size:0.85rem; color:var(--text-secondary);">${o.id}</td>
+                        <td style="color:var(--text-secondary); font-size:0.85rem;">${formatDate(o.createdAt)}</td>
+                        <td style="font-weight:600;">${escHtml(o.clientName)}</td>
+                        <td>${escHtml(o.packageLabel || o.package)}</td>
+                        <td style="font-weight:600;">${escHtml(o.price)}</td>
+                        <td><span class="badge badge-${o.status}">${STATUS_LABELS[o.status] || o.status}</span></td>
+                        <td>
+                            <button class="btn-action btn-edit" onclick="openEditModal(${JSON.stringify(JSON.stringify(o))})">✏ Bearbeiten</button>
+                            <button class="btn-action btn-status" onclick="openStatusModal(${JSON.stringify(JSON.stringify(o))})">▶ Status</button>
                         </td>
                     </tr>
                 `).join('');
-            } catch (e) {
-                console.error("Error loading orders", e);
+            } catch(e) {
+                tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Fehler beim Laden: ${e.message}</td></tr>`;
             }
         }
+
+        function formatDate(iso) {
+            if (!iso) return '–';
+            return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function escHtml(str) {
+            if (!str) return '–';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // ── Modal helpers ──────────────────────────────────────────────
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function onPackageChange(prefix) {
+            const sel = document.getElementById(`${prefix}-package`);
+            const opt = sel.options[sel.selectedIndex];
+            const price = opt.getAttribute('data-price') || '';
+            const priceInput = document.getElementById(`${prefix}-price`);
+            if (price) priceInput.value = price;
+        }
+
+        function updateCount(textareaId, countId) {
+            const len = document.getElementById(textareaId).value.length;
+            document.getElementById(countId).textContent = len;
+        }
+
+        // ── Create Modal ───────────────────────────────────────────────
+        function openCreateModal() {
+            document.getElementById('c-name').value = '';
+            document.getElementById('c-package').value = '';
+            document.getElementById('c-price').value = '';
+            document.getElementById('c-notes').value = '';
+            document.getElementById('c-notes-count').textContent = '0';
+            document.getElementById('createModal').classList.add('active');
+            setTimeout(() => document.getElementById('c-name').focus(), 100);
+        }
+
+        async function createOrder() {
+            const name = document.getElementById('c-name').value.trim();
+            const packageSel = document.getElementById('c-package');
+            const packageVal = packageSel.value;
+            const packageLabel = packageSel.options[packageSel.selectedIndex]?.getAttribute('data-label') || packageVal;
+            const price = document.getElementById('c-price').value.trim();
+            const notes = document.getElementById('c-notes').value.trim();
+
+            if (!name || !packageVal || !price) {
+                alert('Bitte Name, Paket und Betrag ausfüllen.');
+                return;
+            }
+
+            const res = await fetch('api/manage-orders.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create', clientName: name, package: packageVal, packageLabel, price, notes }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('createModal');
+                loadOrders();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        }
+
+        // ── Edit Modal ─────────────────────────────────────────────────
+        function openEditModal(orderJson) {
+            const o = JSON.parse(orderJson);
+            document.getElementById('e-id').value    = o.id;
+            document.getElementById('e-name').value  = o.clientName;
+            document.getElementById('e-package').value = o.package;
+            document.getElementById('e-price').value = o.price;
+            document.getElementById('e-notes').value = o.notes || '';
+            document.getElementById('e-notes-count').textContent = (o.notes || '').length;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        async function updateOrder() {
+            const id       = document.getElementById('e-id').value;
+            const name     = document.getElementById('e-name').value.trim();
+            const packageSel = document.getElementById('e-package');
+            const packageVal = packageSel.value;
+            const packageLabel = packageSel.options[packageSel.selectedIndex]?.getAttribute('data-label') || packageVal;
+            const price    = document.getElementById('e-price').value.trim();
+            const notes    = document.getElementById('e-notes').value.trim();
+
+            if (!name || !packageVal || !price) {
+                alert('Bitte Name, Paket und Betrag ausfüllen.');
+                return;
+            }
+
+            const res = await fetch('api/manage-orders.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update', id, clientName: name, package: packageVal, packageLabel, price, notes }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('editModal');
+                loadOrders();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        }
+
+        async function deleteOrder() {
+            const id   = document.getElementById('e-id').value;
+            const name = document.getElementById('e-name').value;
+            if (!confirm(`Bestellung von "${name}" wirklich löschen?`)) return;
+
+            const res = await fetch('api/manage-orders.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', id }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('editModal');
+                loadOrders();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        }
+
+        // ── Status Modal ───────────────────────────────────────────────
+        function openStatusModal(orderJson) {
+            const o = JSON.parse(orderJson);
+            currentStatusOrderId = o.id;
+            document.getElementById('statusModalOrderName').textContent = `${o.id} — ${o.clientName}`;
+
+            STATUSES.forEach(s => {
+                const el = document.getElementById(`step-${s}`);
+                el.classList.toggle('active', o.status === s);
+            });
+
+            document.getElementById('statusModal').classList.add('active');
+        }
+
+        async function setStatus(newStatus) {
+            if (!currentStatusOrderId) return;
+
+            const res = await fetch('api/manage-orders.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'set_status', id: currentStatusOrderId, status: newStatus }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update visual immediately
+                STATUSES.forEach(s => {
+                    document.getElementById(`step-${s}`).classList.toggle('active', s === newStatus);
+                });
+                loadOrders(); // refresh table in background
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Initial load
         loadOrders();
     </script>
 </body>
-
 </html>
