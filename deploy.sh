@@ -10,15 +10,9 @@ echo "========================================"
 echo "[1/5] Disabling git filemode tracking..."
 git config core.filemode false
 
-# Step 2: Stash only the data files that the application writes to
+# Step 2: Stash ALL modified files in the data directories
 echo "[2/5] Stashing live data files..."
-git stash push -m "live-server-data" \
-    data/calendar.json \
-    data/inquiries.json \
-    data/orders.json \
-    data/testimonials.json \
-    gallery/data/orders.json \
-    gallery/data/favorites.json
+git stash push -m "live-server-data" -- data/ gallery/data/
 
 # Step 3: Pull the latest code
 echo "[3/5] Pulling latest code from origin/main..."
@@ -30,14 +24,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Step 4: Restore the live data files (keep server's version over what was pulled)
+# Step 4: Restore the live data files (keep server's version on top)
 echo "[4/5] Restoring live data files..."
 git stash pop
 
-# If there are merge conflicts in data files, keep the server's version
+# If there are merge conflicts, always keep the server's live data
 if [ $? -ne 0 ]; then
-    echo "Conflicts in data files - keeping server versions..."
-    git checkout --theirs data/calendar.json data/inquiries.json data/orders.json data/testimonials.json gallery/data/orders.json gallery/data/favorites.json 2>/dev/null || true
+    echo "Conflicts detected - keeping live server data..."
+    git checkout --theirs data/ gallery/data/ 2>/dev/null || true
     git add data/ gallery/data/ 2>/dev/null || true
     git stash drop 2>/dev/null || true
 fi
