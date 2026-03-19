@@ -11,7 +11,7 @@ if (!$data) {
     exit;
 }
 
-$file = '../../data/faq.json';
+$file = __DIR__ . '/../../data/faq.json';
 
 if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT))) {
     echo json_encode(['success' => true]);

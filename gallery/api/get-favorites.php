@@ -9,7 +9,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true ||
 }
 
 $username = $_SESSION['user']['username'];
-$file = '../data/favorites.json';
+$file = __DIR__ . '/../data/favorites.json';
 
 $favorites = [];
 if (file_exists($file)) {

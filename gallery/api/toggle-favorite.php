@@ -16,7 +16,7 @@ if (!isset($input['image'])) {
 
 $image = $input['image'];
 $username = $_SESSION['user']['username'];
-$file = '../data/favorites.json';
+$file = __DIR__ . '/../data/favorites.json';
 
 $data = [];
 if (file_exists($file)) {

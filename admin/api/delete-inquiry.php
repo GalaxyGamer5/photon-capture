@@ -11,7 +11,7 @@ if (!isset($data['id'])) {
 }
 
 $id = $data['id'];
-$file = '../../data/inquiries.json';
+$file = __DIR__ . '/../../data/inquiries.json';
 
 if (!file_exists($file)) {
     echo json_encode(['success' => false, 'error' => 'Database not found']);

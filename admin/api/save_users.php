@@ -26,7 +26,7 @@ $jsContent .= "// In a real application, this would be a server-side database\n"
 $jsContent .= "window.usersDatabase = " . json_encode($data, JSON_PRETTY_PRINT) . ";";
 
 // Path to data file
-$file = '../../gallery/data/users.js';
+$file = __DIR__ . '/../../gallery/data/users.js';
 
 // Check if file exists and is writable
 if (file_exists($file) && !is_writable($file)) {

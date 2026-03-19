@@ -16,7 +16,7 @@ $userId = $data['userId'];
 $oldHash = $data['oldPasswordHash'];
 $newHash = $data['newPasswordHash'];
 
-$usersFile = '../data/users.js';
+$usersFile = __DIR__ . '/../data/users.js';
 
 if (!file_exists($usersFile)) {
     http_response_code(500);

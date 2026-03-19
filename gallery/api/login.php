@@ -17,7 +17,7 @@ $username = $input['username'];
 $password = $input['password'];
 
 // Load users database
-$usersFile = '../data/users.js';
+$usersFile = __DIR__ . '/../data/users.js';
 if (!file_exists($usersFile)) {
     echo json_encode(['success' => false, 'error' => 'User database not found']);
     exit;

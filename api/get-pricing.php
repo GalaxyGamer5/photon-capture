@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-$file = '../data/pricing.json';
+$file = __DIR__ . '/../data/pricing.json';
 
 if (file_exists($file)) {
     echo file_get_contents($file);

@@ -24,7 +24,7 @@ if (!file_exists($targetDir)) {
     mkdir($targetDir, 0755, true);
 }
 
-$portfolioFile = '../../data/portfolio.json';
+$portfolioFile = __DIR__ . '/../../data/portfolio.json';
 $portfolioData = ['images' => []];
 if (file_exists($portfolioFile)) {
     $portfolioData = json_decode(file_get_contents($portfolioFile), true);

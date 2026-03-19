@@ -9,7 +9,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Load users database
-$usersFile = '../../gallery/data/users.js';
+$usersFile = __DIR__ . '/../../gallery/data/users.js';
 if (!file_exists($usersFile)) {
     echo json_encode(['success' => false, 'error' => 'User database not found']);
     exit;

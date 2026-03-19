@@ -8,7 +8,7 @@ session_start();
 // Set JSON header
 header('Content-Type: application/json');
 
-$file = '../../data/testimonials.json';
+$file = __DIR__ . '/../../data/testimonials.json';
 
 // Get input
 $input = json_decode(file_get_contents('php://input'), true);

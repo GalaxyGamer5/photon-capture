@@ -21,7 +21,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 // Path to data file
-$file = '../../data/calendar.json';
+$file = __DIR__ . '/../../data/calendar.json';
 
 // Check if file exists and is writable
 if (file_exists($file) && !is_writable($file)) {

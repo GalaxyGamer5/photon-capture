@@ -22,7 +22,7 @@ if (!isset($_POST['galleryId']) || !isset($_FILES['photos'])) {
 $galleryId = $_POST['galleryId'];
 
 // Load users database to get folder name
-$usersFile = '../../gallery/data/users.js';
+$usersFile = __DIR__ . '/../../gallery/data/users.js';
 $usersContent = file_get_contents($usersFile);
 preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
 $usersData = json_decode($matches[1], true);
@@ -42,7 +42,7 @@ if (!$gallery) {
 }
 
 // Target directory
-$targetDir = '../../gallery/assets/' . $gallery['folder'] . '/';
+$targetDir = __DIR__ . '/../../gallery/assets/' . $gallery['folder'] . '/';
 if (!file_exists($targetDir)) {
     mkdir($targetDir, 0755, true);
 }

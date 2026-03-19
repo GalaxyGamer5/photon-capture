@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-$file = '../data/testimonials.json';
+$file = __DIR__ . '/../data/testimonials.json';
 
 if (!file_exists($file)) {
     echo json_encode(['success' => false, 'error' => 'Testimonials not found']);

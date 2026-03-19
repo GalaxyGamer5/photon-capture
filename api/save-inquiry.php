@@ -10,7 +10,7 @@ if (!$data) {
     exit;
 }
 
-$file = '../data/inquiries.json';
+$file = __DIR__ . '/../data/inquiries.json';
 
 if (!file_exists($file)) {
     $db = ['inquiries' => []];

@@ -11,7 +11,7 @@ if (!isset($data['id'])) {
 }
 
 $id = $data['id'];
-$portfolioFile = '../../data/portfolio.json';
+$portfolioFile = __DIR__ . '/../../data/portfolio.json';
 
 if (!file_exists($portfolioFile)) {
     echo json_encode(['success' => false, 'error' => 'Database not found']);

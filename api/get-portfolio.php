@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-$file = '../data/portfolio.json';
+$file = __DIR__ . '/../data/portfolio.json';
 
 if (!file_exists($file)) {
     echo json_encode(['success' => true, 'images' => []]);

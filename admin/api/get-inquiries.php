@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 
 
-$file = '../../data/inquiries.json';
+$file = __DIR__ . '/../../data/inquiries.json';
 
 if (!file_exists($file)) {
     echo json_encode(['success' => true, 'inquiries' => []]);

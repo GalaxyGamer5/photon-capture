@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Path to data file
-$file = '../../data/calendar.json';
+$file = __DIR__ . '/../../data/calendar.json';
 
 if (!file_exists($file)) {
     // Return empty object if file doesn't exist yet, or 404

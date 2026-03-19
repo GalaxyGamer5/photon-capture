@@ -3,7 +3,7 @@
 header('Content-Type: application/javascript');
 
 // Path to data file
-$file = '../../gallery/data/users.js';
+$file = __DIR__ . '/../../gallery/data/users.js';
 
 if (!file_exists($file)) {
     http_response_code(404);
