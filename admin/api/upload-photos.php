@@ -89,19 +89,46 @@ for ($i = 0; $i < $fileCount; $i++) {
         continue;
     }
     
-    // Determine file extension
-    $ext = ($mimeType === 'image/png') ? 'png' : 'jpg';
+        $errors[] = "File {$files['name'][$i]}: Invalid type (only JPG/PNG/GIF/WEBP allowed for conversion)";
+        continue;
+    }
     
     // New filename (auto-increment)
     $currentCount++;
-    $newFilename = $currentCount . '.' . $ext;
-    $targetPath = $targetDir . $newFilename;
+    // Target path with .jpg extension
+    $targetFile = $targetDir . $currentCount . '.jpg';
     
-    // Move uploaded file (compression was already done on client side)
-    if (moveImage($files['tmp_name'][$i], $targetPath)) {
-        $uploadedCount++;
+    // Convert to JPG
+    $tmpFile = $files['tmp_name'][$i];
+    $img = null;
+    
+    switch ($mimeType) {
+        case 'image/jpeg':
+            $img = imagecreatefromjpeg($tmpFile);
+            break;
+        case 'image/png':
+            $img = imagecreatefrompng($tmpFile);
+            break;
+        case 'image/gif':
+            $img = imagecreatefromgif($tmpFile);
+            break;
+        case 'image/webp':
+            $img = imagecreatefromwebp($tmpFile);
+            break;
+    }
+    
+    if ($img) {
+        // Save as JPG with 90% quality
+        if (imagejpeg($img, $targetFile, 90)) {
+            $uploadedCount++;
+        } else {
+            $errors[] = "File {$files['name'][$i]}: Failed to save converted JPG";
+            $currentCount--; // Rollback counter
+        }
+        imagedestroy($img);
     } else {
-        $errors[] = "File {$files['name'][$i]}: Failed to compress or save";
+        // Fallback: if GD failed to create image from source (e.g., corrupted file)
+        $errors[] = "File {$files['name'][$i]}: Failed to process image with GD library.";
         $currentCount--; // Rollback counter
     }
 }
