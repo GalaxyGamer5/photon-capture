@@ -52,7 +52,9 @@ echo json_encode([
         'upload_max_filesize' => ini_get('upload_max_filesize'),
         'post_max_size' => ini_get('post_max_size'),
         'memory_limit' => ini_get('memory_limit'),
-        'max_execution_time' => ini_get('max_execution_time')
+        'max_execution_time' => ini_get('max_execution_time'),
+        'session_save_path' => session_save_path(),
+        'session_path_writable' => is_writable(session_save_path() ?: '/tmp')
     ],
     'diagnostics' => $diag
 ], JSON_PRETTY_PRINT);
