@@ -84,8 +84,8 @@ ${message}`;
 
                 if (res.ok) {
                     const successMsg = currentLang === 'en'
-                        ? `Thank you! Your booking request has been sent successfully.`
-                        : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet.`;
+                        ? `Thank you! Your booking request has been sent successfully. I will get back to you shortly via email.`
+                        : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet. Ich werde mich zeitnah per Mail bei dir melden.`;
                     alert(successMsg);
                     bookingForm.reset();
                     // If there's a back button to reset the UI, trigger it
@@ -135,8 +135,8 @@ ${message}`;
                 
                 if (res.ok) {
                     const successMsg = currentLang === 'en'
-                        ? 'Thank you! Your message has been sent directly to our inbox.'
-                        : 'Vielen Dank! Deine Nachricht wurde direkt in unser Postfach gesendet.';
+                        ? 'Thank you! Your message has been sent successfully. I will get back to you shortly via email.'
+                        : 'Vielen Dank! Deine Nachricht wurde erfolgreich gesendet. Ich werde mich zeitnah per Mail bei dir melden.';
                     alert(successMsg);
                     contactForm.reset();
                 } else {
