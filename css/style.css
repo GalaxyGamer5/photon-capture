@@ -643,6 +643,17 @@ section {
     overflow: hidden;
     box-shadow: var(--shadow-md);
     transition: all var(--transition-slow) var(--ease-out-expo);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Keep customize link and CTA button anchored to the bottom */
+.pricing-card .customize-link {
+    margin-top: auto;
+}
+
+.pricing-card .cta-button {
+    margin-top: 1rem;
 }
 
 /* Shine/gloss overlay effect */

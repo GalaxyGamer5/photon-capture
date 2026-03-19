@@ -228,7 +228,7 @@ const translations = {
 
         "about.title": "About Me",
         "about.intro": "So glad you're here!",
-        "about.p1": "I'm Jonathan, and I love capturing real emotions and unique moments. I've been accompanying people with my camera for many years – it all started with an older phone and a fascination for visual storytelling.",
+        "about.p1": "I'm Jonathan, and I love capturing real emotions and unique moments. I've been accompanying people with my camera for many years – it all started with an old phone and a fascination for visual storytelling.",
         "about.p2": "My goal is to create images that touch you and stay with you. Whether it's a moment with your beloved furry friend, an honest portrait, or the lively atmosphere of an event – I want to capture the moment exactly as it felt.",
         "about.p3": "When I'm not taking photos, I love being out in nature, always looking for new light and inspiration to constantly evolve my work for you.",
         "about.btn": "Let's Talk",

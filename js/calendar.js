@@ -33,25 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookingValues.service.value = selectedPackage;
             }
             renderExtras(bookingValues.service.value);
-
-            // Special Case: "Other" package implies general inquiry, no date needed.
-            // Show form immediately.
-            if (selectedPackage === 'other') {
-                document.getElementById('booking-initial-view').style.display = 'none';
-                document.getElementById('booking-form-container').style.display = 'block';
-                // Hide the calendar panel heading since we aren't picking a date
-                const heading = document.querySelector('#bookingPanel h3');
-                if (heading) heading.style.display = 'none';
-
-                // Show booking panel so form is visible
-                const panel = document.getElementById('bookingPanel');
-                panel.classList.add('active');
-
-                // Scroll to it
-                setTimeout(() => {
-                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 500);
-            }
         }
     }
 
@@ -248,9 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (selectedPackage) {
             let packageName = selectedPackage;
-            if (selectedPackage === 'portrait') packageName = t["services.portrait.title"];
-            if (selectedPackage === 'event') packageName = t["services.event.title"];
-            if (selectedPackage === 'pet') packageName = t["services.pet.title"];
+            if (selectedPackage === 'portrait') packageName = t["services.portrait.title"] || "Porträt-Session";
+            if (selectedPackage === 'event') packageName = t["services.event.title"] || "Event-Begleitung";
+            if (selectedPackage === 'pet') packageName = t["services.pet.title"] || "Tierfotografie";
+            if (selectedPackage === 'other' || selectedPackage === 'custom') packageName = t["contact.form.service.other"] || "Sonstiges / Allgemeine Frage";
 
             packageNameSpan.textContent = packageName;
             packageInfo.style.display = 'inline-block';
@@ -346,19 +328,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const config = extrasConfig[service] || extrasConfig['portrait'];
 
         // Handle "other" visibility
-        const dateInput = document.getElementById('date'); // already in scope globally or via ID
+        const dateInput = document.getElementById('date');
         const timeInput = document.getElementById('time');
 
-        // Note: We might want to hide the date/time inputs for "other" too, but 
-        // since they are part of the calendar flow, we keep them visible or make them optional.
-        // For now, let's keep them as is, but maybe remove 'required' 
-        if (service === 'other') {
-            if (dateInput) dateInput.removeAttribute('required');
-            if (timeInput) timeInput.removeAttribute('required');
-        } else {
-            if (dateInput) dateInput.setAttribute('required', 'required');
-            if (timeInput) timeInput.setAttribute('required', 'required');
-        }
+        // Always require date and time when using the calendar interface
+        if (dateInput) dateInput.setAttribute('required', 'required');
+        if (timeInput) timeInput.setAttribute('required', 'required');
 
         const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
 
