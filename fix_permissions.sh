@@ -40,3 +40,8 @@ chmod +x "$0"
 echo "-----------------------------------------------"
 echo "Permissions updated successfully!"
 echo "-----------------------------------------------"
+
+# Disable Git filemode tracking so chmod calls don't cause merge conflicts
+echo "Disabling Git filemode tracking (core.filemode=false)..."
+git config core.filemode false
+echo "Done. Git will no longer track file permission changes."
