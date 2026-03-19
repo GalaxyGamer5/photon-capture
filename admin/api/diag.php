@@ -25,7 +25,8 @@ $targets = [
     'pricing_json' => __DIR__ . '/../../data/pricing.json',
     'gallery_data_dir' => __DIR__ . '/../../gallery/data/',
     'users_js' => __DIR__ . '/../../gallery/data/users.js',
-    'gallery_assets' => __DIR__ . '/../../gallery/assets/'
+    'gallery_assets' => __DIR__ . '/../../gallery/assets/',
+    'portfolio_assets' => __DIR__ . '/../../assets/portfolio/'
 ];
 
 $diag = [];
@@ -34,6 +35,7 @@ foreach ($targets as $name => $path) {
         'path' => realpath($path) ?: $path,
         'exists' => file_exists($path),
         'writable' => is_writable($path),
+        'readable' => is_readable($path),
         'perms' => get_perms($path),
         'owner' => get_owner($path),
         'group' => get_group($path)
@@ -43,5 +45,11 @@ foreach ($targets as $name => $path) {
 echo json_encode([
     'php_user' => posix_getpwuid(posix_geteuid())['name'],
     'server_software' => $_SERVER['SERVER_SOFTWARE'],
+    'php_limits' => [
+        'upload_max_filesize' => ini_get('upload_max_filesize'),
+        'post_max_size' => ini_get('post_max_size'),
+        'memory_limit' => ini_get('memory_limit'),
+        'max_execution_time' => ini_get('max_execution_time')
+    ],
     'diagnostics' => $diag
 ], JSON_PRETTY_PRINT);
