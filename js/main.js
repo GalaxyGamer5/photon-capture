@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        if (lightbox.classList.contains('active')) {
+        if (lightbox && lightbox.classList.contains('active')) {
             if (e.key === 'Escape') closeLightbox();
             if (e.key === 'ArrowLeft') showImage(currentImageIndex - 1, 'prev');
             if (e.key === 'ArrowRight') showImage(currentImageIndex + 1, 'next');
