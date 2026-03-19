@@ -15,7 +15,6 @@ $file = __DIR__ . '/../../data/pricing.json';
 
 $result = file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 if ($result !== false) {
-    chmod($file, 0664);
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'error' => 'Failed to write pricing data']);

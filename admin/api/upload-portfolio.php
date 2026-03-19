@@ -79,7 +79,6 @@ for ($i = 0; $i < $fileCount; $i++) {
 
 if ($uploadedCount > 0) {
     file_put_contents($portfolioFile, json_encode($portfolioData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    chmod($portfolioFile, 0664);
 }
 
 echo json_encode([

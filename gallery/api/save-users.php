@@ -59,7 +59,6 @@ $jsContent = "window.usersDatabase = " . $jsonStr . ";";
 
 // Write to file
 if (file_put_contents($usersFile, $jsContent) !== false) {
-    chmod($usersFile, 0664);
     jsonResponse(['success' => true, 'message' => 'Configuration saved successfully']);
 } else {
     jsonResponse(['error' => 'Failed to write configuration file'], 500);

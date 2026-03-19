@@ -56,13 +56,8 @@ function loadOrders() {
     return json_decode($json, true) ?: ['orders' => []];
 }
 
-// Helper function to save orders
 function saveOrders($data) {
-    if (file_put_contents(ORDERS_FILE, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false) {
-        chmod(ORDERS_FILE, 0664);
-        return true;
-    }
-    return false;
+    return file_put_contents(ORDERS_FILE, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false;
 }
 
 // Helper function to find order by ID

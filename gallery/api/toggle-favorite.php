@@ -41,7 +41,6 @@ if ($index !== false) {
 }
 
 if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    chmod($file, 0664);
     echo json_encode(['success' => true, 'isFavorite' => $isFavorite, 'favorites' => $data[$username]]);
 } else {
     http_response_code(500);

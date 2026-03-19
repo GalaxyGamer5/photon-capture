@@ -45,7 +45,6 @@ if (file_exists($targetPath)) {
 
 // Save json
 if (file_put_contents($portfolioFile, json_encode($portfolioData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    chmod($portfolioFile, 0664);
 }
 
 echo json_encode(['success' => true]);

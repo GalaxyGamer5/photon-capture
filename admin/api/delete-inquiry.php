@@ -36,6 +36,5 @@ if (!$found) {
 }
 
 if (file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    chmod($file, 0664);
 }
 echo json_encode(['success' => true]);

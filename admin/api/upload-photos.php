@@ -102,7 +102,6 @@ if (file_put_contents($usersFile, $jsContent) === false) {
     echo json_encode(['success' => false, 'error' => 'Failed to update user database']);
     exit;
 }
-chmod($usersFile, 0664);
 
 echo json_encode([
     'success' => true,

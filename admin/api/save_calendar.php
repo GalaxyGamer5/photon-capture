@@ -32,7 +32,6 @@ if (file_exists($file) && !is_writable($file)) {
 
 // Save to file
 if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    chmod($file, 0664);
     echo json_encode(['success' => true]);
 } else {
     http_response_code(500);

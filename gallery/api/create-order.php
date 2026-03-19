@@ -86,7 +86,6 @@ if (!file_exists(dirname($ordersFile))) {
 // Initialize orders.json if it doesn't exist
 if (!file_exists($ordersFile)) {
     file_put_contents($ordersFile, json_encode(['orders' => []], JSON_PRETTY_PRINT));
-    chmod($ordersFile, 0664);
 }
 
 // Lock file for concurrent access safety
@@ -129,10 +128,7 @@ try {
     $ordersData['orders'][] = $order;
     
     // Write back to file
-    $result = file_put_contents($ordersFile, json_encode($ordersData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    if ($result !== false) {
-        chmod($ordersFile, 0664);
-    }
+    file_put_contents($ordersFile, json_encode($ordersData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     
     if ($result === false) {
         throw new Exception('Failed to write orders file');
