@@ -232,7 +232,8 @@
                     img.src = newSrc;
                     // If this is the lightbox image, also update the download button URL
                     if (img.id === 'lightbox-img') {
-                        document.getElementById('download-btn').href = newSrc;
+                        const dlBtn = document.getElementById('lightbox-download');
+                        if (dlBtn) dlBtn.href = newSrc;
                     }
                 } else {
                     img.style.opacity = '0';
