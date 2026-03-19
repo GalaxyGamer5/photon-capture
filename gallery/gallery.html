@@ -435,13 +435,24 @@
                         downloadBtn.textContent = `Bild ${i + 1}/${imagesToDownload.length} wird hinzugefügt...`;
 
                         try {
-                            // Fetch the image as blob
-                            const response = await fetch(imgSrc);
+                            // Attempt fallback extensions if .jpg fails
+                            let response = await fetch(`${imageFolder}/${index}.jpg`);
+                            let ext = 'jpg';
+                            
+                            if (!response.ok) {
+                                response = await fetch(`${imageFolder}/${index}.png`);
+                                ext = 'png';
+                            }
+                            if (!response.ok) {
+                                response = await fetch(`${imageFolder}/${index}.webp`);
+                                ext = 'webp';
+                            }
+
                             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                             const blob = await response.blob();
 
-                            // Add to ZIP with a clean filename
-                            zip.file(`Bild_${String(index).padStart(3, '0')}.jpg`, blob);
+                            // Add to ZIP with correct extension
+                            zip.file(`Bild_${String(index).padStart(3, '0')}.${ext}`, blob);
                             addedCount++;
                         } catch (err) {
                             console.error(`Error adding image ${index} to ZIP:`, err);
