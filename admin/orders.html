@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestellungen | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: var(--surface-light);
+        }
+
+        .status-paid {
+            color: var(--success);
+        }
+
+        .status-pending {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Bestellungen</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
+                        Dashboard</a></p>
+            </div>
+            <button onclick="location.reload()" class="btn" style="width: auto;">Aktualisieren</button>
+        </header>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bestell-Nr.</th>
+                        <th>Datum</th>
+                        <th>Paket</th>
+                        <th>Betrag</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTable">
+                    <!-- JS Generated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        async function loadOrders() {
+            try {
+                const response = await fetch('../gallery/data/orders.json');
+                const data = await response.json();
+                const tbody = document.getElementById('ordersTable');
+
+                // Convert object to array if needed, assuming array based on previous files
+                const orders = Array.isArray(data) ? data : (data.orders || []);
+
+                tbody.innerHTML = orders.map(order => `
+                    <tr>
+                        <td>${order.id || order.orderId}</td>
+                        <td>${order.date || new Date().toLocaleDateString()}</td>
+                        <td>${order.package || '-'}</td>
+                        <td>${(order.amount / 100).toFixed(2)} €</td>
+                        <td class="${order.status === 'paid' ? 'status-paid' : 'status-pending'}">
+                            ${order.status === 'paid' ? 'Bezahlt' : 'Offen'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Error loading orders", e);
+            }
+        }
+        loadOrders();
+    </script>
+</body>
+
+</html>

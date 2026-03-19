@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seite nicht gefunden | Photon Capture</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <style>
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .error-code {
+            font-size: 8rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            line-height: 1;
+            filter: drop-shadow(0 0 30px rgba(255, 51, 102, 0.3));
+        }
+
+        .error-message {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin: 1.5rem 0 3rem;
+            max-width: 500px;
+        }
+
+        .shine {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--accent-glow);
+            filter: blur(100px);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse 4s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: scale(1.2);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-page">
+        <div class="shine"></div>
+        <h1 class="error-code">404</h1>
+        <p class="error-message">Hoppla! Die Seite, die du suchst, scheint in einem anderen Licht zu stehen – oder
+            existiert nicht mehr.</p>
+        <a href="index.html" class="cta-button">Zurück zur Startseite</a>
+    </div>
+
+    <!-- Global Scripts for Theme consistency -->
+    <script src="js/main.js"></script>
+</body>
+
+</html>

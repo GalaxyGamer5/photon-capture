@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestellung | Photon Capture</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <!-- Link to Main CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Payment Page Specific Overrides to ensure Glassmorphism works well here */
+        body {
+            padding-top: 100px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge.warning {
+            background: rgba(234, 179, 8, 0.1);
+            color: #efb307;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .status-badge.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            /* Fallback */
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
+        }
+
+        .alert-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar (Simplified) -->
+    <header
+        style="position: fixed; top: 0; left: 0; right: 0; padding: 1.5rem 0; z-index: 100; backdrop-filter: blur(10px); background: rgba(5, 5, 5, 0.8); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="container" style="display: flex; justify-content: center;">
+            <a href="../index.html" class="logo"
+                style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); text-decoration: none;">Photon<span
+                    style="color: var(--accent-color);">-Capture</span></a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="payment-header" style="text-align: center; margin-bottom: 3rem;">
+            <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Deine Bestellung</h1>
+            <p style="color: var(--text-secondary);">Vielen Dank für dein Vertrauen.</p>
+        </div>
+
+        <div id="loading" class="loading" style="text-align: center; padding: 4rem;">
+            <div style="font-size: 1.2rem; color: var(--text-secondary);">Bestellung wird geladen...</div>
+        </div>
+
+        <div id="order-content" style="display: none;">
+            <!-- Order Details -->
+            <div class="glass-card">
+                <h2>Bestelldetails</h2>
+                <div class="order-info">
+                    <div class="info-item">
+                        <span class="info-label">Bestellnummer</span>
+                        <span class="info-value" id="order-id"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Datum</span>
+                        <span class="info-value" id="booking-date"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Service</span>
+                        <span class="info-value" id="service"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Dauer</span>
+                        <span class="info-value" id="duration"></span>
+                    </div>
+                    <div class="info-item" id="extras-item" style="display: none;">
+                        <span class="info-label">Extras</span>
+                        <span class="info-value" id="extras"></span>
+                    </div>
+                    <div class="info-item" style="border-bottom: none; font-size: 1.2rem; margin-top: 1rem;">
+                        <span class="info-label"><strong>Gesamtbetrag</strong></span>
+                        <span class="info-value" id="total-amount" style="color: var(--accent-color);"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section 1: Deposit -->
+            <div class="glass-card">
+                <h2>1. Anzahlung (50€)</h2>
+
+                <div id="deposit-section" class="payment-section">
+                    <div id="deposit-unpaid">
+                        <div class="status-badge warning">Ausstehend</div>
+                        <div class="amount" id="deposit-amount">50,00 €</div>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            Bitte zahle die Anzahlung, um deine Buchung zu bestätigen.
+                        </p>
+
+                        <div class="alert alert-info">
+                            <strong>Bankverbindung:</strong><br>
+                            IBAN: DE89 3704 0044 0532 0130 00<br>
+                            BIC: COBADEFFXXX<br>
+                            Verwendungszweck: <span id="deposit-reference"></span>
+                        </div>
+
+                        <button onclick="payWithStripe('deposit')" class="btn btn-success" style="width: 100%;">
+                            💳 Jetzt mit Kreditkarte bezahlen
+                        </button>
+                    </div>
+
+                    <div id="deposit-paid" style="display: none;">
+                        <div class="status-badge success">✓ Bezahlt</div>
+                        <div class="amount">50,00 €</div>
+                        <p style="color: var(--success-color);">
+                            Anzahlung erhalten am <span id="deposit-paid-date"></span>
+                        </p>
+                        <p style="color: var(--text-secondary); margin-top: 1rem;">
+                            Vielen Dank! Deine Buchung ist bestätigt.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section 2: Final Payment -->
+            <div class="glass-card">
+                <h2>2. Restbetrag</h2>
+
+                <div id="final-section" class="payment-section locked">
+                    <div id="final-locked">
+                        <div class="status-badge">🔒 Gesperrt</div>
+                        <div class="amount" id="final-amount">450,00 €</div>
+                        <p style="color: var(--text-secondary);">
+                            Die Restzahlung wird nach dem Shooting freigeschaltet.
+                        </p>
+                    </div>
+
+                    <div id="final-unlocked" style="display: none;">
+                        <div id="final-unpaid">
+                            <div class="status-badge warning">Ausstehend</div>
+                            <div class="amount" id="final-amount-2">450,00 €</div>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Bitte zahle den Restbetrag, um deine Fotos zu erhalten.
+                            </p>
+
+                            <div class="alert alert-info">
+                                <strong>Bankverbindung:</strong><br>
+                                IBAN: DE89 3704 0044 0532 0130 00<br>
+                                BIC: COBADEFFXXX<br>
+                                Verwendungszweck: <span id="final-reference"></span>
+                            </div>
+
+                            <button onclick="payWithStripe('final')" class="btn btn-success" style="width: 100%;">
+                                💳 Jetzt mit Kreditkarte bezahlen
+                            </button>
+                        </div>
+
+                        <div id="final-paid" style="display: none;">
+                            <div class="status-badge success">✓ Bezahlt</div>
+                            <div class="amount" id="final-amount-3">450,00 €</div>
+                            <p style="color: var(--success-color);">
+                                Restbetrag erhalten am <span id="final-paid-date"></span>
+                            </p>
+                            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                                Vielen Dank! Die Zahlung ist abgeschlossen.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="index.html" class="btn btn-secondary">← Zurück zur Suche</a>
+            </div>
+        </div>
+
+        <div id="error-content" style="display: none;">
+            <div class="error-message">
+                Bestellung nicht gefunden. Bitte überprüfe die Bestellnummer.
+            </div>
+            <div style="text-align: center;">
+                <a href="index.html" class="btn btn-primary">← Zurück zur Suche</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Scripts (Theme, etc) -->
+    <script src="../js/translations.js"></script>
+    <script src="../js/main.js"></script>
+
+    <!-- Payment Specific -->
+    <script src="js/payment-utils.js"></script>
+    <script src="js/payment-client.js"></script>
+    <script>
+        // Get order ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        if (!orderId) {
+            window.location.href = 'index.html';
+        }
+
+        // Load order asynchronously
+        (async function () {
+            try {
+                const order = await getOrder(orderId);
+
+                if (!order) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error-content').style.display = 'block';
+                } else {
+                    displayOrder(order);
+                }
+            } catch (error) {
+                console.error('Error loading order:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-content').style.display = 'block';
+            }
+        })();
+
+        function displayOrder(order) {
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('order-content').style.display = 'block';
+
+            // Fill order details
+            document.getElementById('order-id').textContent = order.orderId;
+            document.getElementById('booking-date').textContent = formatDate(order.bookingDate);
+            document.getElementById('service').textContent = order.service;
+            document.getElementById('duration').textContent = `${order.duration} Stunden`;
+            document.getElementById('total-amount').textContent = formatCurrency(order.totalAmount);
+
+            // Extras
+            if (order.extras && order.extras.length > 0) {
+                document.getElementById('extras-item').style.display = 'flex';
+                document.getElementById('extras').textContent = order.extras.join(', ');
+            }
+
+            // Deposit section
+            document.getElementById('deposit-amount').textContent = formatCurrency(order.depositAmount);
+            document.getElementById('deposit-reference').textContent = order.orderId;
+
+            if (order.depositPaid) {
+                document.getElementById('deposit-unpaid').style.display = 'none';
+                document.getElementById('deposit-paid').style.display = 'block';
+                document.getElementById('deposit-paid-date').textContent = formatDate(order.depositPaidDate);
+                document.getElementById('deposit-section').classList.remove('pending');
+                document.getElementById('deposit-section').classList.add('paid');
+            } else {
+                document.getElementById('deposit-section').classList.add('pending');
+            }
+
+            // Final payment section
+            document.getElementById('final-amount').textContent = formatCurrency(order.finalAmount);
+            document.getElementById('final-amount-2').textContent = formatCurrency(order.finalAmount);
+            document.getElementById('final-amount-3').textContent = formatCurrency(order.finalAmount);
+            document.getElementById('final-reference').textContent = order.orderId;
+
+            if (order.finalPaymentUnlocked) {
+                document.getElementById('final-locked').style.display = 'none';
+                document.getElementById('final-unlocked').style.display = 'block';
+                document.getElementById('final-section').classList.remove('locked');
+
+                if (order.finalPaid) {
+                    document.getElementById('final-unpaid').style.display = 'none';
+                    document.getElementById('final-paid').style.display = 'block';
+                    document.getElementById('final-paid-date').textContent = formatDate(order.finalPaidDate);
+                    document.getElementById('final-section').classList.add('paid');
+                } else {
+                    document.getElementById('final-section').classList.add('pending');
+                }
+            }
+        }
+
+        function markDepositAsPaid() {
+            if (confirm('Hinweis: Du wirst zur Stripe-Zahlung weitergeleitet.')) {
+                payWithStripe('deposit');
+            }
+        }
+
+        function markFinalAsPaid() {
+            if (confirm('Hinweis: Du wirst zur Stripe-Zahlung weitergeleitet.')) {
+                payWithStripe('final');
+            }
+        }
+
+        // Stripe Payment Integration
+        async function payWithStripe(paymentType) {
+            try {
+                // Show loading state
+                const button = event.target;
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Lade...';
+
+                // Call backend to create checkout session
+                const response = await fetch('api/create-checkout.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        paymentType: paymentType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+                // Redirect to Stripe Checkout
+                window.location.href = data.url;
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Fehler beim Laden der Zahlung: ' + error.message);
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

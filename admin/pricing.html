@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preise Verwalten | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .pricing-admin-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .package-card {
+            background: var(--surface-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .features-list {
+            margin-top: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--border-color);
+        }
+        .feature-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+        .feature-item input {
+            flex: 1;
+        }
+        .btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-small:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-delete { background: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
+        .btn-delete:hover { background: rgba(255, 77, 77, 0.3); }
+        
+        #save-status {
+            text-align: right;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Preise Verwalten</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum Dashboard</a></p>
+            </div>
+            <button onclick="savePricingData()" class="btn">Änderungen Speichern</button>
+        </header>
+
+        <div class="pricing-admin-container" id="editor-container">
+            <div style="text-align: center; padding: 2rem;">Lade Daten...</div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        let pricingData = null;
+        const container = document.getElementById('editor-container');
+
+        async function loadPricing() {
+            try {
+                const res = await fetch('../api/get-pricing.php');
+                pricingData = await res.json();
+                renderEditor();
+            } catch (e) {
+                container.innerHTML = '<div style="color: red;">Fehler beim Laden.</div>';
+            }
+        }
+
+        function renderEditor() {
+            if (!pricingData) return;
+
+            let html = `<h2>Standard Pakete</h2>`;
+            
+            pricingData.packages.forEach((pkg, pkgIndex) => {
+                html += `
+                <div class="package-card" data-pkg-index="${pkgIndex}">
+                    <h3>Paket: ${pkg.id}</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Titel (DE)</label>
+                            <input type="text" value="${pkg.title.de}" onchange="updatePkg(${pkgIndex}, 'title', 'de', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Titel (EN)</label>
+                            <input type="text" value="${pkg.title.en}" onchange="updatePkg(${pkgIndex}, 'title', 'en', this.value)">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Preis (z.B. 125€)</label>
+                            <input type="text" value="${pkg.price}" onchange="updatePkgVal(${pkgIndex}, 'price', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Einheit (DE) (z.B. /Stunde)</label>
+                            <input type="text" value="${pkg.priceUnit.de || ''}" onchange="updatePkg(${pkgIndex}, 'priceUnit', 'de', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Einheit (EN) (z.B. /hour)</label>
+                            <input type="text" value="${pkg.priceUnit.en || ''}" onchange="updatePkg(${pkgIndex}, 'priceUnit', 'en', this.value)">
+                        </div>
+                    </div>
+                    
+                    <h4>Features</h4>
+                    <div class="features-list">
+                `;
+
+                pkg.features.forEach((feat, featIndex) => {
+                    html += `
+                        <div class="feature-item">
+                            <input type="text" placeholder="DE" value="${feat.de}" onchange="updateFeat(${pkgIndex}, ${featIndex}, 'de', this.value)">
+                            <input type="text" placeholder="EN" value="${feat.en}" onchange="updateFeat(${pkgIndex}, ${featIndex}, 'en', this.value)">
+                            <button class="btn-small btn-delete" onclick="removeFeature(${pkgIndex}, ${featIndex})">X</button>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        <div style="margin-top: 1rem;">
+                            <button class="btn-small" onclick="addFeature(${pkgIndex})">+ Feature Hinzufügen</button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            // Custom Request Section
+            html += `
+                <h2 style="margin-top: 3rem;">Individuelle Anfrage (Custom)</h2>
+                <div class="package-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Titel (DE)</label>
+                            <input type="text" value="${pricingData.custom.title.de}" onchange="updateCustom('title', 'de', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Titel (EN)</label>
+                            <input type="text" value="${pricingData.custom.title.en}" onchange="updateCustom('title', 'en', this.value)">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Text (DE)</label>
+                            <textarea rows="3" onchange="updateCustom('desc', 'de', this.value)">${pricingData.custom.desc.de}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Text (EN)</label>
+                            <textarea rows="3" onchange="updateCustom('desc', 'en', this.value)">${pricingData.custom.desc.en}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Button Text (DE)</label>
+                            <input type="text" value="${pricingData.custom.btn.de}" onchange="updateCustom('btn', 'de', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Button Text (EN)</label>
+                            <input type="text" value="${pricingData.custom.btn.en}" onchange="updateCustom('btn', 'en', this.value)">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            html += `<div id="save-status"></div>`;
+            container.innerHTML = html;
+        }
+
+        // Updaters
+        window.updatePkgVal = (pkgIndex, prop, val) => { pricingData.packages[pkgIndex][prop] = val; }
+        window.updatePkg = (pkgIndex, prop, lang, val) => { pricingData.packages[pkgIndex][prop][lang] = val; }
+        window.updateFeat = (pkgIndex, featIndex, lang, val) => { pricingData.packages[pkgIndex].features[featIndex][lang] = val; }
+        window.removeFeature = (pkgIndex, featIndex) => { 
+            pricingData.packages[pkgIndex].features.splice(featIndex, 1);
+            renderEditor();
+        }
+        window.addFeature = (pkgIndex) => {
+            pricingData.packages[pkgIndex].features.push({de: "", en: ""});
+            renderEditor();
+        }
+        window.updateCustom = (prop, lang, val) => { pricingData.custom[prop][lang] = val; }
+
+        async function savePricingData() {
+            const statusLabel = document.getElementById('save-status');
+            statusLabel.textContent = "Speichere...";
+            statusLabel.style.color = "var(--text-primary)";
+
+            try {
+                const res = await fetch('api/manage-pricing.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pricingData)
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    statusLabel.textContent = "Erfolgreich gespeichert!";
+                    statusLabel.style.color = "#4caf50";
+                } else {
+                    statusLabel.textContent = "Fehler: " + result.error;
+                    statusLabel.style.color = "#ff4d4d";
+                }
+            } catch (e) {
+                statusLabel.textContent = "Netzwerkfehler.";
+                statusLabel.style.color = "#ff4d4d";
+            }
+            
+            setTimeout(() => { if(statusLabel) statusLabel.textContent = ''; }, 3000);
+        }
+
+        loadPricing();
+    </script>
+</body>
+</html>

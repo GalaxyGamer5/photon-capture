@@ -1,0 +1,11 @@
+# Block ALL direct HTTP access to data files
+# Only server-side PHP scripts can read these files
+<FilesMatch "\.(json|js)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

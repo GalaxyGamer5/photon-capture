@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Benutzer | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .user-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .user-card {
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Galerie Benutzer</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
+                        Dashboard</a></p>
+            </div>
+            <button onclick="showAddUser()" class="btn" style="width: auto;">+ Neuer Benutzer</button>
+        </header>
+
+        <div class="user-list" id="userList">
+            <!-- JS Generated -->
+        </div>
+
+        <!-- Simple Add User Modal (Hardcoded for simplicity in this file) -->
+        <div id="addUserForm"
+            style="display:none; background: var(--surface-dark); padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+            <h3>Neuen Benutzer anlegen</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newUserName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="newUserUsername" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Passwort</label>
+                <input type="text" id="newUserPassword" class="form-control" placeholder="Passwort eingeben">
+                <small style="color: var(--text-secondary)">Wird automatisch verschlüsselt (SHA1)</small>
+            </div>
+            <button onclick="addUser()" class="btn">Hinzufügen</button>
+            <button onclick="document.getElementById('addUserForm').style.display='none'" class="btn"
+                style="background: transparent; border: 1px solid var(--border); margin-top: 0.5rem;">Abbrechen</button>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        let usersData = { users: [] };
+        let favoritesData = {};
+
+        // Simple SHA-1 function (same as in main.js)
+        async function sha1(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('api/get_users.php');
+                const text = await response.text();
+                // Extract JSON part from "window.usersDatabase = { ... };"
+                const jsonStr = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/)[1];
+                usersData = JSON.parse(jsonStr);
+
+                // Fetch Favorites
+                try {
+                    const favRes = await fetch('../gallery/data/favorites.json');
+                    if (favRes.ok) {
+                        favoritesData = await favRes.json();
+                    }
+                } catch(e) { console.log('No favorites found'); }
+
+                renderUsers();
+            } catch (e) {
+                console.error("Error loading users", e);
+            }
+        }
+
+        function renderUsers() {
+            const container = document.getElementById('userList');
+            container.innerHTML = usersData.users.map((user, index) => {
+                const userFavs = favoritesData[user.username] || [];
+                const favCount = userFavs.length;
+                let favHtml = '';
+                
+                if (favCount > 0) {
+                    favHtml = `<div style="margin-top: 0.5rem; color: #ff4d4d; font-size: 0.85rem; font-weight: 500;">
+                        ❤️ ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg','')).join(', ')}
+                    </div>`;
+                }
+
+                return `
+                <div class="user-card">
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">${user.name}</h3>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Username: ${user.username} <br>
+                            Folder: ${user.folder}
+                        </div>
+                        ${favHtml}
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; margin-bottom: 0.5rem; color: var(--accent);">${user.imageCount} Bilder</span>
+                        <button onclick="deleteUser(${index})" class="btn" style="background: rgba(255, 77, 77, 0.2); color: var(--danger); font-size: 0.8rem; padding: 0.5rem;">Löschen</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function showAddUser() {
+            document.getElementById('addUserForm').style.display = 'block';
+        }
+
+        async function addUser() {
+            const name = document.getElementById('newUserName').value;
+            const username = document.getElementById('newUserUsername').value;
+            const password = document.getElementById('newUserPassword').value;
+
+            if (name && username && password) {
+                const hash = await sha1(password);
+
+                usersData.users.push({
+                    id: Date.now().toString(),
+                    username: username,
+                    passwordHash: hash,
+                    name: name,
+                    folder: username + '-gallery',
+                    imageCount: 0
+                });
+                renderUsers();
+                document.getElementById('addUserForm').style.display = 'none';
+                saveUsers();
+
+                // Reset form
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserUsername').value = '';
+                document.getElementById('newUserPassword').value = '';
+            } else {
+                alert("Bitte alle Felder ausfüllen");
+            }
+        }
+
+        function deleteUser(index) {
+            if (confirm('Benutzer wirklich löschen?')) {
+                usersData.users.splice(index, 1);
+                renderUsers();
+                saveUsers();
+            }
+        }
+
+        async function saveUsers() {
+            try {
+                const response = await fetch('api/save_users.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usersData)
+                });
+
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server Return Invalid JSON: ' + text.substring(0, 100)); // Show start of error
+                }
+
+                if (result.success) {
+                    console.log("Users saved successfully");
+                } else {
+                    alert("Server Error: " + (result.message || "Unknown Error"));
+                }
+            } catch (e) {
+                console.error("Save error", e);
+                alert("Fehler: " + e.message);
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+
+</html>

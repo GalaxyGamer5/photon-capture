@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Photon Capture</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <a href="#" class="logo">Photon<span>-Admin</span></a>
+
+            <div id="error-msg" class="error-message">
+                Zugriff verweigert
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Administrator Passwort</label>
+                    <input type="password" id="password" class="form-control" placeholder="Passwort eingeben" required
+                        autofocus>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorMsg = document.getElementById('error-msg');
+
+        // Check if already logged in
+        if (sessionStorage.getItem('photon_admin_auth') === 'true') {
+            window.location.href = 'dashboard.html';
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+
+            // Simple client-side check for this static setup
+            // In a real PHP environment, this would post to an API
+            if (password === 'photon2024') {
+                sessionStorage.setItem('photon_admin_auth', 'true');
+                window.location.href = 'dashboard.html';
+            } else {
+                errorMsg.style.display = 'block';
+                form.reset();
+            }
+        });
+    </script>
+</body>
+
+</html>

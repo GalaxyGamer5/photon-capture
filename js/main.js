@@ -1,6 +1,101 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Randomize Gallery Items ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Load Dynamic Portfolio ---
     const galleryGrid = document.querySelector('.gallery-grid');
+    if (galleryGrid) {
+        try {
+            const response = await fetch('api/get-portfolio.php');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.images && data.images.length > 0) {
+                    galleryGrid.innerHTML = '';
+                    data.images.forEach(img => {
+                        const div = document.createElement('div');
+                        div.className = 'gallery-item show';
+                        div.setAttribute('data-category', img.category);
+                        const image = document.createElement('img');
+                        image.src = `assets/portfolio/${img.filename}`;
+                        image.alt = img.category;
+                        image.loading = 'lazy';
+                        div.appendChild(image);
+                        galleryGrid.appendChild(div);
+                    });
+                }
+            }
+        } catch(e) { console.error("Error loading dynamic portfolio:", e); }
+    }
+
+    // --- Load Dynamic Pricing ---
+    const pricingGrid = document.getElementById('pricing-grid-container');
+    const customReq = document.getElementById('custom-request-container');
+    let loadedPricingData = null;
+
+    async function fetchPricing() {
+        if (!pricingGrid || !customReq) return;
+        try {
+            const res = await fetch('api/get-pricing.php');
+            if (res.ok) {
+                loadedPricingData = await res.json();
+                renderPricing();
+            }
+        } catch(e) { console.error("Error loading pricing:", e); }
+    }
+
+    function renderPricing() {
+        if (!loadedPricingData || !pricingGrid || !customReq) return;
+        const lang = localStorage.getItem('preferredLang') || 'de';
+        
+        // Render Packages
+        pricingGrid.innerHTML = '';
+        if (loadedPricingData.packages) {
+            loadedPricingData.packages.forEach(pkg => {
+                const card = document.createElement('div');
+                card.className = 'pricing-card';
+                
+                let featuresHtml = '';
+                pkg.features.forEach(feat => {
+                    if (feat[lang]) {
+                        featuresHtml += `<li>${feat[lang]}</li>`;
+                    }
+                });
+
+                const unitHtml = pkg.priceUnit[lang] ? `<span>${pkg.priceUnit[lang]}</span>` : '';
+                const customizeText = lang === 'en' ? 'Customize Package (Extras)' : 'Paket anpassen (Extras)';
+                const btnText = lang === 'en' ? 'Send Request' : 'Anfrage senden';
+
+                card.innerHTML = `
+                    <h3>${pkg.title[lang]}</h3>
+                    <div class="price">${pkg.price}${unitHtml}</div>
+                    <ul class="pricing-features">
+                        ${featuresHtml}
+                    </ul>
+                    <a href="javascript:void(0)" class="customize-link" data-package="${pkg.id}">${customizeText}</a>
+                    <a href="${pkg.buttonUrl}" class="cta-button" style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);">${btnText}</a>
+                `;
+                pricingGrid.appendChild(card);
+            });
+        }
+
+        // Render Custom Request
+        if (loadedPricingData.custom) {
+            const cust = loadedPricingData.custom;
+            customReq.innerHTML = `
+                <h3 style="margin-bottom: 0.5rem;">${cust.title[lang]}</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    ${cust.desc[lang]}
+                </p>
+                <a href="${cust.buttonUrl}" class="cta-button" style="background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary);">
+                    ${cust.btn[lang]}
+                </a>
+            `;
+        }
+    }
+
+    fetchPricing();
+    
+    // Listen for language changes to re-render texts
+    window.addEventListener('languageChanged', renderPricing);
+
+    // --- Randomize Gallery Items ---
     if (galleryGrid) {
         const items = Array.from(galleryGrid.children);
 
@@ -59,27 +154,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Parallax Scrolling ---
-    const hero = document.querySelector('.hero');
+    // --- Parallax Scrolling ---
+    const heroBg = document.querySelector('.hero-bg');
+    const heroContent = document.querySelector('.hero-content');
+
+    // Use requestAnimationFrame for smoother performance
+    let lastScrollY = window.pageYOffset;
+    let ticking = false;
 
     window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const parallaxSpeed = 0.5;
-
-        if (hero && scrolled < window.innerHeight) {
-            hero.style.transform = `translateY(${scrolled * parallaxSpeed}px)`;
+        lastScrollY = window.pageYOffset;
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                const scrolled = lastScrollY;
+                if (scrolled < window.innerHeight) {
+                    if (heroBg) {
+                        // Background moves slower for depth
+                        heroBg.style.transform = `translate3d(0, ${scrolled * 0.2}px, 0)`;
+                    }
+                    if (heroContent) {
+                        // Content moves faster and fades out
+                        heroContent.style.transform = `translate3d(0, ${scrolled * 0.4}px, 0)`;
+                        heroContent.style.opacity = Math.max(0, 1 - (scrolled / 600));
+                    }
+                }
+                ticking = false;
+            });
+            ticking = true;
         }
-    });
+    }, { passive: true });
 
-    // --- FAQ Accordion ---
-    const faqQuestions = document.querySelectorAll('.faq-question');
+    // --- Load Dynamic FAQ ---
+    const faqContainer = document.getElementById('faq-container');
+    let loadedFaqData = null;
 
-    faqQuestions.forEach(question => {
-        question.addEventListener('click', () => {
-            const faqItem = question.parentElement;
+    async function fetchFaq() {
+        if (!faqContainer) return;
+        try {
+            const res = await fetch('api/get-faq.php');
+            if (res.ok) {
+                loadedFaqData = await res.json();
+                renderFaq();
+            }
+        } catch(e) { console.error("Error loading FAQ:", e); }
+    }
+
+    function renderFaq() {
+        if (!loadedFaqData || !loadedFaqData.items || !faqContainer) return;
+        const lang = localStorage.getItem('preferredLang') || 'de';
+        
+        faqContainer.innerHTML = '';
+        loadedFaqData.items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'faq-item';
+            div.innerHTML = `
+                <button class="faq-question">
+                    <span>${item.q[lang]}</span>
+                    <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="faq-answer">
+                    <p>${item.a[lang]}</p>
+                </div>
+            `;
+            faqContainer.appendChild(div);
+        });
+    }
+
+    fetchFaq();
+    window.addEventListener('languageChanged', renderFaq);
+
+    // --- FAQ Accordion Event Delegation ---
+    if (faqContainer) {
+        faqContainer.addEventListener('click', (e) => {
+            const questionBtn = e.target.closest('.faq-question');
+            if (!questionBtn) return;
+            
+            const faqItem = questionBtn.parentElement;
             const isActive = faqItem.classList.contains('active');
 
             // Close all other FAQ items
-            document.querySelectorAll('.faq-item').forEach(item => {
+            faqContainer.querySelectorAll('.faq-item').forEach(item => {
                 item.classList.remove('active');
             });
 
@@ -88,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 faqItem.classList.add('active');
             }
         });
-    });
+    }
 
     // --- Mobile Menu Toggle ---
     const hamburger = document.querySelector('.hamburger');
@@ -120,6 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         localStorage.setItem('preferredLang', lang);
         currentLang = lang;
+
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('languageChanged', {
+            detail: { language: lang }
+        }));
     };
 
     // Expose updateContent to global scope for other scripts
@@ -238,20 +399,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const row2 = document.getElementById('gallery-row-2');
 
         if (!row1 || !row2) {
+            // Check if we even have a gallery to build upon
+            const galleryGrid = document.querySelector('.gallery-grid');
+            if (!galleryGrid) return; // Exit if no gallery grid exists (e.g. payment page)
+
             // If carousel rows don't exist, create them
             const wrapper = document.querySelector('.gallery-carousel-wrapper');
             if (!wrapper) {
-                const galleryGrid = document.querySelector('.gallery-grid');
-                if (galleryGrid) {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'gallery-carousel-wrapper';
-                    wrapper.innerHTML = `
-                        <div class="gallery-row gallery-row-right" id="gallery-row-1"></div>
-                        <div class="gallery-row gallery-row-left" id="gallery-row-2"></div>
-                    `;
-                    galleryGrid.parentNode.insertBefore(wrapper, galleryGrid);
-                    galleryGrid.style.display = 'none';
-                }
+                const wrapper = document.createElement('div');
+                wrapper.className = 'gallery-carousel-wrapper';
+                wrapper.innerHTML = `
+                    <div class="gallery-row gallery-row-right" id="gallery-row-1"></div>
+                    <div class="gallery-row gallery-row-left" id="gallery-row-2"></div>
+                `;
+                galleryGrid.parentNode.insertBefore(wrapper, galleryGrid);
+                galleryGrid.style.display = 'none';
             }
             // Try again after creation
             initializeCarousel(filterValue);
@@ -337,9 +499,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (lightbox && lightboxImg) {
             // Update visible images list to match the current carousel content (unique items)
-            // We use the src to find the index in the unique list
-            visibleImages = currentUniqueItems;
-            currentImageIndex = visibleImages.findIndex(item => item.querySelector('img').src === img.src);
+            // Map to img elements to be consistent with grid logic
+            visibleImages = currentUniqueItems.map(item => item.querySelector('img'));
+
+            // Find index by matching src
+            currentImageIndex = visibleImages.findIndex(item => item.src === img.src);
 
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -395,11 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
         visibleImages = Array.from(galleryImages).filter(img => {
             const item = img.closest('.gallery-item');
             // Check if the item is currently displayed (not hidden by filter)
-            return item.style.display !== 'none';
+            // Use class check instead of style.display for consistency
+            return !item.classList.contains('hide');
         });
     }
 
-    // Open lightbox
+    // Open lightbox (Grid Click Handler)
     galleryImages.forEach((img, index) => {
         img.addEventListener('click', (e) => {
             updateVisibleImages();
@@ -456,8 +621,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentImageIndex < 0) currentImageIndex = visibleImages.length - 1;
         if (currentImageIndex >= visibleImages.length) currentImageIndex = 0;
 
-        const item = visibleImages[currentImageIndex];
-        const img = item.querySelector('img');
+        const img = visibleImages[currentImageIndex];
+        // Note: img is now directly the image element, no querySelector needed
 
         // Reset any inline styles from hero animation
         lightboxImg.style.transform = '';
@@ -567,22 +732,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('customization-modal');
     const modalText = document.getElementById('modal-text');
     const closeBtn = document.querySelector('.modal-close');
-    const customizeLinks = document.querySelectorAll('.customize-link');
 
     if (modal && modalText && closeBtn) {
-        customizeLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
+        document.body.addEventListener('click', (e) => {
+            if (e.target.classList.contains('customize-link')) {
                 e.preventDefault();
-                const packageType = link.getAttribute('data-package');
+                const packageType = e.target.getAttribute('data-package');
                 const translationKey = `pricing.extras.${packageType}`;
-
-                // Get translation based on current language
-                // Use the currentLang variable from the outer scope
                 const text = translations[currentLang] ? translations[currentLang][translationKey] : '';
-
-                modalText.textContent = text;
+                modalText.textContent = text || (currentLang === 'en' ? 'No extras available.' : 'Keine Extras verfügbar.');
                 modal.classList.add('active');
-            });
+            }
         });
 
         closeBtn.addEventListener('click', () => {
@@ -604,6 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cookieBanner = document.getElementById('cookie-banner');
     const acceptCookiesBtn = document.getElementById('accept-cookies');
     const declineCookiesBtn = document.getElementById('decline-cookies');
+    const cookieSettingsBtn = document.getElementById('cookie-settings');
 
     if (cookieBanner) {
         // Check if user has already made a choice
@@ -617,13 +778,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         acceptCookiesBtn.addEventListener('click', () => {
-            localStorage.setItem('cookieConsent', 'accepted');
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.acceptAll();
+            } else {
+                localStorage.setItem('cookieConsent', 'accepted');
+            }
             cookieBanner.classList.remove('show');
         });
 
         declineCookiesBtn.addEventListener('click', () => {
-            localStorage.setItem('cookieConsent', 'declined');
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.declineAll();
+            } else {
+                localStorage.setItem('cookieConsent', 'declined');
+            }
             cookieBanner.classList.remove('show');
+        });
+
+        cookieSettingsBtn.addEventListener('click', () => {
+            if (typeof CookieManager !== 'undefined') {
+                CookieManager.showSettings();
+                cookieBanner.classList.remove('show');
+            }
+        });
+    }
+
+    // --- Image Protection ---
+    // Protect gallery images from right-click saving and dragging
+    const protectImages = () => {
+        // Select all images in gallery (both grid and carousel)
+        const allGalleryImages = document.querySelectorAll('.gallery-item img, .gallery-row img, #lightbox-img');
+
+        allGalleryImages.forEach(img => {
+            // Disable right-click context menu
+            img.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showProtectionMessage();
+                return false;
+            });
+
+            // Disable drag-and-drop
+            img.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            // Add CSS protection attributes
+            img.style.userSelect = 'none';
+            img.style.webkitUserSelect = 'none';
+            img.style.mozUserSelect = 'none';
+            img.style.msUserSelect = 'none';
+            img.setAttribute('draggable', 'false');
+        });
+    };
+
+    // Show protection message when user tries to save
+    let protectionMessageTimeout;
+    const showProtectionMessage = () => {
+        // Create message if it doesn't exist
+        let message = document.getElementById('image-protection-message');
+        if (!message) {
+            message = document.createElement('div');
+            message.id = 'image-protection-message';
+            message.className = 'image-protection-message';
+            message.innerHTML = '📷 Image protection active';
+            document.body.appendChild(message);
+        }
+
+        // Show message
+        message.classList.add('show');
+
+        // Hide after 2 seconds
+        clearTimeout(protectionMessageTimeout);
+        protectionMessageTimeout = setTimeout(() => {
+            message.classList.remove('show');
+        }, 2000);
+    };
+
+    // Initial protection
+    protectImages();
+
+    // Re-apply protection after dynamic content loads (carousel)
+    const protectionObserver = new MutationObserver(() => {
+        protectImages();
+    });
+
+    // Observe gallery carousel for new images
+    const carouselWrapper = document.querySelector('.gallery-carousel-wrapper');
+    if (carouselWrapper) {
+        protectionObserver.observe(carouselWrapper, {
+            childList: true,
+            subtree: true
         });
     }
 });

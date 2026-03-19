@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posteingang | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        .inbox-layout {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            height: calc(100vh - 80px);
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+
+        /* --- Left Panel: Message List --- */
+        .inbox-list {
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--surface-dark);
+        }
+
+        .inbox-list-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .inbox-list-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .unread-badge {
+            background: var(--accent);
+            color: #000;
+            border-radius: 99px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .inbox-messages {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .inbox-messages::-webkit-scrollbar { width: 4px; }
+        .inbox-messages::-webkit-scrollbar-track { background: transparent; }
+        .inbox-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .msg-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+        }
+
+        .msg-item:hover { background: rgba(255,255,255,0.04); }
+        .msg-item.active { background: rgba(0,242,255,0.07); border-left: 3px solid var(--accent); }
+
+        .msg-item.unread .msg-sender {
+            font-weight: 700;
+        }
+
+        .msg-unread-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            right: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .msg-sender {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 1rem;
+        }
+
+        .msg-subject {
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .msg-preview {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .msg-date {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+        }
+
+        /* --- Right Panel: Message Detail --- */
+        .inbox-detail {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .detail-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            gap: 1rem;
+            font-size: 1rem;
+        }
+
+        .detail-placeholder svg { opacity: 0.2; }
+
+        .detail-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .detail-header h2 {
+            font-size: 1.1rem;
+            margin: 0 0 0.5rem;
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-meta a { color: var(--accent); text-decoration: none; }
+        .detail-meta a:hover { text-decoration: underline; }
+
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .detail-actions {
+            padding: 1rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .btn-reply {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .btn-reply:hover { opacity: 0.85; }
+
+        .btn-delete-detail {
+            background: transparent;
+            color: #ff4d4d;
+            border: 1px solid rgba(255,77,77,0.3);
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-delete-detail:hover { background: rgba(255,77,77,0.1); }
+
+        .empty-list {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .inbox-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: 260px 1fr;
+            }
+            .inbox-list { border-right: none; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Posteingang <span id="unread-count-badge" class="unread-badge" style="display:none;"></span></h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum Dashboard</a></p>
+            </div>
+            <button onclick="loadInquiries()" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">
+                Aktualisieren
+            </button>
+        </header>
+
+        <div class="inbox-layout">
+            <!-- Left: Message List -->
+            <div class="inbox-list">
+                <div class="inbox-list-header">
+                    <h2>Nachrichten</h2>
+                </div>
+                <div class="inbox-messages" id="inbox-messages">
+                    <div class="empty-list">Lade Nachrichten...</div>
+                </div>
+            </div>
+
+            <!-- Right: Detail View -->
+            <div class="inbox-detail" id="inbox-detail">
+                <div class="detail-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <p>Wähle eine Nachricht aus</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        let allInquiries = [];
+        let activeId = null;
+
+        async function loadInquiries() {
+            document.getElementById('inbox-messages').innerHTML = '<div class="empty-list">Lade Nachrichten...</div>';
+            try {
+                const res = await fetch('api/get-inquiries.php');
+                const data = await res.json();
+                if (data.success) {
+                    allInquiries = data.inquiries;
+                    renderList();
+                    // Reopen active message if still present
+                    if (activeId) {
+                        const found = allInquiries.find(i => i.id === activeId);
+                        if (found) openMessage(found, false);
+                    }
+                } else {
+                    document.getElementById('inbox-messages').innerHTML = '<div class="empty-list" style="color:#ff4d4d;">Fehler beim Laden.</div>';
+                }
+            } catch (e) {
+                document.getElementById('inbox-messages').innerHTML = '<div class="empty-list" style="color:#ff4d4d;">Netzwerkfehler.</div>';
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('inbox-messages');
+            const unreadCount = allInquiries.filter(i => i.unread).length;
+
+            const badge = document.getElementById('unread-count-badge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (allInquiries.length === 0) {
+                container.innerHTML = '<div class="empty-list">Noch keine Nachrichten.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            allInquiries.forEach(inq => {
+                const dateObj = new Date(inq.date);
+                const now = new Date();
+                let dateStr;
+                if (dateObj.toDateString() === now.toDateString()) {
+                    dateStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    dateStr = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                }
+
+                const isUnread = inq.unread === true;
+                const preview = (inq.message || '').replace(/\n/g, ' ').substring(0, 60);
+
+                const item = document.createElement('div');
+                item.className = `msg-item ${isUnread ? 'unread' : ''} ${inq.id === activeId ? 'active' : ''}`;
+                item.dataset.id = inq.id;
+                item.innerHTML = `
+                    <div class="msg-date">${dateStr}</div>
+                    <div class="msg-sender">${escHtml(inq.name)}</div>
+                    <div class="msg-subject">${escHtml(inq.service)}</div>
+                    <div class="msg-preview">${escHtml(preview)}${preview.length >= 60 ? '…' : ''}</div>
+                    ${isUnread ? '<div class="msg-unread-dot"></div>' : ''}
+                `;
+                item.addEventListener('click', () => openMessage(inq, true));
+                container.appendChild(item);
+            });
+        }
+
+        async function openMessage(inq, markRead) {
+            activeId = inq.id;
+
+            // Mark active in list
+            document.querySelectorAll('.msg-item').forEach(el => el.classList.remove('active'));
+            const activeEl = document.querySelector(`.msg-item[data-id="${inq.id}"]`);
+            if (activeEl) activeEl.classList.add('active');
+
+            // Mark read on server
+            if (markRead && inq.unread) {
+                inq.unread = false;
+                if (activeEl) {
+                    activeEl.classList.remove('unread');
+                    const dot = activeEl.querySelector('.msg-unread-dot');
+                    if (dot) dot.remove();
+                    const sender = activeEl.querySelector('.msg-sender');
+                    if (sender) sender.style.fontWeight = '';
+                }
+                const unreadNow = allInquiries.filter(i => i.unread).length;
+                const badge = document.getElementById('unread-count-badge');
+                if (unreadNow > 0) { badge.textContent = unreadNow; }
+                else { badge.style.display = 'none'; }
+
+                fetch('api/mark-inquiry-read.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: inq.id })
+                }).catch(() => {});
+            }
+
+            const dateObj = new Date(inq.date);
+            const dateStr = dateObj.toLocaleString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('inbox-detail').innerHTML = `
+                <div class="detail-header">
+                    <h2>${escHtml(inq.service)}</h2>
+                    <div class="detail-meta">
+                        <span>Von: <strong>${escHtml(inq.name)}</strong></span>
+                        <span>📧 <a href="mailto:${escHtml(inq.email)}">${escHtml(inq.email)}</a></span>
+                        <span>🕐 ${dateStr}</span>
+                    </div>
+                </div>
+                <div class="detail-body">${escHtml(inq.message || 'Keine Nachricht.')}</div>
+                <div class="detail-actions">
+                    <a href="mailto:${escHtml(inq.email)}?subject=Re: ${encodeURIComponent(inq.service)}" class="btn-reply">✉️ Antworten</a>
+                    <button class="btn-delete-detail" onclick="deleteInquiry('${escHtml(inq.id)}')">Löschen</button>
+                </div>
+            `;
+        }
+
+        async function deleteInquiry(id) {
+            if (!confirm('Diese Nachricht wirklich endgültig löschen?')) return;
+            try {
+                const res = await fetch('api/delete-inquiry.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    activeId = null;
+                    document.getElementById('inbox-detail').innerHTML = `
+                        <div class="detail-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <p>Wähle eine Nachricht aus</p>
+                        </div>`;
+                    loadInquiries();
+                } else {
+                    alert('Fehler: ' + result.error);
+                }
+            } catch (e) {
+                alert('Netzwerkfehler beim Löschen.');
+            }
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        loadInquiries();
+    </script>
+</body>
+</html>

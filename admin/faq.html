@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Verwalten | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .faq-admin-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .faq-card {
+            background: var(--surface-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-small:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-delete { background: rgba(255, 77, 77, 0.2); color: #ff4d4d; position: absolute; top: 1rem; right: 1rem; }
+        .btn-delete:hover { background: rgba(255, 77, 77, 0.3); }
+        
+        #save-status {
+            text-align: right;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>FAQ Verwalten</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum Dashboard</a></p>
+            </div>
+            <button onclick="saveFaqData()" class="btn">Änderungen Speichern</button>
+        </header>
+
+        <div class="faq-admin-container" id="editor-container">
+            <div style="text-align: center; padding: 2rem;">Lade Daten...</div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        let faqData = null;
+        const container = document.getElementById('editor-container');
+
+        async function loadFaq() {
+            try {
+                const res = await fetch('../api/get-faq.php');
+                faqData = await res.json();
+                renderEditor();
+            } catch (e) {
+                container.innerHTML = '<div style="color: red;">Fehler beim Laden.</div>';
+            }
+        }
+
+        function renderEditor() {
+            if (!faqData) return;
+
+            let html = `
+                <div class="faq-card">
+                    <h3>Allgemeiner Titel</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Titel (DE)</label>
+                            <input type="text" value="${faqData.title.de}" onchange="faqData.title.de = this.value">
+                        </div>
+                        <div class="form-group">
+                            <label>Titel (EN)</label>
+                            <input type="text" value="${faqData.title.en}" onchange="faqData.title.en = this.value">
+                        </div>
+                    </div>
+                </div>
+                <h2 style="margin-top: 2rem; margin-bottom: 1rem;">Fragen & Antworten</h2>
+                <div id="faq-items-list">
+            `;
+            
+            faqData.items.forEach((item, index) => {
+                html += `
+                <div class="faq-card">
+                    <button class="btn-small btn-delete" onclick="removeFaq(${index})">Löschen</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Frage (DE)</label>
+                            <input type="text" value="${item.q.de}" onchange="updateFaq(${index}, 'q', 'de', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Frage (EN)</label>
+                            <input type="text" value="${item.q.en}" onchange="updateFaq(${index}, 'q', 'en', this.value)">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Antwort (DE)</label>
+                            <textarea rows="3" onchange="updateFaq(${index}, 'a', 'de', this.value)">${item.a.de}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Antwort (EN)</label>
+                            <textarea rows="3" onchange="updateFaq(${index}, 'a', 'en', this.value)">${item.a.en}</textarea>
+                        </div>
+                    </div>
+                    <!-- Draggable handle could go here for reordering -->
+                </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <button class="btn-small" onclick="addFaq()" style="margin-top: 1rem; width: 100%; padding: 1rem;">+ Neue Frage hinzufügen</button>
+                <div id="save-status"></div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        window.updateFaq = (index, prop, lang, val) => {
+            faqData.items[index][prop][lang] = val;
+        }
+
+        window.removeFaq = (index) => {
+            if (confirm("Wirklich löschen?")) {
+                faqData.items.splice(index, 1);
+                renderEditor();
+            }
+        }
+
+        window.addFaq = () => {
+            faqData.items.push({
+                id: 'faq_' + Date.now(),
+                q: { de: "", en: "" },
+                a: { de: "", en: "" }
+            });
+            renderEditor();
+        }
+
+        async function saveFaqData() {
+            const statusLabel = document.getElementById('save-status');
+            statusLabel.textContent = "Speichere...";
+            statusLabel.style.color = "var(--text-primary)";
+
+            try {
+                const res = await fetch('api/manage-faq.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(faqData)
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    statusLabel.textContent = "Erfolgreich gespeichert!";
+                    statusLabel.style.color = "#4caf50";
+                } else {
+                    statusLabel.textContent = "Fehler: " + result.error;
+                    statusLabel.style.color = "#ff4d4d";
+                }
+            } catch (e) {
+                statusLabel.textContent = "Netzwerkfehler.";
+                statusLabel.style.color = "#ff4d4d";
+            }
+            
+            setTimeout(() => { if(statusLabel) statusLabel.textContent = ''; }, 3000);
+        }
+
+        loadFaq();
+    </script>
+</body>
+</html>

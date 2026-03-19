@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kundenstimmen verwalten | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .testimonials-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .testimonial-form {
+            background: var(--surface-dark);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .testimonials-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .testimonial-item {
+            background: var(--surface-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .testimonial-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .testimonial-info h3 {
+            margin: 0;
+            color: var(--accent);
+        }
+
+        .testimonial-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .testimonial-content {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+
+        .testimonial-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .status-approved {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-pending {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .rating-stars {
+            color: #ffcc00;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Kundenstimmen verwalten</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
+                        Dashboard</a></p>
+            </div>
+            <button onclick="document.getElementById('add-form').scrollIntoView({behavior: 'smooth'})" class="btn">Neue
+                Bewertung hinzufügen</button>
+        </header>
+
+        <div class="testimonials-container">
+            <!-- Add Testimonial Form -->
+            <div class="testimonial-form" id="add-form">
+                <h3>Neue Bewertung erfassen</h3>
+                <form id="new-testimonial-form" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label for="client-name">Name des Kunden</label>
+                        <input type="text" id="client-name" class="form-control" required placeholder="z.B. Maria S.">
+                    </div>
+                    <div class="form-group">
+                        <label for="rating">Bewertung (1-5 Sterne)</label>
+                        <select id="rating" class="form-control">
+                            <option value="5">5 Sterne</option>
+                            <option value="4">4 Sterne</option>
+                            <option value="3">3 Sterne</option>
+                            <option value="2">2 Sterne</option>
+                            <option value="1">1 Stern</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-text">Bewertungstext</label>
+                        <textarea id="review-text" class="form-control" rows="4" required
+                            placeholder="Was hat der Kunde geschrieben?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="is-approved" checked> Direkt veröffentlichen
+                        </label>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Bewertung speichern</button>
+                </form>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 3rem 0;">
+
+            <h2>Bestehende Bewertungen</h2>
+            <div class="testimonials-list" id="testimonials-list">
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">Lade Bewertungen...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        const testimonialsList = document.getElementById('testimonials-list');
+        const newForm = document.getElementById('new-testimonial-form');
+
+        // Load testimonials
+        async function loadTestimonials() {
+            try {
+                const response = await fetch('api/manage-testimonials.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'list' })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    renderTestimonials(data.testimonials);
+                }
+            } catch (error) {
+                console.error(error);
+                testimonialsList.innerHTML = '<div style="color: #ff4d4d; text-align: center;">Fehler beim Laden der Bewertungen.</div>';
+            }
+        }
+
+        function renderTestimonials(testimonials) {
+            if (testimonials.length === 0) {
+                testimonialsList.innerHTML = '<div style="text-align: center; color: var(--text-secondary);">Noch keine Bewertungen vorhanden.</div>';
+                return;
+            }
+
+            testimonialsList.innerHTML = '';
+            // Sort by newest first
+            [...testimonials].reverse().forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'testimonial-item';
+
+                let stars = '★'.repeat(t.rating) + '☆'.repeat(5 - t.rating);
+                const statusClass = t.approved ? 'status-approved' : 'status-pending';
+                const statusText = t.approved ? 'Veröffentlicht' : 'Ausgeblendet';
+
+                item.innerHTML = `
+                    <div class="testimonial-header">
+                        <div class="testimonial-info">
+                            <h3>${t.name}</h3>
+                            <div class="rating-stars">${stars}</div>
+                            <div class="testimonial-meta">${new Date(t.date).toLocaleDateString('de-DE')}</div>
+                        </div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="testimonial-content">"${t.text}"</div>
+                    <div class="testimonial-actions">
+                        <button class="btn" style="background: var(--surface-light); border-color: var(--border-color); font-size: 0.8rem;" onclick="toggleStatus('${t.id}')">
+                            ${t.approved ? 'Ausblenden' : 'Veröffentlichen'}
+                        </button>
+                        <button class="btn" style="background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border-color: rgba(255, 77, 77, 0.2); font-size: 0.8rem;" onclick="deleteTestimonial('${t.id}')">
+                            Löschen
+                        </button>
+                    </div>
+                `;
+                testimonialsList.appendChild(item);
+            });
+        }
+
+        // Add new testimonial
+        newForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = newForm.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Wird gespeichert...';
+
+            const payload = {
+                action: 'add',
+                name: document.getElementById('client-name').value,
+                rating: parseInt(document.getElementById('rating').value),
+                text: document.getElementById('review-text').value,
+                approved: document.getElementById('is-approved').checked
+            };
+
+            try {
+                const response = await fetch('api/manage-testimonials.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    newForm.reset();
+                    loadTestimonials();
+                    alert('✓ Bewertung erfolgreich gespeichert!');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Fehler beim Speichern.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Bewertung speichern';
+            }
+        });
+
+        async function toggleStatus(id) {
+            try {
+                await fetch('api/manage-testimonials.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'toggle', id })
+                });
+                loadTestimonials();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function deleteTestimonial(id) {
+            if (!confirm('Diese Bewertung wirklich löschen?')) return;
+            try {
+                await fetch('api/manage-testimonials.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id })
+                });
+                loadTestimonials();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadTestimonials();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Dashboard</h1>
+                <p>Willkommen im Admin-Bereich</p>
+            </div>
+            <button onclick="logout()" class="logout-btn">Abmelden</button>
+        </header>
+
+        <div class="module-grid">
+            <!-- Calendar Module -->
+            <a href="calendar.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <h2>Kalender Manager</h2>
+                <p>Verwende den Kalender, um Tage als "Verfügbar", "Gebucht" oder "Reserviert" zu markieren.</p>
+            </a>
+
+            <!-- Payment Module -->
+            <a href="orders.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                </div>
+                <h2>Bestellungen</h2>
+                <p>Übersicht aller Zahlungen und offenen Bestellungen aus dem Stripe-Testsystem.</p>
+            </a>
+
+            <!-- Gallery Module -->
+            <a href="users.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <h2>Galerie Benutzer</h2>
+                <p>Erstelle und verwalte Zugangsdaten für Kundengalerien.</p>
+            </a>
+
+            <!-- Photo Upload Module -->
+            <a href="upload.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <h2>Fotos Hochladen</h2>
+                <p>Lade Fotos für Kundengalerien hoch. Drag & Drop unterstützt.</p>
+            </a>
+
+            <!-- Testimonials Module -->
+            <a href="testimonials.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <h2>Kundenstimmen</h2>
+                <p>Verwalte Kundenbewertungen und entscheide, welche auf der Homepage angezeigt werden.</p>
+            </a>
+        </div>
+
+        <div class="dashboard-stats" id="dashboard-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+            <!-- Fetched via JS -->
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">Lade Statistiken...</div>
+        </div>
+
+        <div class="module-grid" style="margin-top: 2rem;">
+            <!-- Portfolio Module -->
+            <a href="portfolio.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </div>
+                <h2>Portfolio Manager</h2>
+                <p>Verwalte die öffentlichen Bildergalerien auf der Startseite (Porträts, Events, Tiere).</p>
+            </a>
+
+            <!-- Inquiries Module -->
+            <a href="inquiries.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <h2>Nachrichten & Anfragen</h2>
+                <p>Übersicht aller über das Kontaktformular gesendeten Nachrichten und allgemeinen Anfragen.</p>
+            </a>
+
+            <!-- Pricing Module -->
+            <a href="pricing.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <h2>Preise Verwalten</h2>
+                <p>Bearbeite die Preis-Pakete und Leistungen auf der Startseite (auch mehrsprachig).</p>
+            </a>
+
+            <!-- FAQ Module -->
+            <a href="faq.html" class="module-card">
+                <div class="module-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <h2>FAQ Manager</h2>
+                <p>Verwalte die "Häufig gestellten Fragen" für deine Besucher.</p>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Auth Check
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') {
+            window.location.href = 'index.html';
+        }
+
+        async function fetchStats() {
+            try {
+                const res = await fetch('api/get-dashboard-stats.php');
+                const stats = await res.json();
+                
+                document.getElementById('dashboard-stats').innerHTML = `
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.inquiries}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Anfragen</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.galleries}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Kunden</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.portfolio}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Portfolio</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: #ff4d4d; line-height: 1;">${stats.favorites}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Favoriten ❤️</div>
+                    </div>
+                `;
+            } catch(e) {
+                document.getElementById('dashboard-stats').style.display = 'none';
+            }
+        }
+        fetchStats();
+
+        function logout() {
+            sessionStorage.removeItem('photon_admin_auth');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>

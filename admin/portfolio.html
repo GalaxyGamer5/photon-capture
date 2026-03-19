@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio verwalten | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .portfolio-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .upload-form {
+            background: var(--surface-dark);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .portfolio-item {
+            background: var(--surface-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .portfolio-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .portfolio-info {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .portfolio-category {
+            font-size: 0.85rem;
+            text-transform: capitalize;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+        }
+
+        .delete-btn {
+            background: rgba(255, 77, 77, 0.1);
+            color: #ff4d4d;
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            padding: 0.4rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 77, 77, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="welcome-text">
+                <h1>Portfolio verwalten</h1>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum Dashboard</a></p>
+            </div>
+            <button onclick="document.getElementById('upload-form').scrollIntoView({behavior: 'smooth'})" class="btn">Neues Bild hochladen</button>
+        </header>
+
+        <div class="portfolio-container">
+            <!-- Upload Form -->
+            <div class="upload-form" id="upload-form">
+                <h3>Neues Bild für die Startseite hinzufügen</h3>
+                <form id="portfolio-upload-form" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label for="category">Kategorie</label>
+                        <select id="category" class="form-control" required>
+                            <option value="portrait">Porträt</option>
+                            <option value="event">Event</option>
+                            <option value="pet">Tier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="photos">Bilder auswählen</label>
+                        <input type="file" id="photos" name="photos[]" class="form-control" accept="image/jpeg, image/png, image/webp" required multiple style="padding: 10px;">
+                        <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">Du kannst mehrere Bilder gleichzeitig hochladen.</small>
+                    </div>
+                    <button type="submit" class="btn" id="submit-btn" style="width: 100%;">Hochladen</button>
+                    <div id="upload-status" style="margin-top: 1rem; text-align: center; display: none;"></div>
+                </form>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 3rem 0;">
+
+            <h2>Bestehendes Portfolio</h2>
+            
+            <div class="portfolio-grid" id="portfolio-grid">
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary); grid-column: 1/-1;">Lade Portfolio...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        const uploader = document.getElementById('portfolio-upload-form');
+        const grid = document.getElementById('portfolio-grid');
+        const statusDiv = document.getElementById('upload-status');
+        const submitBtn = document.getElementById('submit-btn');
+
+        async function loadPortfolio() {
+            try {
+                const response = await fetch('../api/get-portfolio.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderPortfolio(data.images);
+                } else {
+                    grid.innerHTML = '<div style="color: #ff4d4d; text-align: center; grid-column: 1/-1;">Fehler beim Laden des Portfolios.</div>';
+                }
+            } catch (error) {
+                console.error(error);
+                grid.innerHTML = '<div style="color: #ff4d4d; text-align: center; grid-column: 1/-1;">Netzwerkfehler.</div>';
+            }
+        }
+
+        function renderPortfolio(images) {
+            if (!images || images.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Noch keine Bilder hochgeladen.</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            images.forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'portfolio-item';
+                
+                // German label for category
+                const catLabels = { 'portrait': 'Porträt', 'event': 'Event', 'pet': 'Tier' };
+                const catText = catLabels[img.category] || img.category;
+
+                item.innerHTML = `
+                    <img src="../assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
+                    <div class="portfolio-info">
+                        <span class="portfolio-category">${catText}</span>
+                        <button class="delete-btn" onclick="deleteImage('${img.id}')" title="Löschen">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        uploader.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('photos');
+            if (fileInput.files.length === 0) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Lädt hoch...';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Bilder werden hochgeladen...';
+            statusDiv.style.color = 'var(--text-primary)';
+
+            const formData = new FormData();
+            formData.append('category', document.getElementById('category').value);
+            
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('photos[]', fileInput.files[i]);
+            }
+
+            try {
+                const response = await fetch('api/upload-portfolio.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    uploader.reset();
+                    statusDiv.textContent = `Erfolgreich hochgeladen: ${result.uploaded} Bilder.`;
+                    statusDiv.style.color = '#4caf50';
+                    loadPortfolio();
+                } else {
+                    throw new Error(result.error || 'Fehler beim Hochladen');
+                }
+            } catch (error) {
+                console.error(error);
+                statusDiv.textContent = error.message;
+                statusDiv.style.color = '#ff4d4d';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Hochladen';
+            }
+        });
+
+        async function deleteImage(id) {
+            if (!confirm('Dieses Bild wirklich aus dem Portfolio löschen?')) return;
+            
+            try {
+                const response = await fetch('api/delete-portfolio.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    loadPortfolio();
+                } else {
+                    alert('Fehler: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadPortfolio();
+    </script>
+</body>
+</html>
