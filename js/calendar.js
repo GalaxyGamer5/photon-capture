@@ -319,6 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Dynamic Pricing & Extras Logic (Migrated from booking.html) ---
 
+    // Guard against infinite loop: renderExtras -> updatePricing -> updateContent -> languageChanged -> renderExtras
+    let isRenderingExtras = false;
+
     // Extras Configuration
     const extrasConfig = {
         portrait: ['photos', 'location', 'time_standard'],
@@ -336,6 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderExtras(service) {
         if (!bookingValues.extrasContainer) return;
+        if (isRenderingExtras) return; // Prevent infinite loop
+        isRenderingExtras = true;
 
         bookingValues.extrasContainer.innerHTML = '';
         const config = extrasConfig[service] || extrasConfig['portrait'];
@@ -359,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bookingValues.extrasContainer.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;" data-i18n="contact.form.extras.none">Keine speziellen Extras für diese Auswahl.</p>';
             if (window.updateContent) window.updateContent();
             updatePricing();
+            isRenderingExtras = false;
             return;
         }
 
@@ -388,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         updatePricing();
+        isRenderingExtras = false;
     }
 
     function updatePricing() {
