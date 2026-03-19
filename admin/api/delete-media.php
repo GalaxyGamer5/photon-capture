@@ -78,15 +78,33 @@ if (!empty($affectedGalleryFolders)) {
                         if (isset($data['users']) && is_array($data['users'])) {
                             foreach ($data['users'] as &$user) {
                                 if (isset($user['folder']) && $user['folder'] === $folderName) {
-                                    $images = 0;
+                                    $imagesCount = 0;
                                     if (is_dir($folder)) {
+                                        $filesList = [];
                                         foreach (scandir($folder) as $file) {
                                             if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
-                                                $images++;
+                                                $filesList[] = $file;
                                             }
                                         }
+                                        // Natural sort so 2.jpg comes before 10.jpg
+                                        natsort($filesList);
+                                        $filesList = array_values($filesList);
+                                        
+                                        $counter = 1;
+                                        foreach ($filesList as $file) {
+                                            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                            $expectedName = $counter . '.' . $ext;
+                                            $oldPath = $folder . DIRECTORY_SEPARATOR . $file;
+                                            $newPath = $folder . DIRECTORY_SEPARATOR . $expectedName;
+                                            
+                                            if ($oldPath !== $newPath && strtolower($file) !== $expectedName) {
+                                                rename($oldPath, $newPath);
+                                            }
+                                            $imagesCount++;
+                                            $counter++;
+                                        }
                                     }
-                                    $user['imageCount'] = $images;
+                                    $user['imageCount'] = $imagesCount;
                                     $changed = true;
                                     break;
                                 }
