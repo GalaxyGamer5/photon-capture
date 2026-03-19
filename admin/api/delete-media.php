@@ -78,8 +78,15 @@ if (!empty($affectedGalleryFolders)) {
                         if (isset($data['users']) && is_array($data['users'])) {
                             foreach ($data['users'] as &$user) {
                                 if (isset($user['folder']) && $user['folder'] === $folderName) {
-                                    $images = glob($folder . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp}', GLOB_BRACE);
-                                    $user['imageCount'] = $images ? count($images) : 0;
+                                    $images = 0;
+                                    if (is_dir($folder)) {
+                                        foreach (scandir($folder) as $file) {
+                                            if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
+                                                $images++;
+                                            }
+                                        }
+                                    }
+                                    $user['imageCount'] = $images;
                                     $changed = true;
                                     break;
                                 }
