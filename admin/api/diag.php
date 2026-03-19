@@ -43,8 +43,8 @@ foreach ($targets as $name => $path) {
 }
 
 echo json_encode([
-    'php_user' => posix_getpwuid(posix_geteuid())['name'],
-    'server_software' => $_SERVER['SERVER_SOFTWARE'],
+    'php_user' => ($u = posix_getpwuid(posix_geteuid())) ? $u['name'] : 'unknown',
+    'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
     'php_limits' => [
         'upload_max_filesize' => ini_get('upload_max_filesize'),
         'post_max_size' => ini_get('post_max_size'),
