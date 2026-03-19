@@ -360,9 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (timeInput) timeInput.setAttribute('required', 'required');
         }
 
+        const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
+
         if (config.length === 0) {
-            bookingValues.extrasContainer.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;" data-i18n="contact.form.extras.none">Keine speziellen Extras für diese Auswahl.</p>';
-            if (window.updateContent) window.updateContent();
+            bookingValues.extrasContainer.innerHTML = `<p style="color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.none'] || 'Keine speziellen Extras für diese Auswahl.'}</p>`;
             updatePricing();
             isRenderingExtras = false;
             return;
@@ -372,20 +373,18 @@ document.addEventListener('DOMContentLoaded', () => {
             let html = '';
             // (Same HTML generation logic as before, just compact)
             if (type === 'photos') {
-                html = `<div class="form-group"><label data-i18n="contact.form.extras.photos.label">Mehr bearbeitete Bilder</label><select name="extra_photos" class="form-control"><option value="none" data-i18n="contact.form.extras.photos.opt0">Keine zusätzlichen Bilder</option><option value="plus10" data-i18n="contact.form.extras.photos.opt1">+10 Bilder</option><option value="plus25" data-i18n="contact.form.extras.photos.opt2">+25 Bilder</option><option value="plus50" data-i18n="contact.form.extras.photos.opt3">+50 Bilder</option></select></div>`;
+                html = `<div class="form-group"><label>${t['contact.form.extras.photos.label'] || 'Mehr bearbeitete Bilder'}</label><select name="extra_photos" class="form-control"><option value="none">${t['contact.form.extras.photos.opt0'] || 'Keine zusätzlichen Bilder'}</option><option value="plus10">${t['contact.form.extras.photos.opt1'] || '+10 Bilder'}</option><option value="plus25">${t['contact.form.extras.photos.opt2'] || '+25 Bilder'}</option><option value="plus50">${t['contact.form.extras.photos.opt3'] || '+50 Bilder'}</option></select></div>`;
             } else if (type === 'location') {
-                html = `<div class="form-group"><label data-i18n="contact.form.extras.location.label">Zusätzliche Location</label><select name="extra_location" class="form-control"><option value="none" data-i18n="contact.form.extras.location.opt0">Keine zusätzliche Location</option><option value="plus1" data-i18n="contact.form.extras.location.opt1">+1 Location</option><option value="plus2" data-i18n="contact.form.extras.location.opt2">+2 Locations</option></select></div>`;
+                html = `<div class="form-group"><label>${t['contact.form.extras.location.label'] || 'Zusätzliche Location'}</label><select name="extra_location" class="form-control"><option value="none">${t['contact.form.extras.location.opt0'] || 'Keine zusätzliche Location'}</option><option value="plus1">${t['contact.form.extras.location.opt1'] || '+1 Location'}</option><option value="plus2">${t['contact.form.extras.location.opt2'] || '+2 Locations'}</option></select></div>`;
             } else if (type === 'time_standard') {
-                html = `<div class="form-group"><label data-i18n="contact.form.extras.time.label">Verlängerung der Shooting-Zeit</label><select name="extra_time" class="form-control"><option value="none" data-i18n="contact.form.extras.time.opt0">Keine Verlängerung</option><option value="plus30m" data-i18n="contact.form.extras.time.opt1">+30 Minuten</option><option value="plus1h" data-i18n="contact.form.extras.time.opt2">+1 Stunde</option><option value="plus2h" data-i18n="contact.form.extras.time.opt3">+2 Stunden</option></select></div>`;
+                html = `<div class="form-group"><label>${t['contact.form.extras.time.label'] || 'Verlängerung der Shooting-Zeit'}</label><select name="extra_time" class="form-control"><option value="none">${t['contact.form.extras.time.opt0'] || 'Keine Verlängerung'}</option><option value="plus30m">${t['contact.form.extras.time.opt1'] || '+30 Minuten'}</option><option value="plus1h">${t['contact.form.extras.time.opt2'] || '+1 Stunde'}</option><option value="plus2h">${t['contact.form.extras.time.opt3'] || '+2 Stunden'}</option></select></div>`;
             } else if (type === 'duration_event') {
-                html = `<div class="form-group"><label data-i18n="contact.form.extras.duration.label">Buchungsdauer</label><select name="event_duration" class="form-control"><option value="2h" data-i18n="contact.form.extras.duration.opt2">2 Stunden (Minimum)</option><option value="3h" data-i18n="contact.form.extras.duration.opt3">3 Stunden</option><option value="4h" data-i18n="contact.form.extras.duration.opt4">4 Stunden</option><option value="5h" data-i18n="contact.form.extras.duration.opt5">5 Stunden</option><option value="6h" data-i18n="contact.form.extras.duration.opt6">6 Stunden</option><option value="8h" data-i18n="contact.form.extras.duration.opt8">8 Stunden</option><option value="open" data-i18n="contact.form.extras.duration.open">Open End</option></select><small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-style: italic;" data-i18n="contact.form.extras.duration.open_note">Hinweis: Open End basiert auf 8 Stunden. Jede weitere Stunde wird mit 50€ berechnet.</small></div>`;
+                html = `<div class="form-group"><label>${t['contact.form.extras.duration.label'] || 'Buchungsdauer'}</label><select name="event_duration" class="form-control"><option value="2h">${t['contact.form.extras.duration.opt2'] || '2 Stunden (Minimum)'}</option><option value="3h">${t['contact.form.extras.duration.opt3'] || '3 Stunden'}</option><option value="4h">${t['contact.form.extras.duration.opt4'] || '4 Stunden'}</option><option value="5h">${t['contact.form.extras.duration.opt5'] || '5 Stunden'}</option><option value="6h">${t['contact.form.extras.duration.opt6'] || '6 Stunden'}</option><option value="8h">${t['contact.form.extras.duration.opt8'] || '8 Stunden'}</option><option value="open">${t['contact.form.extras.duration.open'] || 'Open End'}</option></select><small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.duration.open_note'] || 'Hinweis: Open End basiert auf 8 Stunden. Jede weitere Stunde wird mit 50€ berechnet.'}</small></div>`;
             } else if (type === 'express') {
-                html = `<div class="form-group"><label data-i18n="contact.form.extras.express.label">Express-Bearbeitung</label><select name="extra_express" class="form-control"><option value="standard" data-i18n="contact.form.extras.express.opt0">Standard (1-2 Wochen)</option><option value="express" data-i18n="contact.form.extras.express.opt1">Express (48 Stunden)</option><option value="overnight" data-i18n="contact.form.extras.express.opt2">Overnight (24 Stunden)</option></select></div>`;
+                html = `<div class="form-group"><label>${t['contact.form.extras.express.label'] || 'Express-Bearbeitung'}</label><select name="extra_express" class="form-control"><option value="standard">${t['contact.form.extras.express.opt0'] || 'Standard (1-2 Wochen)'}</option><option value="express">${t['contact.form.extras.express.opt1'] || 'Express (48 Stunden)'}</option><option value="overnight">${t['contact.form.extras.express.opt2'] || 'Overnight (24 Stunden)'}</option></select></div>`;
             }
             bookingValues.extrasContainer.innerHTML += html;
         });
-
-        if (window.updateContent) window.updateContent();
 
         // Attach listeners to new inputs
         const inputs = bookingValues.extrasContainer.querySelectorAll('select');
@@ -484,8 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const finalTotal = basePrice + extrasTotal - extrasDiscount;
-        priceTotal.innerHTML = `<div style="display: flex; justify-content: space-between;"><span data-i18n="booking.price_summary.total">Gesamt:</span><span>${finalTotal}€</span></div>`;
-        if (window.updateContent) window.updateContent();
+        const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
+        priceTotal.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>${t['booking.price_summary.total'] || 'Gesamt:'}</span><span>${finalTotal}€</span></div>`;
 
         // Populate inputs for EmailJS
         updateHiddenInputs(finalTotal,
