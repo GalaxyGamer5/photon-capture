@@ -173,7 +173,7 @@
             const imageFolder = `assets/${user.folder}`;
             const imageCount = user.imageCount || 0;
 
-            // Generate grid
+            // Render Main Gallery Grid
             function renderGallery() {
                 galleryGrid.innerHTML = '';
 
@@ -187,7 +187,7 @@
                         const isFavorite = favorites.has(i);
 
                         // Assuming jpg format for simplicity, could be enhanced to support others
-                        const imgSrc = `${imageFolder}/${i}.jpg?v=${cacheBuster}`;
+                        const imgSrc = `${imageFolder}/${i}.jpg`;
 
                         item.innerHTML = `
                         <div class="selection-checkbox" style="display: none;">
@@ -222,14 +222,11 @@
             window.tryNextExtension = function(img) {
                 const src = img.src;
                 let newSrc = null;
-                // Strip existing cache buster for matching, but keep it for appending
-                const baseMatch = src.split('?')[0]; 
-                const cb = src.split('?')[1] ? '?' + src.split('?')[1] : '';
 
-                if (baseMatch.match(/\.jpg$/i)) {
-                    newSrc = baseMatch.replace(/\.jpg$/i, '.png') + cb;
-                } else if (baseMatch.match(/\.png$/i)) {
-                    newSrc = baseMatch.replace(/\.png$/i, '.webp') + cb;
+                if (src.match(/\.jpg$/i)) {
+                    newSrc = src.replace(/\.jpg$/i, '.png');
+                } else if (src.match(/\.png$/i)) {
+                    newSrc = src.replace(/\.png$/i, '.webp');
                 }
                 
                 if (newSrc) {
@@ -306,7 +303,7 @@
             };
 
             function updateLightbox() {
-                const imgSrc = `${imageFolder}/${currentIndex}.jpg?v=${cacheBuster}`;
+                const imgSrc = `${imageFolder}/${currentIndex}.jpg`;
                 lightboxImg.src = imgSrc;
                 lightboxImg.onerror = function() { tryNextExtension(this); };
                 downloadBtn.href = imgSrc;
@@ -443,21 +440,21 @@
                     // Add each image to the ZIP
                     for (let i = 0; i < imagesToDownload.length; i++) {
                         const index = imagesToDownload[i];
-                        const imgSrc = `${imageFolder}/${index}.jpg?v=${cacheBuster}`;
+                        const imgSrc = `${imageFolder}/${index}.jpg`;
 
                         downloadBtn.textContent = `Bild ${i + 1}/${imagesToDownload.length} wird hinzugefügt...`;
 
                         try {
                             // Attempt fallback extensions if .jpg fails
-                            let response = await fetch(`${imageFolder}/${index}.jpg?v=${cacheBuster}`);
+                            let response = await fetch(`${imageFolder}/${index}.jpg`);
                             let ext = 'jpg';
                             
                             if (!response.ok) {
-                                response = await fetch(`${imageFolder}/${index}.png?v=${cacheBuster}`);
+                                response = await fetch(`${imageFolder}/${index}.png`);
                                 ext = 'png';
                             }
                             if (!response.ok) {
-                                response = await fetch(`${imageFolder}/${index}.webp?v=${cacheBuster}`);
+                                response = await fetch(`${imageFolder}/${index}.webp`);
                                 ext = 'webp';
                             }
 
