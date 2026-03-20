@@ -459,38 +459,49 @@
             try {
                 const res = await fetch('api/get-pricing.php');
                 pricing = await res.json();
-                renderExtras();
+                // Initial render will be done when modal opens or package changes
             } catch(e) { console.error('Pricing fetch failed', e); }
         }
 
-        function renderExtras() {
-            if(!pricing || !pricing.extras) return;
-            ['c', 'e'].forEach(prefix => {
-                const div = document.getElementById(`${prefix}-extras-list`);
-                if(!div) return;
-                div.innerHTML = pricing.extras.map(ex => `
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
-                        <input type="checkbox" class="extra-cb" data-id="${ex.id}" data-price="${ex.price}" onchange="calculatePrice('${prefix}')">
-                        <span>${ex.label} (+${ex.price}€)</span>
-                    </label>
-                `).join('');
-            });
+        function renderExtras(prefix, selectedPkgId, checkedExtraIds = []) {
+            const div = document.getElementById(`${prefix}-extras-list`);
+            if(!div || !pricing) return;
+
+            const pkg = pricing.packages.find(p => p.id === selectedPkgId);
+            if(!pkg || !pkg.extras || pkg.extras.length === 0) {
+                div.innerHTML = '<div style="color:var(--text-secondary); font-size: 0.8rem; font-style: italic; grid-column: 1/-1;">Keine Extras für dieses Paket verfügbar.</div>';
+                return;
+            }
+
+            div.innerHTML = pkg.extras.map(ex => `
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                    <input type="checkbox" class="extra-cb" data-id="${ex.id}" data-price="${ex.price}" 
+                        ${checkedExtraIds.includes(ex.id) ? 'checked' : ''}
+                        onchange="calculatePrice('${prefix}')">
+                    <span>${ex.label} (+${ex.price}€)</span>
+                </label>
+            `).join('');
         }
 
         function calculatePrice(prefix) {
             if(!pricing) return;
             
             const packageSel = document.getElementById(`${prefix}-package`);
-            const packageVal = packageSel.value;
-            const opt = packageSel.options[packageSel.selectedIndex];
+            const packageId = packageSel.value;
+            const pkg = pricing.packages.find(p => p.id === packageId);
             
-            let basePrice = parseFloat(opt.getAttribute('data-price')) || 0;
+            if (!pkg) {
+                document.getElementById(`${prefix}-price-display`).textContent = '0,00€';
+                return;
+            }
+
+            let basePrice = pkg.price || 0;
             const hoursInput = document.getElementById(`${prefix}-hours`);
             const hours = parseFloat(hoursInput.value) || 1;
 
             // Show/Hide Hours for Event
             const hoursGroup = document.getElementById(`${prefix}-hours-group`);
-            if (packageVal === 'event') {
+            if (packageId === 'event') {
                 hoursGroup.style.display = 'block';
                 basePrice = basePrice * hours;
             } else {
@@ -501,6 +512,7 @@
             let extrasTotal = 0;
             const checks = document.querySelectorAll(`#${prefix}-extras-list .extra-cb:checked`);
             checks.forEach(cb => extrasTotal += parseFloat(cb.getAttribute('data-price')) || 0);
+            const extrasCount = checks.length;
             
             let total = basePrice + extrasTotal;
 
@@ -513,21 +525,9 @@
                 }
             }
 
-            // Apply Bulk Discount
-            if(pricing.bulkDiscounts) {
-                let bulkRules = [];
-                let compareValue = 0;
-
-                if (packageVal === 'event') {
-                    bulkRules = pricing.bulkDiscounts.eventHours || [];
-                    compareValue = hours;
-                } else {
-                    bulkRules = pricing.bulkDiscounts.extras || [];
-                    compareValue = extrasTotal;
-                }
-
-                const sortedDiscounts = [...bulkRules].sort((a,b) => b.threshold - a.threshold);
-                const appliedBulk = sortedDiscounts.find(d => compareValue >= d.threshold);
+            // Apply Package-Specific Bulk Discount (Count-based)
+            if(pkg.bulkDiscounts && extrasCount > 0) {
+                const appliedBulk = pkg.bulkDiscounts.find(d => d.count === extrasCount);
                 if(appliedBulk) {
                     total *= (1 - (appliedBulk.discountPercent / 100));
                 }
@@ -543,7 +543,6 @@
             }
 
             total = Math.max(0, total);
-            // Numeric formatting for output (without € symbol for storage)
             const formattedTotal = total.toFixed(2);
             document.getElementById(`${prefix}-price-display`).textContent = formattedTotal.replace('.', ',') + '€';
             document.getElementById(`${prefix}-price`).value = formattedTotal;
@@ -558,7 +557,7 @@
                 if (!data.success) throw new Error(data.error);
 
                 const orders = data.orders;
-                allOrders = orders; // Store for lookup
+                allOrders = orders;
                 document.getElementById('order-count').textContent = `${orders.length} Bestellung${orders.length !== 1 ? 'en' : ''}`;
 
                 if (orders.length === 0) {
@@ -601,6 +600,8 @@
         }
 
         function onPackageChange(prefix) {
+            const packageId = document.getElementById(`${prefix}-package`).value;
+            renderExtras(prefix, packageId);
             calculatePrice(prefix);
         }
 
@@ -616,7 +617,7 @@
             document.getElementById('c-hours').value = '1';
             document.getElementById('c-discount-value').value = '';
             document.getElementById('c-discount-type').value = 'euro';
-            document.querySelectorAll('#c-extras-list .extra-cb').forEach(cb => cb.checked = false);
+            document.getElementById(`${'c'}-extras-list`).innerHTML = '';
             
             document.getElementById('c-notes').value = '';
             document.getElementById('c-notes-count').textContent = '0';
@@ -669,11 +670,8 @@
             document.getElementById('e-package').value = o.package;
             document.getElementById('e-hours').value = o.hours || 1;
             
-            // Set Extras
-            const selectedExtras = o.selectedExtras || [];
-            document.querySelectorAll('#e-extras-list .extra-cb').forEach(cb => {
-                cb.checked = selectedExtras.includes(cb.getAttribute('data-id'));
-            });
+            // Render package-specific extras and pre-check them
+            renderExtras('e', o.package, o.selectedExtras || []);
 
             // Set Discount
             const discount = o.discount || { value: 0, type: 'euro' };

@@ -3,37 +3,63 @@
     {
       "id": "portrait",
       "title": { "de": "Porträt-Session", "en": "Portrait Session" },
-      "price": "125",
+      "price": 125,
       "priceUnit": { "de": "", "en": "" },
       "features": [
         { "de": "60 Minuten Shooting", "en": "60-minute shoot" },
         { "de": "Alle guten Fotos inkl.", "en": "All good photos incl." },
         { "de": "Professionelle Bearbeitung", "en": "Professional editing" },
         { "de": "Online Galerie", "en": "Online gallery" }
+      ],
+      "extras": [
+        { "id": "p_usb", "label": "USB-Stick mit allen Bildern", "price": 20 },
+        { "id": "p_express", "label": "Express-Bearbeitung (24h)", "price": 50 }
+      ],
+      "bulkDiscounts": [
+        { "count": 1, "discountPercent": 5 },
+        { "count": 2, "discountPercent": 10 }
       ]
     },
     {
       "id": "event",
       "title": { "de": "Event-Begleitung", "en": "Event Coverage" },
-      "price": "100",
+      "price": 100,
       "priceUnit": { "de": "/Stunde", "en": "/hour" },
       "features": [
         { "de": "Events & Feiern", "en": "Events & celebrations" },
         { "de": "Reportage-Stil", "en": "Reportage style" },
         { "de": "Flexible Dauer", "en": "Flexible duration" },
         { "de": "High-Res Downloads", "en": "High-res downloads" }
+      ],
+      "extras": [
+        { "id": "e_drone", "label": "Drohnen-Aufnahmen", "price": 80 },
+        { "id": "e_photobooth", "label": "Photobooth-Verleih", "price": 150 },
+        { "id": "e_usb", "label": "USB-Stick Box", "price": 25 }
+      ],
+      "bulkDiscounts": [
+        { "count": 1, "discountPercent": 5 },
+        { "count": 2, "discountPercent": 10 },
+        { "count": 3, "discountPercent": 15 }
       ]
     },
     {
       "id": "pet",
       "title": { "de": "Tierfotografie", "en": "Pet Photography" },
-      "price": "125",
+      "price": 125,
       "priceUnit": { "de": "", "en": "" },
       "features": [
         { "de": "Hunde, Katzen & mehr", "en": "Dogs, cats & more" },
         { "de": "Geduld & Einfühlungsvermögen", "en": "Patience & empathy" },
         { "de": "Outdoor oder Home-Studio", "en": "Outdoor or home studio" },
         { "de": "Andenken fürs Leben", "en": "Lifelong memories" }
+      ],
+      "extras": [
+        { "id": "pet_action", "label": "Action-Szenen (Highspeed)", "price": 30 },
+        { "id": "pet_print", "label": "Leinwand-Druck (40x60)", "price": 45 }
+      ],
+      "bulkDiscounts": [
+        { "count": 1, "discountPercent": 5 },
+        { "count": 2, "discountPercent": 10 }
       ]
     }
   ],
@@ -44,20 +70,6 @@
       "en": "Didn't find what you're looking for? Reach out with your ideas and I'll create a custom offer for you."
     },
     "btn": { "de": "Anfrage senden", "en": "Send Request" }
-  },
-  "extras": [
-    { "id": "extra_usb", "label": "USB-Stick mit allen Bildern", "price": 20 },
-    { "id": "extra_express", "label": "Express-Bearbeitung (24h)", "price": 50 }
-  ],
-  "bulkDiscounts": {
-    "extras": [
-      { "threshold": 100, "discountPercent": 10 },
-      { "threshold": 200, "discountPercent": 15 }
-    ],
-    "eventHours": [
-      { "threshold": 5, "discountPercent": 10 },
-      { "threshold": 10, "discountPercent": 20 }
-    ]
   },
   "globalDiscount": {
     "active": false,

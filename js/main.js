@@ -730,28 +730,127 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Customization Modal Logic ---
     const modal = document.getElementById('customization-modal');
-    const modalText = document.getElementById('modal-text');
+    const modalContent = document.getElementById('modal-text');
     const closeBtn = document.querySelector('.modal-close');
+    let activePackageId = null;
 
-    if (modal && modalText && closeBtn) {
+    function calculateModalPrice() {
+        if (!loadedPricingData || !activePackageId) return;
+        const pkg = loadedPricingData.packages.find(p => p.id === activePackageId);
+        if (!pkg) return;
+
+        const lang = localStorage.getItem('preferredLang') || 'de';
+        let basePrice = parseFloat(pkg.price) || 0;
+        
+        let extrasTotal = 0;
+        let selectedCount = 0;
+        const checks = modal.querySelectorAll('.extra-check:checked');
+        checks.forEach(cb => {
+            extrasTotal += parseFloat(cb.dataset.price) || 0;
+            selectedCount++;
+        });
+
+        let total = basePrice + extrasTotal;
+        let discountInfo = '';
+
+        // Global Discount
+        if (loadedPricingData.globalDiscount && loadedPricingData.globalDiscount.active) {
+            const gd = loadedPricingData.globalDiscount;
+            let val = parseFloat(gd.value) || 0;
+            if (gd.type === 'percent') {
+                total *= (1 - (val / 100));
+            } else {
+                total -= val;
+            }
+        }
+
+        // Bulk Discount (Count-based)
+        if (pkg.bulkDiscounts && selectedCount > 0) {
+            const appliedBulk = pkg.bulkDiscounts.find(d => d.count === selectedCount);
+            if (appliedBulk && appliedBulk.discountPercent > 0) {
+                total *= (1 - (appliedBulk.discountPercent / 100));
+                discountInfo = lang === 'en' 
+                    ? `Bundle Discount: -${appliedBulk.discountPercent}%`
+                    : `Sammelrabatt: -${appliedBulk.discountPercent}%`;
+            }
+        }
+
+        const priceDisplay = modal.querySelector('.modal-total-price');
+        const discountDisplay = modal.querySelector('.modal-discount-info');
+        if (priceDisplay) {
+            priceDisplay.textContent = total.toFixed(2).replace('.', ',') + '€';
+        }
+        if (discountDisplay) {
+            discountDisplay.textContent = discountInfo;
+            discountDisplay.style.display = discountInfo ? 'block' : 'none';
+        }
+    }
+
+    if (modal && modalContent && closeBtn) {
         document.body.addEventListener('click', (e) => {
-            if (e.target.classList.contains('customize-link')) {
+            const link = e.target.closest('.customize-link');
+            if (link) {
                 e.preventDefault();
-                const packageType = e.target.getAttribute('data-package');
-                const translationKey = `pricing.extras.${packageType}`;
-                const text = translations[currentLang] ? translations[currentLang][translationKey] : '';
-                modalText.textContent = text || (currentLang === 'en' ? 'No extras available.' : 'Keine Extras verfügbar.');
+                activePackageId = link.getAttribute('data-package');
+                const pkg = loadedPricingData.packages.find(p => p.id === activePackageId);
+                if (!pkg) return;
+
+                const lang = localStorage.getItem('preferredLang') || 'de';
+                const title = pkg.title[lang];
+                
+                let extrasHtml = '';
+                if (pkg.extras && pkg.extras.length > 0) {
+                    extrasHtml = `
+                        <div class="modal-extras-grid">
+                            ${pkg.extras.map(ex => `
+                                <label class="modal-extra-item">
+                                    <input type="checkbox" class="extra-check" data-id="${ex.id}" data-price="${ex.price}" onchange="this.dispatchEvent(new CustomEvent('recalc'))">
+                                    <div class="extra-info">
+                                        <span class="extra-name">${ex.label}</span>
+                                        <span class="extra-price">+${ex.price}€</span>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    extrasHtml = `<p style="opacity:0.6; font-style:italic;">${lang === 'en' ? 'No extras available for this package.' : 'Keine Extras für dieses Paket verfügbar.'}</p>`;
+                }
+
+                modalContent.innerHTML = `
+                    <h2 style="margin-bottom:1rem; background:none; -webkit-text-fill-color:white;">${title}</h2>
+                    <p style="margin-bottom:2rem; opacity:0.8; font-size:0.9rem;">
+                        ${lang === 'en' ? 'Select your desired extras to see the total price including potential bundle discounts.' : 'Wähle deine gewünschten Extras aus, um den Gesamtpreis inklusive möglicher Sammelrabatte zu sehen.'}
+                    </p>
+                    ${extrasHtml}
+                    <div class="modal-pricing-summary" style="margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.1);">
+                        <div class="modal-discount-info" style="color:var(--accent); font-size:0.85rem; margin-bottom:0.5rem; display:none;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                            <span style="opacity:0.6;">${lang === 'en' ? 'Estimated Total' : 'Voraussichtlicher Gesamtpreis'}:</span>
+                            <span class="modal-total-price" style="font-size:2rem; font-weight:700; color:var(--accent);">0,00€</span>
+                        </div>
+                    </div>
+                `;
+
+                // Add recalc listeners
+                modal.querySelectorAll('.extra-check').forEach(cb => {
+                    cb.addEventListener('recalc', calculateModalPrice);
+                });
+
                 modal.classList.add('active');
+                calculateModalPrice();
             }
         });
 
         closeBtn.addEventListener('click', () => {
             modal.classList.remove('active');
+            activePackageId = null;
         });
 
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.classList.remove('active');
+                activePackageId = null;
             }
         });
     }
