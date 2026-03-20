@@ -2,156 +2,67 @@
   "packages": [
     {
       "id": "portrait",
-      "title": {
-        "de": "Porträt-Session",
-        "en": "Portrait Session"
-      },
-      "price": "125€",
-      "priceUnit": {
-        "de": "",
-        "en": ""
-      },
+      "title": { "de": "Porträt-Session", "en": "Portrait Session" },
+      "price": "125",
+      "priceUnit": { "de": "", "en": "" },
       "features": [
-        {
-          "de": "1 Stunde Shooting",
-          "en": "1 Hour Shooting"
-        },
-        {
-          "de": "1 Location nach Wahl",
-          "en": "1 Location of choice"
-        },
-        {
-          "de": "50 liebevoll bearbeitete Bilder",
-          "en": "50 lovingly edited images"
-        },
-        {
-          "de": "Online-Galerie zum Download",
-          "en": "Online Gallery for download"
-        },
-        {
-          "de": "Private Nutzungsrechte",
-          "en": "Private usage rights"
-        }
-      ],
-      "buttonUrl": "calendar.html?package=portrait"
+        { "de": "60 Minuten Shooting", "en": "60-minute shoot" },
+        { "de": "Alle guten Fotos inkl.", "en": "All good photos incl." },
+        { "de": "Professionelle Bearbeitung", "en": "Professional editing" },
+        { "de": "Online Galerie", "en": "Online gallery" }
+      ]
     },
     {
       "id": "event",
-      "title": {
-        "de": "Event-Begleitung",
-        "en": "Event Coverage"
-      },
-      "price": "100€",
-      "priceUnit": {
-        "de": "/Stunde",
-        "en": "/hour"
-      },
+      "title": { "de": "Event-Begleitung", "en": "Event Coverage" },
+      "price": "100",
+      "priceUnit": { "de": "/Stunde", "en": "/hour" },
       "features": [
-        {
-          "de": "Ab 2 Stunden buchbar",
-          "en": "Bookable from 2 hours"
-        },
-        {
-          "de": "Reportage & Highlights",
-          "en": "Reportage & Highlights"
-        },
-        {
-          "de": "Alle besten Bilder bearbeitet",
-          "en": "All best images edited"
-        },
-        {
-          "de": "Schnelle Bereitstellung",
-          "en": "Quick turnaround"
-        },
-        {
-          "de": "Kommerzielle Nutzungsrechte",
-          "en": "Commercial usage rights"
-        }
-      ],
-      "buttonUrl": "calendar.html?package=event"
+        { "de": "Events & Feiern", "en": "Events & celebrations" },
+        { "de": "Reportage-Stil", "en": "Reportage style" },
+        { "de": "Flexible Dauer", "en": "Flexible duration" },
+        { "de": "High-Res Downloads", "en": "High-res downloads" }
+      ]
     },
     {
       "id": "pet",
-      "title": {
-        "de": "Tierfotografie",
-        "en": "Pet Photography"
-      },
-      "price": "125€",
-      "priceUnit": {
-        "de": "",
-        "en": ""
-      },
+      "title": { "de": "Tierfotografie", "en": "Pet Photography" },
+      "price": "125",
+      "priceUnit": { "de": "", "en": "" },
       "features": [
-        {
-          "de": "1 Stunde Shooting",
-          "en": "1 Hour Shooting"
-        },
-        {
-          "de": "1 Location nach Wahl",
-          "en": "1 Location of choice"
-        },
-        {
-          "de": "50 liebevoll bearbeitete Bilder",
-          "en": "50 lovingly edited images"
-        },
-        {
-          "de": "Online-Galerie zum Download",
-          "en": "Online Gallery for download"
-        },
-        {
-          "de": "Private Nutzungsrechte",
-          "en": "Private usage rights"
-        }
-      ],
-      "buttonUrl": "calendar.html?package=pet"
+        { "de": "Hunde, Katzen & mehr", "en": "Dogs, cats & more" },
+        { "de": "Geduld & Einfühlungsvermögen", "en": "Patience & empathy" },
+        { "de": "Outdoor oder Home-Studio", "en": "Outdoor or home studio" },
+        { "de": "Andenken fürs Leben", "en": "Lifelong memories" }
+      ]
     }
   ],
   "custom": {
-    "title": {
-      "de": "Individuelle Anfrage",
-      "en": "Custom Request"
-    },
+    "title": { "de": "Individuelle Anfrage", "en": "Custom Request" },
     "desc": {
-      "de": "Nicht das Passende dabei? Kein Problem! Schreib mir einfach deine Wünsche und wir finden gemeinsam eine Lösung.",
-      "en": "Didn't find what you're looking for? No problem! Just let me know your wishes and we'll find a solution together."
+      "de": "Nicht das Richtige dabei? Schreib mir von deinen Vorstellungen und ich erstelle dir ein unverbindliches Angebot.",
+      "en": "Didn't find what you're looking for? Reach out with your ideas and I'll create a custom offer for you."
     },
-    "btn": {
-      "de": "Individuelles Angebot anfragen",
-      "en": "Request Custom Quote"
-    },
-    "buttonUrl": "calendar.html?package=other"
+    "btn": { "de": "Anfrage senden", "en": "Send Request" }
   },
   "extras": [
-    {
-      "id": "usb",
-      "label": "USB-Stick mit allen Bildern",
-      "price": 15
-    },
-    {
-      "id": "express",
-      "label": "Express-Bearbeitung (24h)",
-      "price": 50
-    },
-    {
-      "id": "shooting_plus",
-      "label": "Zusätzliche Shooting-Stunde",
-      "price": 80
-    }
+    { "id": "extra_usb", "label": "USB-Stick mit allen Bildern", "price": 20 },
+    { "id": "extra_express", "label": "Express-Bearbeitung (24h)", "price": 50 }
   ],
-  "bulkDiscounts": [
-    {
-      "threshold": 300,
-      "discountPercent": 5
-    },
-    {
-      "threshold": 600,
-      "discountPercent": 10
-    }
-  ],
+  "bulkDiscounts": {
+    "extras": [
+      { "threshold": 100, "discountPercent": 10 },
+      { "threshold": 200, "discountPercent": 15 }
+    ],
+    "eventHours": [
+      { "threshold": 5, "discountPercent": 10 },
+      { "threshold": 10, "discountPercent": 20 }
+    ]
+  },
   "globalDiscount": {
     "active": false,
-    "label": "Black Friday Sale",
+    "label": "Aktion",
     "type": "percent",
-    "value": 10
+    "value": 0
   }
 }

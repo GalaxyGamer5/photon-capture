@@ -250,29 +250,58 @@
             // --- BULK DISCOUNTS Section ---
             html += `
                 <h2 style="margin-top: 3rem;">Sammel-Rabatte (Automatisch)</h2>
+                
                 <div class="package-card">
+                    <h3>1. Rabatt auf Extras (Preisbasiert)</h3>
                     <p style="color:var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                        Wird automatisch angewendet, wenn der Gesamtbetrag (Paket + Extras) den Schwellenwert überschreitet.
+                        Wird angewendet, wenn die Summe der gewählten Extras diesen Betrag erreicht.
                     </p>
-                    <div id="bulk-discounts-list">
+                    <div id="bulk-extras-list">
             `;
-            (pricingData.bulkDiscounts || []).forEach((bd, i) => {
+            (pricingData.bulkDiscounts.extras || []).forEach((bd, i) => {
                 html += `
                     <div class="discount-row">
                         <div class="form-group">
-                            <label>Ab Betrag (€)</label>
-                            <input type="number" value="${bd.threshold}" onchange="updateBulk(${i}, 'threshold', parseFloat(this.value) || 0)">
+                            <label>Ab Extras-Summe (€)</label>
+                            <input type="text" value="${bd.threshold}" onchange="updateBulk('extras', ${i}, 'threshold', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Rabatt (%)</label>
-                            <input type="number" value="${bd.discountPercent}" onchange="updateBulk(${i}, 'discountPercent', parseFloat(this.value) || 0)">
+                            <input type="text" value="${bd.discountPercent}" onchange="updateBulk('extras', ${i}, 'discountPercent', this.value)">
                         </div>
-                        <button class="btn-small btn-delete" onclick="removeBulk(${i})">X</button>
+                        <button class="btn-small btn-delete" onclick="removeBulk('extras', ${i})">X</button>
                     </div>
                 `;
             });
             html += `
-                        <button class="btn-small" onclick="addBulk()">+ Rabattstufe Hinzufügen</button>
+                        <button class="btn-small" onclick="addBulk('extras')">+ Rabattstufe (Extras) Hinzufügen</button>
+                    </div>
+                </div>
+
+                <div class="package-card">
+                    <h3>2. Rabatt für Events (Zeitbasiert)</h3>
+                    <p style="color:var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Wird bei 'Event-Begleitung' angewendet, wenn die gebuchten Stunden diesen Wert erreichen.
+                    </p>
+                    <div id="bulk-hours-list">
+            `;
+            (pricingData.bulkDiscounts.eventHours || []).forEach((bd, i) => {
+                html += `
+                    <div class="discount-row">
+                        <div class="form-group">
+                            <label>Ab Stunden (h)</label>
+                            <input type="text" value="${bd.threshold}" onchange="updateBulk('eventHours', ${i}, 'threshold', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Rabatt (%)</label>
+                            <input type="text" value="${bd.discountPercent}" onchange="updateBulk('eventHours', ${i}, 'discountPercent', this.value)">
+                        </div>
+                        <button class="btn-small btn-delete" onclick="removeBulk('eventHours', ${i})">X</button>
+                    </div>
+                `;
+            });
+            html += `
+                        <button class="btn-small" onclick="addBulk('eventHours')">+ Rabattstufe (Stunden) Hinzufügen</button>
                     </div>
                 </div>
             `;
@@ -326,8 +355,14 @@
         }
         window.updateCustom = (prop, lang, val) => { pricingData.custom[prop][lang] = val; }
 
+        // Helpers
+        function parseVal(val) {
+            if (typeof val === 'string') val = val.replace(',', '.');
+            return parseFloat(val) || 0;
+        }
+
         // Extras Handlers
-        window.updateExtra = (idx, prop, val) => { pricingData.extras[idx][prop] = val; }
+        window.updateExtra = (idx, prop, val) => { pricingData.extras[idx][prop] = parseVal(val); }
         window.addExtra = () => {
             if(!pricingData.extras) pricingData.extras = [];
             pricingData.extras.push({ id: "extra_" + Date.now(), label: "", price: 0 });
@@ -339,21 +374,26 @@
         }
 
         // Bulk Handlers
-        window.updateBulk = (idx, prop, val) => { pricingData.bulkDiscounts[idx][prop] = val; }
-        window.addBulk = () => {
-            if(!pricingData.bulkDiscounts) pricingData.bulkDiscounts = [];
-            pricingData.bulkDiscounts.push({ threshold: 0, discountPercent: 0 });
-            pricingData.bulkDiscounts.sort((a,b) => a.threshold - b.threshold);
+        window.updateBulk = (type, idx, prop, val) => { 
+            if(!pricingData.bulkDiscounts[type]) pricingData.bulkDiscounts[type] = [];
+            pricingData.bulkDiscounts[type][idx][prop] = parseVal(val); 
+        }
+        window.addBulk = (type) => {
+            if(!pricingData.bulkDiscounts) pricingData.bulkDiscounts = { extras: [], eventHours: [] };
+            if(!pricingData.bulkDiscounts[type]) pricingData.bulkDiscounts[type] = [];
+            pricingData.bulkDiscounts[type].push({ threshold: 0, discountPercent: 0 });
+            pricingData.bulkDiscounts[type].sort((a,b) => a.threshold - b.threshold);
             renderEditor();
         }
-        window.removeBulk = (idx) => {
-            pricingData.bulkDiscounts.splice(idx, 1);
+        window.removeBulk = (type, idx) => {
+            pricingData.bulkDiscounts[type].splice(idx, 1);
             renderEditor();
         }
 
         // Global Handlers
         window.updateGlobal = (prop, val) => {
             if(!pricingData.globalDiscount) pricingData.globalDiscount = { active: false, label: "", type: "percent", value: 0 };
+            if(prop === 'value') val = parseVal(val);
             pricingData.globalDiscount[prop] = val;
         }
 

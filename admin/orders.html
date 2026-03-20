@@ -293,6 +293,11 @@
                 </select>
             </div>
 
+            <div class="form-group" id="c-hours-group" style="display: none;">
+                <label>Anzahl Stunden</label>
+                <input type="number" id="c-hours" class="form-control" value="1" min="1" oninput="calculatePrice('c')">
+            </div>
+
             <div class="form-group">
                 <label>Extras</label>
                 <div id="c-extras-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
@@ -353,6 +358,11 @@
                     <option value="pet" data-label="Tierfotografie" data-price="125">Tierfotografie (125€)</option>
                     <option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="e-hours-group" style="display: none;">
+                <label>Anzahl Stunden</label>
+                <input type="number" id="e-hours" class="form-control" min="1" oninput="calculatePrice('e')">
             </div>
 
             <div class="form-group">
@@ -471,8 +481,21 @@
             if(!pricing) return;
             
             const packageSel = document.getElementById(`${prefix}-package`);
+            const packageVal = packageSel.value;
             const opt = packageSel.options[packageSel.selectedIndex];
+            
             let basePrice = parseFloat(opt.getAttribute('data-price')) || 0;
+            const hoursInput = document.getElementById(`${prefix}-hours`);
+            const hours = parseFloat(hoursInput.value) || 1;
+
+            // Show/Hide Hours for Event
+            const hoursGroup = document.getElementById(`${prefix}-hours-group`);
+            if (packageVal === 'event') {
+                hoursGroup.style.display = 'block';
+                basePrice = basePrice * hours;
+            } else {
+                hoursGroup.style.display = 'none';
+            }
             
             // Add Extras
             let extrasTotal = 0;
@@ -480,7 +503,6 @@
             checks.forEach(cb => extrasTotal += parseFloat(cb.getAttribute('data-price')) || 0);
             
             let total = basePrice + extrasTotal;
-            const subtotalBeforeDiscounts = total;
 
             // Apply Global Discount
             if(pricing.globalDiscount && pricing.globalDiscount.active) {
@@ -493,8 +515,19 @@
 
             // Apply Bulk Discount
             if(pricing.bulkDiscounts) {
-                const sortedDiscounts = [...pricing.bulkDiscounts].sort((a,b) => b.threshold - a.threshold);
-                const appliedBulk = sortedDiscounts.find(d => subtotalBeforeDiscounts >= d.threshold);
+                let bulkRules = [];
+                let compareValue = 0;
+
+                if (packageVal === 'event') {
+                    bulkRules = pricing.bulkDiscounts.eventHours || [];
+                    compareValue = hours;
+                } else {
+                    bulkRules = pricing.bulkDiscounts.extras || [];
+                    compareValue = extrasTotal;
+                }
+
+                const sortedDiscounts = [...bulkRules].sort((a,b) => b.threshold - a.threshold);
+                const appliedBulk = sortedDiscounts.find(d => compareValue >= d.threshold);
                 if(appliedBulk) {
                     total *= (1 - (appliedBulk.discountPercent / 100));
                 }
@@ -510,8 +543,9 @@
             }
 
             total = Math.max(0, total);
-            const formattedTotal = total.toFixed(2).replace('.', ',') + '€';
-            document.getElementById(`${prefix}-price-display`).textContent = formattedTotal;
+            // Numeric formatting for output (without € symbol for storage)
+            const formattedTotal = total.toFixed(2);
+            document.getElementById(`${prefix}-price-display`).textContent = formattedTotal.replace('.', ',') + '€';
             document.getElementById(`${prefix}-price`).value = formattedTotal;
         }
 
@@ -537,8 +571,8 @@
                         <td style="font-family:monospace; font-size:0.85rem; color:var(--text-secondary);">${o.id}</td>
                         <td style="color:var(--text-secondary); font-size:0.85rem;">${formatDate(o.createdAt)}</td>
                         <td style="font-weight:600;">${escHtml(o.clientName)}</td>
-                        <td>${escHtml(o.packageLabel || o.package)}</td>
-                        <td style="font-weight:600;">${o.price.replace('.', ',')}€</td>
+                        <td>${escHtml(o.packageLabel || o.package)} ${o.hours ? `(${o.hours}h)` : ''}</td>
+                        <td style="font-weight:600;">${o.price ? o.price.toString().replace('€','').replace('.', ',') : '0,00'}€</td>
                         <td><span class="badge badge-${o.status}">${STATUS_LABELS[o.status] || o.status}</span></td>
                         <td>
                             <button class="btn-action btn-edit" onclick="openEditModal('${o.id}')">✏ Bearbeiten</button>
@@ -579,6 +613,7 @@
         function openCreateModal() {
             document.getElementById('c-name').value = '';
             document.getElementById('c-package').value = '';
+            document.getElementById('c-hours').value = '1';
             document.getElementById('c-discount-value').value = '';
             document.getElementById('c-discount-type').value = 'euro';
             document.querySelectorAll('#c-extras-list .extra-cb').forEach(cb => cb.checked = false);
@@ -594,6 +629,7 @@
             const name = document.getElementById('c-name').value.trim();
             const packageSel = document.getElementById('c-package');
             const packageVal = packageSel.value;
+            const hours = (packageVal === 'event') ? (parseInt(document.getElementById('c-hours').value) || 1) : null;
             const packageLabel = packageSel.options[packageSel.selectedIndex]?.getAttribute('data-label') || packageVal;
             const price = document.getElementById('c-price').value;
             const notes = document.getElementById('c-notes').value.trim();
@@ -612,7 +648,7 @@
             const res = await fetch('api/manage-orders.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'create', clientName: name, package: packageVal, packageLabel, price, notes, selectedExtras, discount }),
+                body: JSON.stringify({ action: 'create', clientName: name, package: packageVal, packageLabel, price, notes, selectedExtras, discount, hours }),
             });
             const data = await res.json();
             if (data.success) {
@@ -631,6 +667,7 @@
             document.getElementById('e-id').value    = o.id;
             document.getElementById('e-name').value  = o.clientName;
             document.getElementById('e-package').value = o.package;
+            document.getElementById('e-hours').value = o.hours || 1;
             
             // Set Extras
             const selectedExtras = o.selectedExtras || [];
@@ -655,6 +692,7 @@
             const name     = document.getElementById('e-name').value.trim();
             const packageSel = document.getElementById('e-package');
             const packageVal = packageSel.value;
+            const hours    = (packageVal === 'event') ? (parseInt(document.getElementById('e-hours').value) || 1) : null;
             const packageLabel = packageSel.options[packageSel.selectedIndex]?.getAttribute('data-label') || packageVal;
             const price    = document.getElementById('e-price').value;
             const notes    = document.getElementById('e-notes').value.trim();
@@ -673,7 +711,7 @@
             const res = await fetch('api/manage-orders.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'update', id, clientName: name, package: packageVal, packageLabel, price, notes, selectedExtras, discount }),
+                body: JSON.stringify({ action: 'update', id, clientName: name, package: packageVal, packageLabel, price, notes, selectedExtras, discount, hours }),
             });
             const data = await res.json();
             if (data.success) {

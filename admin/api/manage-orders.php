@@ -62,7 +62,8 @@ switch ($action) {
             'status' => 'neu',
             'notes' => $input['notes'] ?? '',
             'selectedExtras' => $input['selectedExtras'] ?? [],
-            'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro']
+            'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro'],
+            'hours' => $input['hours'] ?? null
         ];
         array_unshift($db['orders'], $newOrder);
         $success = saveOrders($file, $db);
@@ -79,6 +80,7 @@ switch ($action) {
                 $o['notes'] = $input['notes'] ?? $o['notes'];
                 $o['selectedExtras'] = $input['selectedExtras'] ?? ($o['selectedExtras'] ?? []);
                 $o['discount'] = $input['discount'] ?? ($o['discount'] ?? ['value' => 0, 'type' => 'euro']);
+                $o['hours'] = $input['hours'] ?? ($o['hours'] ?? null);
                 $success = true;
                 break;
             }
