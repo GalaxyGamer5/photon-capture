@@ -395,6 +395,7 @@
         };
 
         let currentStatusOrderId = null;
+        let allOrders = []; // Global store for loaded orders
 
         // ── Load & render orders ───────────────────────────────────────
         async function loadOrders() {
@@ -405,6 +406,7 @@
                 if (!data.success) throw new Error(data.error);
 
                 const orders = data.orders;
+                allOrders = orders; // Store for lookup
                 document.getElementById('order-count').textContent = `${orders.length} Bestellung${orders.length !== 1 ? 'en' : ''}`;
 
                 if (orders.length === 0) {
@@ -421,8 +423,8 @@
                         <td style="font-weight:600;">${escHtml(o.price)}</td>
                         <td><span class="badge badge-${o.status}">${STATUS_LABELS[o.status] || o.status}</span></td>
                         <td>
-                            <button class="btn-action btn-edit" onclick="openEditModal(${JSON.stringify(JSON.stringify(o))})">✏ Bearbeiten</button>
-                            <button class="btn-action btn-status" onclick="openStatusModal(${JSON.stringify(JSON.stringify(o))})">▶ Status</button>
+                            <button class="btn-action btn-edit" onclick="openEditModal('${o.id}')">✏ Bearbeiten</button>
+                            <button class="btn-action btn-status" onclick="openStatusModal('${o.id}')">▶ Status</button>
                         </td>
                     </tr>
                 `).join('');
@@ -498,8 +500,10 @@
         }
 
         // ── Edit Modal ─────────────────────────────────────────────────
-        function openEditModal(orderJson) {
-            const o = JSON.parse(orderJson);
+        function openEditModal(orderId) {
+            const o = allOrders.find(ord => ord.id === orderId);
+            if (!o) return;
+
             document.getElementById('e-id').value    = o.id;
             document.getElementById('e-name').value  = o.clientName;
             document.getElementById('e-package').value = o.package;
@@ -557,8 +561,10 @@
         }
 
         // ── Status Modal ───────────────────────────────────────────────
-        function openStatusModal(orderJson) {
-            const o = JSON.parse(orderJson);
+        function openStatusModal(orderId) {
+            const o = allOrders.find(ord => ord.id === orderId);
+            if (!o) return;
+            
             currentStatusOrderId = o.id;
             document.getElementById('statusModalOrderName').textContent = `${o.id} — ${o.clientName}`;
 
