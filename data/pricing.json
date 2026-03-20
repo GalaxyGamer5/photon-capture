@@ -120,5 +120,38 @@
       "en": "Request Custom Quote"
     },
     "buttonUrl": "calendar.html?package=other"
+  },
+  "extras": [
+    {
+      "id": "usb",
+      "label": "USB-Stick mit allen Bildern",
+      "price": 15
+    },
+    {
+      "id": "express",
+      "label": "Express-Bearbeitung (24h)",
+      "price": 50
+    },
+    {
+      "id": "shooting_plus",
+      "label": "Zusätzliche Shooting-Stunde",
+      "price": 80
+    }
+  ],
+  "bulkDiscounts": [
+    {
+      "threshold": 300,
+      "discountPercent": 5
+    },
+    {
+      "threshold": 600,
+      "discountPercent": 10
+    }
+  ],
+  "globalDiscount": {
+    "active": false,
+    "label": "Black Friday Sale",
+    "type": "percent",
+    "value": 10
   }
 }

@@ -60,7 +60,9 @@ switch ($action) {
             'packageLabel' => $input['packageLabel'] ?? '',
             'price' => $input['price'] ?? '0€',
             'status' => 'neu',
-            'notes' => $input['notes'] ?? ''
+            'notes' => $input['notes'] ?? '',
+            'selectedExtras' => $input['selectedExtras'] ?? [],
+            'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro']
         ];
         array_unshift($db['orders'], $newOrder);
         $success = saveOrders($file, $db);
@@ -75,6 +77,8 @@ switch ($action) {
                 $o['packageLabel'] = $input['packageLabel'] ?? $o['packageLabel'];
                 $o['price'] = $input['price'] ?? $o['price'];
                 $o['notes'] = $input['notes'] ?? $o['notes'];
+                $o['selectedExtras'] = $input['selectedExtras'] ?? ($o['selectedExtras'] ?? []);
+                $o['discount'] = $input['discount'] ?? ($o['discount'] ?? ['value' => 0, 'type' => 'euro']);
                 $success = true;
                 break;
             }

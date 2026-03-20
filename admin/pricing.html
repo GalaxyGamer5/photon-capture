@@ -75,6 +75,22 @@
             margin-top: 1rem;
             font-weight: bold;
         }
+
+        .discount-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .global-discount-box {
+            background: rgba(0, 242, 255, 0.05);
+            border: 1px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -202,6 +218,96 @@
                 </div>
             `;
 
+            // --- EXTRAS Section ---
+            html += `
+                <h2 style="margin-top: 3rem;">Extras & Zusatzleistungen</h2>
+                <div class="package-card">
+                    <div id="extras-list">
+            `;
+            (pricingData.extras || []).forEach((ext, i) => {
+                html += `
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Bezeichnung</label>
+                            <input type="text" value="${ext.label}" onchange="updateExtra(${i}, 'label', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Preis (€)</label>
+                            <input type="number" value="${ext.price}" onchange="updateExtra(${i}, 'price', parseFloat(this.value) || 0)">
+                        </div>
+                        <div class="form-group" style="flex: 0; align-self: flex-end;">
+                            <button class="btn-small btn-delete" onclick="removeExtra(${i})">X</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `
+                        <button class="btn-small" onclick="addExtra()">+ Extra Hinzufügen</button>
+                    </div>
+                </div>
+            `;
+
+            // --- BULK DISCOUNTS Section ---
+            html += `
+                <h2 style="margin-top: 3rem;">Sammel-Rabatte (Automatisch)</h2>
+                <div class="package-card">
+                    <p style="color:var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Wird automatisch angewendet, wenn der Gesamtbetrag (Paket + Extras) den Schwellenwert überschreitet.
+                    </p>
+                    <div id="bulk-discounts-list">
+            `;
+            (pricingData.bulkDiscounts || []).forEach((bd, i) => {
+                html += `
+                    <div class="discount-row">
+                        <div class="form-group">
+                            <label>Ab Betrag (€)</label>
+                            <input type="number" value="${bd.threshold}" onchange="updateBulk(${i}, 'threshold', parseFloat(this.value) || 0)">
+                        </div>
+                        <div class="form-group">
+                            <label>Rabatt (%)</label>
+                            <input type="number" value="${bd.discountPercent}" onchange="updateBulk(${i}, 'discountPercent', parseFloat(this.value) || 0)">
+                        </div>
+                        <button class="btn-small btn-delete" onclick="removeBulk(${i})">X</button>
+                    </div>
+                `;
+            });
+            html += `
+                        <button class="btn-small" onclick="addBulk()">+ Rabattstufe Hinzufügen</button>
+                    </div>
+                </div>
+            `;
+
+            // --- GLOBAL DISCOUNT Section ---
+            const gd = pricingData.globalDiscount || { active: false, label: "", type: "percent", value: 0 };
+            html += `
+                <div class="global-discount-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="margin: 0; background:none; -webkit-text-fill-color: var(--accent);">Globaler Rabatt (z.B. Black Friday)</h2>
+                        <label class="switch" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" ${gd.active ? 'checked' : ''} onchange="updateGlobal('active', this.checked)">
+                            <span>Aktivieren</span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Aktions-Label (z.B. "Winter Sale")</label>
+                            <input type="text" value="${gd.label}" onchange="updateGlobal('label', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Rabatt-Wert</label>
+                            <input type="number" value="${gd.value}" onchange="updateGlobal('value', parseFloat(this.value) || 0)">
+                        </div>
+                        <div class="form-group">
+                            <label>Typ</label>
+                            <select onchange="updateGlobal('type', this.value)" style="width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                                <option value="percent" ${gd.type === 'percent' ? 'selected' : ''}>Prozent (%)</option>
+                                <option value="euro" ${gd.type === 'euro' ? 'selected' : ''}>Euro (€)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+
             html += `<div id="save-status"></div>`;
             container.innerHTML = html;
         }
@@ -219,6 +325,37 @@
             renderEditor();
         }
         window.updateCustom = (prop, lang, val) => { pricingData.custom[prop][lang] = val; }
+
+        // Extras Handlers
+        window.updateExtra = (idx, prop, val) => { pricingData.extras[idx][prop] = val; }
+        window.addExtra = () => {
+            if(!pricingData.extras) pricingData.extras = [];
+            pricingData.extras.push({ id: "extra_" + Date.now(), label: "", price: 0 });
+            renderEditor();
+        }
+        window.removeExtra = (idx) => {
+            pricingData.extras.splice(idx, 1);
+            renderEditor();
+        }
+
+        // Bulk Handlers
+        window.updateBulk = (idx, prop, val) => { pricingData.bulkDiscounts[idx][prop] = val; }
+        window.addBulk = () => {
+            if(!pricingData.bulkDiscounts) pricingData.bulkDiscounts = [];
+            pricingData.bulkDiscounts.push({ threshold: 0, discountPercent: 0 });
+            pricingData.bulkDiscounts.sort((a,b) => a.threshold - b.threshold);
+            renderEditor();
+        }
+        window.removeBulk = (idx) => {
+            pricingData.bulkDiscounts.splice(idx, 1);
+            renderEditor();
+        }
+
+        // Global Handlers
+        window.updateGlobal = (prop, val) => {
+            if(!pricingData.globalDiscount) pricingData.globalDiscount = { active: false, label: "", type: "percent", value: 0 };
+            pricingData.globalDiscount[prop] = val;
+        }
 
         async function savePricingData() {
             const statusLabel = document.getElementById('save-status');
