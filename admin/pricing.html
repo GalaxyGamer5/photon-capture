@@ -406,11 +406,16 @@
                     pkg.bulkDiscounts = (pkg.bulkDiscounts || []).filter(d => d.count <= maxCount);
                 });
 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
                 const res = await fetch('api/manage-pricing.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(pricingData)
+                    body: JSON.stringify(pricingData),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
                 
                 if (!res.ok) {
                     const text = await res.text();
