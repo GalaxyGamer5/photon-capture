@@ -46,9 +46,12 @@ if (file_exists($usersFile)) {
 }
 
 // Image processing with GD
+$info = @getimagesize($image_path);
+$mime = $info['mime'] ?? 'image/jpeg';
+
 if (!function_exists('imagecreatefromjpeg')) {
     // GD not installed, fallback to serving original
-    header('Content-Type: ' . ($mime ?? 'image/jpeg'));
+    header('Content-Type: ' . $mime);
     readfile($image_path);
     exit;
 }
@@ -82,22 +85,32 @@ if ($isProtected) {
     $width = imagesx($image);
     $height = imagesy($image);
     
-    // Create a semi-transparent color for the watermark
-    $white = imagecolorallocatealpha($image, 255, 255, 255, 90); // 90 is roughly 30% opacity
+    // Create colors
+    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 95); // White semi-trans
+    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 110);    // Black semi-trans for contrast
     
-    // Draw repeating "PHOTON CAPTURE" text
     $text = "PHOTON-CAPTURE";
-    $fontSize = 5; // Built-in GD font size (1-5)
+    $fontSize = 5; 
     
     $textWidth = imagefontwidth($fontSize) * strlen($text);
     $textHeight = imagefontheight($fontSize);
     
-    // Grid of watermarks
-    for ($x = 50; $x < $width; $x += $textWidth + 250) {
-        for ($y = 50; $y < $height; $y += 250) {
-            imagestring($image, $fontSize, $x, $y, $text, $white);
+    // Dense diagonal grid of watermarks
+    for ($y = -200; $y < $height + 200; $y += 200) {
+        for ($x = -200; $x < $width + 200; $x += 400) {
+            // Shadow for readability
+            imagestring($image, $fontSize, $x + 1, $y + 1, $text, $color_black);
+            imagestring($image, $fontSize, $x, $y, $text, $color_main);
         }
     }
+
+    // Centered Banner
+    $bannerText = "PREVIEW - UNTIL PAID";
+    $bannerWidth = imagefontwidth($fontSize) * strlen($bannerText);
+    
+    // Draw a semi-transparent dark strip behind the banner
+    imagefilledrectangle($image, 0, ($height/2) - 20, $width, ($height/2) + 20, $color_black);
+    imagestring($image, $fontSize, ($width - $bannerWidth) / 2, ($height / 2) - 8, $bannerText, $color_main);
 }
 
 // Serve the image
