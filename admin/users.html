@@ -112,19 +112,32 @@
                     </div>`;
                 }
 
+                const isProtected = user.isProtected !== false; // Default to true if undefined
+
                 return `
-                <div class="user-card">
+                <div class="user-card" style="border-left: 4px solid ${isProtected ? '#ff9800' : '#4caf50'}">
                     <div>
-                        <h3 style="margin-bottom: 0.5rem;">${user.name}</h3>
+                        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0;">${user.name}</h3>
+                            <span class="badge" style="background: ${isProtected ? 'rgba(255,152,0,0.1)' : 'rgba(76,175,80,0.1)'}; color: ${isProtected ? '#ff9800' : '#4caf50'}; border: 1px solid currentColor; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 4px;">
+                                ${isProtected ? '🔒 Geschützt (Watermark)' : '🔓 Freigegeben'}
+                            </span>
+                        </div>
                         <div style="color: var(--text-secondary); font-size: 0.9rem;">
                             Username: ${user.username} <br>
                             Folder: ${user.folder}
                         </div>
                         ${favHtml}
                     </div>
-                    <div style="text-align: right;">
-                        <span style="display: block; margin-bottom: 0.5rem; color: var(--accent);">${user.imageCount} Bilder</span>
-                        <button onclick="deleteUser(${index})" class="btn" style="background: rgba(255, 77, 77, 0.2); color: var(--danger); font-size: 0.8rem; padding: 0.5rem;">Löschen</button>
+                    <div style="text-align: right; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                        <span style="display: block; color: var(--accent); font-weight: 600;">${user.imageCount} Bilder</span>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="toggleProtection(${index})" class="btn" style="width: auto; background: ${isProtected ? 'rgba(76,175,80,0.2)' : 'rgba(255,152,0,0.2)'}; color: ${isProtected ? '#4caf50' : '#ff9800'}; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid currentColor;">
+                                ${isProtected ? '🔓 Jetzt Freigeben' : '🔒 Watermark aktivieren'}
+                            </button>
+                            <button onclick="deleteUser(${index})" class="btn" style="width: auto; background: rgba(255, 77, 77, 0.1); color: var(--danger); font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(255, 77, 77, 0.2);">Löschen</button>
+                        </div>
                     </div>
                 </div>
                 `;
@@ -149,7 +162,8 @@
                     passwordHash: hash,
                     name: name,
                     folder: username + '-gallery',
-                    imageCount: 0
+                    imageCount: 0,
+                    isProtected: true
                 });
                 renderUsers();
                 document.getElementById('addUserForm').style.display = 'none';
@@ -170,6 +184,13 @@
                 renderUsers();
                 saveUsers();
             }
+        }
+
+        function toggleProtection(index) {
+            const user = usersData.users[index];
+            user.isProtected = user.isProtected === false; // Toggle
+            renderUsers();
+            saveUsers();
         }
 
         async function saveUsers() {

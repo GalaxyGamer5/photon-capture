@@ -186,16 +186,15 @@
                         item.className = 'gallery-item';
                         const isFavorite = favorites.has(i);
 
-                        // Assuming jpg format for simplicity, could be enhanced to support others
-                        const imgSrc = `${imageFolder}/${i}.jpg`;
+                        // Use secure delivery API for watermarking/protection
+                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg`;
 
                         item.innerHTML = `
                         <div class="selection-checkbox" style="display: none;">
                             <input type="checkbox" id="select-${i}" data-image-index="${i}">
                             <label for="select-${i}"></label>
                         </div>
-                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}"
-                             onerror="tryNextExtension(this)">
+                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}">
                         <div class="gallery-overlay">
                             <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${i})" style="margin-right: 0.5rem;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -445,24 +444,15 @@
                         downloadBtn.textContent = `Bild ${i + 1}/${imagesToDownload.length} wird hinzugefügt...`;
 
                         try {
-                            // Attempt fallback extensions if .jpg fails
-                            let response = await fetch(`${imageFolder}/${index}.jpg`);
-                            let ext = 'jpg';
+                            // Fetch via secure delivery API to maintain protection
+                            const apiSrc = `api/get-image.php?f=${user.folder}&i=${index}.jpg`;
+                            let response = await fetch(apiSrc);
                             
-                            if (!response.ok) {
-                                response = await fetch(`${imageFolder}/${index}.png`);
-                                ext = 'png';
-                            }
-                            if (!response.ok) {
-                                response = await fetch(`${imageFolder}/${index}.webp`);
-                                ext = 'webp';
-                            }
-
                             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                             const blob = await response.blob();
 
-                            // Add to ZIP with correct extension
-                            zip.file(`Bild_${String(index).padStart(3, '0')}.${ext}`, blob);
+                            // Add to ZIP (API returns JPG)
+                            zip.file(`Bild_${String(index).padStart(3, '0')}.jpg`, blob);
                             addedCount++;
                         } catch (err) {
                             console.error(`Error adding image ${index} to ZIP:`, err);
