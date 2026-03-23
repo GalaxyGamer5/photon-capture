@@ -97,6 +97,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(pricingData)
                 });
+                
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${text.substring(0, 100)}`);
+                }
+
                 const result = await res.json();
                 if (result.success) {
                     status.textContent = "Gespeichert!";
@@ -106,7 +112,8 @@
                     status.style.color = "#ff4d4d";
                 }
             } catch (e) {
-                status.textContent = "Netzwerkfehler";
+                console.error("Save error:", e);
+                status.textContent = "Netzwerkfehler: " + e.message;
                 status.style.color = "#ff4d4d";
             }
             btn.disabled = false;
