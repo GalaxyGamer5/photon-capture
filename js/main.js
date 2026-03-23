@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchPricing() {
         if (!pricingGrid || !customReq) return;
         try {
-            const res = await fetch('api/get-pricing.php');
+            const res = await fetch('api/get-pricing.php?t=' + Date.now());
             if (res.ok) {
                 loadedPricingData = await res.json();
                 renderPricing();
