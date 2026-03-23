@@ -6,8 +6,8 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data) {
-    echo json_encode(['success' => false, 'error' => 'Invalid data']);
+if ($data === null) {
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON data received: ' . json_last_error_msg()]);
     exit;
 }
 

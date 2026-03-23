@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
             margin: 2rem auto;
             padding: 0 1.5rem;
         }
+
         .package-card {
             background: var(--surface-light);
             border-radius: 12px;
@@ -18,24 +20,30 @@
             padding: 1.5rem;
             margin-bottom: 2rem;
         }
+
         .form-group {
             margin-bottom: 1rem;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-secondary);
         }
+
         .form-row {
             display: flex;
             gap: 1rem;
             margin-bottom: 1rem;
         }
+
         .form-row .form-group {
             flex: 1;
             margin-bottom: 0;
         }
-        input, textarea {
+
+        input,
+        textarea {
             width: 100%;
             padding: 0.75rem;
             background: rgba(255, 255, 255, 0.05);
@@ -44,20 +52,24 @@
             color: var(--text-primary);
             font-family: inherit;
         }
+
         .features-list {
             margin-top: 1rem;
             padding-left: 1rem;
             border-left: 2px solid var(--border-color);
         }
+
         .feature-item {
             display: flex;
             gap: 1rem;
             margin-bottom: 0.5rem;
             align-items: center;
         }
+
         .feature-item input {
             flex: 1;
         }
+
         .btn-small {
             background: rgba(255, 255, 255, 0.1);
             border: none;
@@ -66,10 +78,20 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        .btn-small:hover { background: rgba(255, 255, 255, 0.2); }
-        .btn-delete { background: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
-        .btn-delete:hover { background: rgba(255, 77, 77, 0.3); }
-        
+
+        .btn-small:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-delete {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff4d4d;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 77, 77, 0.3);
+        }
+
         #save-status {
             text-align: right;
             margin-top: 1rem;
@@ -93,12 +115,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="dashboard-container">
         <header class="header">
             <div class="welcome-text">
                 <h1>Preise Verwalten</h1>
-                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum Dashboard</a></p>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
+                        Dashboard</a></p>
             </div>
             <button onclick="savePricingData()" class="btn">Änderungen Speichern</button>
         </header>
@@ -128,7 +152,7 @@
             if (!pricingData) return;
 
             let html = `<h2>Pakete & Leistungen</h2>`;
-            
+
             pricingData.packages.forEach((pkg, pkgIndex) => {
                 html += `
                 <div class="package-card" data-pkg-index="${pkgIndex}" style="border-left: 4px solid var(--accent);">
@@ -140,25 +164,25 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Titel (DE)</label>
-                            <input type="text" value="${pkg.title.de}" onchange="updatePkg(${pkgIndex}, 'title', 'de', this.value)">
+                            <input type="text" value="${pkg.title.de}" oninput="updatePkg(${pkgIndex}, 'title', 'de', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Titel (EN)</label>
-                            <input type="text" value="${pkg.title.en}" onchange="updatePkg(${pkgIndex}, 'title', 'en', this.value)">
+                            <input type="text" value="${pkg.title.en}" oninput="updatePkg(${pkgIndex}, 'title', 'en', this.value)">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Basis-Preis (€)</label>
-                            <input type="text" value="${pkg.price}" onchange="updatePkgVal(${pkgIndex}, 'price', this.value)">
+                            <input type="text" value="${pkg.price}" oninput="updatePkgVal(${pkgIndex}, 'price', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Einheit (DE) (z.B. /Stunde)</label>
-                            <input type="text" value="${pkg.priceUnit.de || ''}" onchange="updatePkg(${pkgIndex}, 'priceUnit', 'de', this.value)">
+                            <input type="text" value="${pkg.priceUnit.de || ''}" oninput="updatePkg(${pkgIndex}, 'priceUnit', 'de', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Einheit (EN) (z.B. /hour)</label>
-                            <input type="text" value="${pkg.priceUnit.en || ''}" onchange="updatePkg(${pkgIndex}, 'priceUnit', 'en', this.value)">
+                            <input type="text" value="${pkg.priceUnit.en || ''}" oninput="updatePkg(${pkgIndex}, 'priceUnit', 'en', this.value)">
                         </div>
                     </div>
                     
@@ -169,8 +193,8 @@
                             <div class="features-list">
                                 ${(pkg.features || []).map((feat, featIndex) => `
                                     <div class="feature-item" style="margin-bottom: 0.5rem;">
-                                        <input type="text" placeholder="DE" value="${feat.de}" onchange="updateFeat(${pkgIndex}, ${featIndex}, 'de', this.value)">
-                                        <input type="text" placeholder="EN" value="${feat.en}" onchange="updateFeat(${pkgIndex}, ${featIndex}, 'en', this.value)">
+                                        <input type="text" placeholder="DE" value="${feat.de}" oninput="updateFeat(${pkgIndex}, ${featIndex}, 'de', this.value)">
+                                        <input type="text" placeholder="EN" value="${feat.en}" oninput="updateFeat(${pkgIndex}, ${featIndex}, 'en', this.value)">
                                         <button class="btn-small btn-delete" onclick="removeFeature(${pkgIndex}, ${featIndex})">X</button>
                                     </div>
                                 `).join('')}
@@ -185,8 +209,8 @@
                                 ${(pkg.extras || []).map((ext, extIndex) => `
                                     <div class="feature-item" style="margin-bottom: 1rem; flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 8px;">
                                         <div style="display: flex; gap: 0.5rem;">
-                                            <input type="text" placeholder="Bezeichnung" value="${ext.label}" onchange="updatePkgExtra(${pkgIndex}, ${extIndex}, 'label', this.value)">
-                                            <input type="text" style="width: 80px;" placeholder="Preis" value="${ext.price}" onchange="updatePkgExtra(${pkgIndex}, ${extIndex}, 'price', this.value)">
+                                            <input type="text" placeholder="Bezeichnung" value="${ext.label}" oninput="updatePkgExtra(${pkgIndex}, ${extIndex}, 'label', this.value)">
+                                            <input type="text" style="width: 80px;" placeholder="Preis" value="${ext.price}" oninput="updatePkgExtra(${pkgIndex}, ${extIndex}, 'price', this.value)">
                                             <button class="btn-small btn-delete" onclick="removePkgExtra(${pkgIndex}, ${extIndex})">X</button>
                                         </div>
                                     </div>
@@ -204,20 +228,20 @@
                         </p>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
                             ${(pkg.extras || []).map((_, i) => {
-                                const count = i + 1;
-                                const bd = (pkg.bulkDiscounts || []).find(d => d.count === count) || { count, discountPercent: 0 };
-                                return `
+                    const count = i + 1;
+                    const bd = (pkg.bulkDiscounts || []).find(d => d.count === count) || { count, discountPercent: 0 };
+                    return `
                                     <div style="background: rgba(0,242,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(0,242,255,0.1);">
                                         <label style="font-size: 0.8rem; display: block; margin-bottom: 0.4rem;">${count} Zusatz-Perk${count > 1 ? 's' : ''}</label>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <input type="text" value="${bd.discountPercent}" 
-                                                onchange="updatePkgBulk(${pkgIndex}, ${count}, this.value)" 
+                                                oninput="updatePkgBulk(${pkgIndex}, ${count}, this.value)" 
                                                 style="padding: 0.4rem; font-size: 0.9rem;">
                                             <span>%</span>
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+                }).join('')}
                         </div>
                         ${pkg.extras && pkg.extras.length === 0 ? '<p style="font-size: 0.9rem; color: var(--text-secondary); font-style: italic;">Füge zuerst Perks hinzu, um Rabattstufen festzulegen.</p>' : ''}
                     </div>
@@ -233,21 +257,21 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Titel (DE)</label>
-                            <input type="text" value="${pricingData.custom.title.de}" onchange="updateCustom('title', 'de', this.value)">
+                            <input type="text" value="${pricingData.custom.title.de}" oninput="updateCustom('title', 'de', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Titel (EN)</label>
-                            <input type="text" value="${pricingData.custom.title.en}" onchange="updateCustom('title', 'en', this.value)">
+                            <input type="text" value="${pricingData.custom.title.en}" oninput="updateCustom('title', 'en', this.value)">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Text (DE)</label>
-                            <textarea rows="3" onchange="updateCustom('desc', 'de', this.value)">${pricingData.custom.desc.de}</textarea>
+                            <textarea rows="3" oninput="updateCustom('desc', 'de', this.value)">${pricingData.custom.desc.de}</textarea>
                         </div>
                         <div class="form-group">
                             <label>Text (EN)</label>
-                            <textarea rows="3" onchange="updateCustom('desc', 'en', this.value)">${pricingData.custom.desc.en}</textarea>
+                            <textarea rows="3" oninput="updateCustom('desc', 'en', this.value)">${pricingData.custom.desc.en}</textarea>
                         </div>
                     </div>
                 </div>
@@ -267,11 +291,11 @@
                     <div class="form-row">
                         <div class="form-group" style="flex: 2;">
                             <label>Aktions-Label (z.B. "Winter Sale")</label>
-                            <input type="text" value="${gd.label}" onchange="updateGlobal('label', this.value)">
+                            <input type="text" value="${gd.label}" oninput="updateGlobal('label', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Rabatt-Wert</label>
-                            <input type="text" value="${gd.value}" onchange="updateGlobal('value', this.value)">
+                            <input type="text" value="${gd.value}" oninput="updateGlobal('value', this.value)">
                         </div>
                         <div class="form-group">
                             <label>Rabatt-Typ</label>
@@ -296,22 +320,22 @@
             return isNaN(num) ? 0 : num;
         }
 
-        window.updatePkgVal = (pkgIndex, prop, val) => { 
-            pricingData.packages[pkgIndex][prop] = (prop === 'price') ? parseVal(val) : val; 
+        window.updatePkgVal = (pkgIndex, prop, val) => {
+            pricingData.packages[pkgIndex][prop] = (prop === 'price') ? parseVal(val) : val;
         }
-        window.updatePkg = (pkgIndex, prop, lang, val) => { 
-            if(!pricingData.packages[pkgIndex][prop]) pricingData.packages[pkgIndex][prop] = {};
-            pricingData.packages[pkgIndex][prop][lang] = val; 
+        window.updatePkg = (pkgIndex, prop, lang, val) => {
+            if (!pricingData.packages[pkgIndex][prop]) pricingData.packages[pkgIndex][prop] = {};
+            pricingData.packages[pkgIndex][prop][lang] = val;
         }
-        
+
         // Features
         window.updateFeat = (pkgIndex, featIndex, lang, val) => { pricingData.packages[pkgIndex].features[featIndex][lang] = val; }
         window.addFeature = (pkgIndex) => {
-            if(!pricingData.packages[pkgIndex].features) pricingData.packages[pkgIndex].features = [];
-            pricingData.packages[pkgIndex].features.push({de: "", en: ""});
+            if (!pricingData.packages[pkgIndex].features) pricingData.packages[pkgIndex].features = [];
+            pricingData.packages[pkgIndex].features.push({ de: "", en: "" });
             renderEditor();
         }
-        window.removeFeature = (pkgIndex, featIndex) => { 
+        window.removeFeature = (pkgIndex, featIndex) => {
             pricingData.packages[pkgIndex].features.splice(featIndex, 1);
             renderEditor();
         }
@@ -321,7 +345,7 @@
             pricingData.packages[pkgIndex].extras[extIndex][prop] = (prop === 'price') ? parseVal(val) : val;
         }
         window.addPkgExtra = (pkgIndex) => {
-            if(!pricingData.packages[pkgIndex].extras) pricingData.packages[pkgIndex].extras = [];
+            if (!pricingData.packages[pkgIndex].extras) pricingData.packages[pkgIndex].extras = [];
             pricingData.packages[pkgIndex].extras.push({ id: 'p_' + Date.now(), label: '', price: 0 });
             renderEditor();
         }
@@ -336,9 +360,9 @@
 
         // Bulk (Count-based)
         window.updatePkgBulk = (pkgIndex, count, val) => {
-            if(!pricingData.packages[pkgIndex].bulkDiscounts) pricingData.bulkDiscounts = [];
+            if (!pricingData.packages[pkgIndex].bulkDiscounts) pricingData.packages[pkgIndex].bulkDiscounts = [];
             let bd = pricingData.packages[pkgIndex].bulkDiscounts.find(d => d.count === count);
-            if(!bd) {
+            if (!bd) {
                 bd = { count, discountPercent: 0 };
                 pricingData.packages[pkgIndex].bulkDiscounts.push(bd);
             }
@@ -346,18 +370,23 @@
         }
 
         // Custom Request
-        window.updateCustom = (prop, lang, val) => { 
-            if(!pricingData.custom[prop]) pricingData.custom[prop] = {};
-            pricingData.custom[prop][lang] = val; 
+        window.updateCustom = (prop, lang, val) => {
+            if (!pricingData.custom[prop]) pricingData.custom[prop] = {};
+            pricingData.custom[prop][lang] = val;
         }
 
         // Global
         window.updateGlobal = (prop, val) => {
-            if(!pricingData.globalDiscount) pricingData.globalDiscount = { active: false, label: "", type: "percent", value: 0 };
+            if (!pricingData.globalDiscount) pricingData.globalDiscount = { active: false, label: "", type: "percent", value: 0 };
             pricingData.globalDiscount[prop] = (prop === 'value') ? parseVal(val) : val;
         }
 
         async function savePricingData() {
+            // Force blur on current active element to ensure all oninput/onchange are processed
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                document.activeElement.blur();
+            }
+
             const statusLabel = document.getElementById('save-status');
             statusLabel.textContent = "Speichere...";
             statusLabel.style.color = "var(--text-primary)";
@@ -375,7 +404,7 @@
                     body: JSON.stringify(pricingData)
                 });
                 const result = await res.json();
-                
+
                 if (result.success) {
                     statusLabel.textContent = "Erfolgreich gespeichert!";
                     statusLabel.style.color = "#4caf50";
@@ -387,11 +416,12 @@
                 statusLabel.textContent = "Netzwerkfehler.";
                 statusLabel.style.color = "#ff4d4d";
             }
-            
-            setTimeout(() => { if(statusLabel) statusLabel.textContent = ''; }, 3000);
+
+            setTimeout(() => { if (statusLabel) statusLabel.textContent = ''; }, 3000);
         }
 
         loadPricing();
     </script>
 </body>
+
 </html>
