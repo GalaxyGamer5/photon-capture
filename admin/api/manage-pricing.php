@@ -1,11 +1,13 @@
 <?php
 header('Content-Type: application/json');
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Hide from HTML output
 
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
 if (!$data) {
-    echo json_encode(['success' => false, 'error' => 'Invalid or empty data received']);
+    echo json_encode(['success' => false, 'error' => 'Invalid or empty JSON received: ' . $input]);
     exit;
 }
 

@@ -98,12 +98,14 @@
                     body: JSON.stringify(pricingData)
                 });
                 
-                if (!res.ok) {
-                    const text = await res.text();
-                    throw new Error(`HTTP ${res.status}: ${text.substring(0, 100)}`);
+                const text = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch(e) {
+                    throw new Error("Invalid JSON: " + text.substring(0, 200));
                 }
 
-                const result = await res.json();
                 if (result.success) {
                     status.textContent = "Gespeichert!";
                     status.style.color = "#4caf50";
