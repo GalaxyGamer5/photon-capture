@@ -37,48 +37,59 @@ function calculateOrderPrice($order, $pricing) {
     $total = $basePrice + $extrasTotal;
     $originalPrice = $total;
 
-    // Apply Global Discount
-    $globalDiscountVal = 0;
+    $totalPercentDiscount = 0; // Cumulative percentage
+    $totalFlatDiscount = 0;
+
+    // 1. Collect Percentage Discounts
     if (isset($pricing['globalDiscount']) && $pricing['globalDiscount']['active']) {
         $gd = $pricing['globalDiscount'];
         if ($gd['type'] === 'percent') {
-            $globalDiscountVal = $total * ((float)$gd['value'] / 100);
-        } else {
-            $globalDiscountVal = (float)$gd['value'];
+            $totalPercentDiscount += (float)$gd['value'];
         }
     }
-    $total -= $globalDiscountVal;
-
-    // Apply Package-Specific Bulk Discount
-    $bulkDiscountVal = 0;
     if (isset($pkg['bulkDiscounts']) && $extrasCount > 0) {
         foreach ($pkg['bulkDiscounts'] as $bd) {
             if ((int)$bd['count'] === $extrasCount) {
-                $bulkDiscountVal = $total * ((float)$bd['discountPercent'] / 100);
-                $total -= $bulkDiscountVal;
+                $totalPercentDiscount += (float)$bd['discountPercent'];
                 break;
             }
         }
     }
-
-    // Apply Manual Discount (stored in order)
-    $manualDiscountVal = 0;
     $manual = $order['discount'] ?? ['value' => 0, 'type' => 'euro'];
     if ($manual['type'] === 'percent') {
-        $manualDiscountVal = $total * ((float)$manual['value'] / 100);
-    } else {
-        $manualDiscountVal = (float)$manual['value'];
+        $totalPercentDiscount += (float)$manual['value'];
     }
-    $total -= $manualDiscountVal;
+
+    // Apply Percentages (Summed up to avoid compounding vs sequence confusion, following "Percent first")
+    $percentSavings = $total * ($totalPercentDiscount / 100);
+    $total -= $percentSavings;
+
+    // 2. Collect Flat Discounts
+    if (isset($pricing['globalDiscount']) && $pricing['globalDiscount']['active']) {
+        $gd = $pricing['globalDiscount'];
+        if ($gd['type'] !== 'percent') {
+            $totalFlatDiscount += (float)$gd['value'];
+        }
+    }
+    if ($manual['type'] !== 'percent') {
+        $totalFlatDiscount += (float)$manual['value'];
+    }
+
+    // Apply Flats
+    $total -= $totalFlatDiscount;
 
     $finalPrice = max(0, $total);
-    $totalSavings = $originalPrice - $finalPrice;
-    $discountText = "";
-
-    if ($totalSavings > 0 && $originalPrice > 0) {
-        $percent = round(($totalSavings / $originalPrice) * 100);
-        $discountText = $percent . "% Rabatt";
+    
+    // Build discountText: "25% / -10€"
+    $parts = [];
+    if ($totalPercentDiscount > 0) {
+        $parts[] = $totalPercentDiscount . "%";
     }
+    if ($totalFlatDiscount > 0) {
+        $parts[] = "-" . number_format($totalFlatDiscount, 0, '.', '') . "€";
+    }
+    
+    $discountText = implode(" / ", $parts);
 
     return [
         'price' => number_format($finalPrice, 2, '.', ''),

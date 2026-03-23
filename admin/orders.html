@@ -515,31 +515,31 @@
             
             let total = basePrice + extrasTotal;
 
-            // Apply Global Discount
+            let totalPercent = 0;
+            let totalFlat = 0;
+
+            // Global
             if(pricing.globalDiscount && pricing.globalDiscount.active) {
-                if(pricing.globalDiscount.type === 'percent') {
-                    total *= (1 - (pricing.globalDiscount.value / 100));
-                } else {
-                    total -= pricing.globalDiscount.value;
-                }
+                if(pricing.globalDiscount.type === 'percent') totalPercent += parseFloat(pricing.globalDiscount.value) || 0;
+                else totalFlat += parseFloat(pricing.globalDiscount.value) || 0;
             }
 
-            // Apply Package-Specific Bulk Discount (Count-based)
+            // Bulk (always %)
             if(pkg.bulkDiscounts && extrasCount > 0) {
                 const appliedBulk = pkg.bulkDiscounts.find(d => d.count === extrasCount);
-                if(appliedBulk) {
-                    total *= (1 - (appliedBulk.discountPercent / 100));
-                }
+                if(appliedBulk) totalPercent += parseFloat(appliedBulk.discountPercent) || 0;
             }
 
-            // Apply Manual Discount
+            // Manual
             const manualVal = parseFloat(document.getElementById(`${prefix}-discount-value`).value) || 0;
             const manualType = document.getElementById(`${prefix}-discount-type`).value;
-            if(manualType === 'percent') {
-                total *= (1 - (manualVal / 100));
-            } else {
-                total -= manualVal;
-            }
+            if(manualType === 'percent') totalPercent += manualVal;
+            else totalFlat += manualVal;
+
+            // Apply percent first
+            total *= (1 - (totalPercent / 100));
+            // Apply flat
+            total -= totalFlat;
 
             total = Math.max(0, total);
             const formattedTotal = total.toFixed(2);
