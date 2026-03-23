@@ -91,16 +91,51 @@
                         <div>
                             <h4>Zusatzperks (Extras)</h4>
                             <div class="features-list">
-                                ${(pkg.extras || []).map((ext, eIdx) => `
-                                    <div class="feature-item" style="flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 8px;">
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            <input type="text" placeholder="Label" value="${ext.label}" oninput="updateArr('packages', ${pkgIdx}, 'extras', ${eIdx}, 'label', this.value)">
-                                            <input type="text" style="width: 80px;" placeholder="€" value="${ext.price}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'price', this.value)">
-                                            <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'extras', ${eIdx})">X</button>
+                                ${(pkg.extras || []).map((ext, eIdx) => {
+                                    const isSelect = ext.type === 'select';
+                                    return `
+                                    <div class="feature-item" style="flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <select style="width: 120px;" onchange="updateExtraType(${pkgIdx}, ${eIdx}, this.value)">
+                                                <option value="checkbox" ${!isSelect?'selected':''}>Checkbox</option>
+                                                <option value="select" ${isSelect?'selected':''}>Dropdown</option>
+                                            </select>
+                                            <input type="text" placeholder="ID (z.B. ext_photos)" value="${ext.id}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'id', this.value)">
+                                            <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'extras', ${eIdx})" style="margin-top:0">Löschen</button>
                                         </div>
+                                        
+                                        <div class="form-row">
+                                            <div class="form-group"><label>Label (DE)</label><input type="text" value="${ext.label.de || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'de', this.value)"></div>
+                                            <div class="form-group"><label>Label (EN)</label><input type="text" value="${ext.label.en || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'en', this.value)"></div>
+                                        </div>
+
+                                        ${!isSelect ? `
+                                            <div class="form-group"><label>Preis (€)</label><input type="text" value="${ext.price || 0}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'price', this.value)"></div>
+                                        ` : `
+                                            <div style="margin-top: 0.5rem; border-left: 2px solid var(--accent); padding-left: 1rem;">
+                                                <label style="font-weight: bold; font-size: 0.8rem; margin-bottom: 0.5rem; display: block;">Optionen</label>
+                                                <div class="features-list">
+                                                    ${(ext.options || []).map((opt, oIdx) => `
+                                                        <div class="feature-item" style="background: rgba(0,242,255,0.03); padding: 0.5rem; border-radius: 4px;">
+                                                            <div style="display:flex; flex-direction:column; gap:0.3rem; flex:1;">
+                                                                <input type="text" placeholder="ID" value="${opt.id}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'id', null, this.value)" style="font-size:0.75rem; padding:0.3rem;">
+                                                                <div style="display:flex; gap:0.3rem;">
+                                                                    <input type="text" placeholder="DE" value="${opt.label.de}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'de', this.value)" style="font-size:0.8rem; padding:0.4rem;">
+                                                                    <input type="text" placeholder="EN" value="${opt.label.en}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'en', this.value)" style="font-size:0.8rem; padding:0.4rem;">
+                                                                </div>
+                                                            </div>
+                                                            <input type="text" style="width: 50px;" placeholder="€" value="${opt.price}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'price', null, this.value)">
+                                                            <button class="btn-small btn-delete" onclick="removeExtraOption(${pkgIdx}, ${eIdx}, ${oIdx})">×</button>
+                                                        </div>
+                                                    `).join('')}
+                                                    <button class="btn-small" onclick="addExtraOption(${pkgIdx}, ${eIdx})">+ Option</button>
+                                                </div>
+                                            </div>
+                                        `}
                                     </div>
-                                `).join('')}
-                                <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'extras', {id:'p_'+Date.now(), label:'', price:0})">+ Perk</button>
+                                    `;
+                                }).join('')}
+                                <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'extras', {id:'ext_'+Date.now(), type:'checkbox', label:{de:'', en:''}, price:0})">+ Neuer Perk</button>
                             </div>
                         </div>
                     </div>
@@ -176,11 +211,48 @@
             pricingData[path][idx][prop] = isNaN(n) ? 0 : n;
         }
         window.updateArr = (path, pIdx, arrName, itemIdx, lang, val) => {
-            pricingData[path][pIdx][arrName][itemIdx][lang] = val;
+            // Check if item is a primitive or object with lang
+            let item = pricingData[path][pIdx][arrName][itemIdx];
+            if (typeof item === 'string') {
+                pricingData[path][pIdx][arrName][itemIdx] = val;
+            } else {
+                item[lang] = val;
+            }
         }
         window.updateArrVal = (path, pIdx, arrName, itemIdx, prop, val) => {
             let n = parseFloat(val.replace(',', '.'));
-            pricingData[path][pIdx][arrName][itemIdx][prop] = isNaN(n) ? 0 : n;
+            pricingData[path][pIdx][arrName][itemIdx][prop] = isNaN(n) ? val : n; // Allow string IDs
+        }
+        window.updateExtraLabel = (pkgIdx, extIdx, lang, val) => {
+            if (!pricingData.packages[pkgIdx].extras[extIdx].label) pricingData.packages[pkgIdx].extras[extIdx].label = { de: '', en: '' };
+            pricingData.packages[pkgIdx].extras[extIdx].label[lang] = val;
+        }
+        window.updateExtraType = (pkgIdx, extIdx, type) => {
+            const ext = pricingData.packages[pkgIdx].extras[extIdx];
+            ext.type = type;
+            if (type === 'select' && !ext.options) {
+                ext.options = [{ id: 'none', label: { de: 'Keine', en: 'None' }, price: 0 }];
+            }
+            render();
+        }
+        window.updateExtraOption = (pkgIdx, extIdx, optIdx, prop, lang, val) => {
+            let opt = pricingData.packages[pkgIdx].extras[extIdx].options[optIdx];
+            if (prop === 'price') {
+                let n = parseFloat(val.replace(',', '.'));
+                opt.price = isNaN(n) ? 0 : n;
+            } else if (lang) {
+                opt[prop][lang] = val;
+            } else {
+                opt[prop] = val;
+            }
+        }
+        window.addExtraOption = (pkgIdx, extIdx) => {
+            pricingData.packages[pkgIdx].extras[extIdx].options.push({ id: 'opt' + Date.now(), label: { de: '', en: '' }, price: 0 });
+            render();
+        }
+        window.removeExtraOption = (pkgIdx, extIdx, optIdx) => {
+            pricingData.packages[pkgIdx].extras[extIdx].options.splice(optIdx, 1);
+            render();
         }
         window.addArrItem = (path, pIdx, arrName, template) => {
             if (!pricingData[path][pIdx][arrName]) pricingData[path][pIdx][arrName] = [];

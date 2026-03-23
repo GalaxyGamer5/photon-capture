@@ -24,17 +24,37 @@ function calculateOrderPrice($order, $pricing) {
 
     // Add Extras
     $extrasTotal = 0;
+    $extrasCount = 0;
     $selectedExtras = $order['selectedExtras'] ?? [];
-    $extrasCount = count($selectedExtras);
     
     if (isset($pkg['extras'])) {
-        foreach ($pkg['extras'] as $ex) {
-            if (in_array($ex['id'], $selectedExtras)) {
-                $extrasTotal += (float)$ex['price'];
+        foreach ($pkg['extras'] as $extra) {
+            $type = $extra['type'] ?? 'checkbox';
+            if ($type === 'select') {
+                foreach ($selectedExtras as $selected) {
+                    if (strpos($selected, $extra['id'] . ':') === 0) {
+                        $optionId = substr($selected, strlen($extra['id']) + 1);
+                        foreach ($extra['options'] as $opt) {
+                            if ($opt['id'] === $optionId) {
+                                $extrasTotal += (float)$opt['price'];
+                                // Only count as extra if it has a price or is not a "none/standard" option
+                                if ($opt['id'] !== 'none' && $opt['id'] !== 'standard' && $opt['id'] !== 'opt0') {
+                                    $extrasCount++;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (in_array($extra['id'], $selectedExtras)) {
+                    $extrasTotal += (float)($extra['price'] ?? 0);
+                    $extrasCount++;
+                }
             }
         }
     }
-    $total = $basePrice + $extrasTotal;
+    $total += $extrasTotal;
     $originalPrice = $total;
 
     $totalPercentDiscount = 0; // Cumulative percentage

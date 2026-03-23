@@ -12,8 +12,40 @@
         { "de": "Online Galerie", "en": "Online gallery" }
       ],
       "extras": [
-        { "id": "p_usb", "label": "USB-Stick mit allen Bildern", "price": 20 },
-        { "id": "p_express", "label": "Express-Bearbeitung (24h)", "price": 50 }
+        {
+          "id": "ext_photos",
+          "type": "select",
+          "label": { "de": "Mehr bearbeitete Bilder", "en": "More edited photos" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine zusätzlichen Bilder", "en": "No additional photos" }, "price": 0 },
+            { "id": "plus10", "label": { "de": "+10 Bilder (+10€)", "en": "+10 Photos (+10€)" }, "price": 10 },
+            { "id": "plus25", "label": { "de": "+25 Bilder (+20€)", "en": "+25 Photos (+20€)" }, "price": 20 },
+            { "id": "plus50", "label": { "de": "+50 Bilder (+35€)", "en": "+50 Photos (+35€)" }, "price": 35 }
+          ]
+        },
+        {
+          "id": "ext_location",
+          "type": "select",
+          "label": { "de": "Zusätzliche Location", "en": "Additional Location" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine zusätzliche Location", "en": "No additional location" }, "price": 0 },
+            { "id": "plus1", "label": { "de": "+1 Location (+30€)", "en": "+1 Location (+30€)" }, "price": 30 },
+            { "id": "plus2", "label": { "de": "+2 Locations (+55€)", "en": "+2 Locations (+55€)" }, "price": 55 }
+          ]
+        },
+        {
+          "id": "ext_time",
+          "type": "select",
+          "label": { "de": "Verlängerung der Shooting-Zeit", "en": "Extended shooting time" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine Verlängerung", "en": "No extension" }, "price": 0 },
+            { "id": "plus30m", "label": { "de": "+30 Minuten (+25€)", "en": "+30 Minutes (+25€)" }, "price": 25 },
+            { "id": "plus1h", "label": { "de": "+1 Stunde (+50€)", "en": "+1 Hour (+50€)" }, "price": 50 },
+            { "id": "plus2h", "label": { "de": "+2 Stunden (+90€)", "en": "+2 Hours (+90€)" }, "price": 90 }
+          ]
+        },
+        { "id": "p_usb", "type": "checkbox", "label": { "de": "USB-Stick mit allen Bildern", "en": "USB Stick with all images" }, "price": 20 },
+        { "id": "p_express", "type": "checkbox", "label": { "de": "Express-Bearbeitung (24h)", "en": "Express Editing (24h)" }, "price": 50 }
       ],
       "bulkDiscounts": [
         { "count": 1, "discountPercent": 5 },
@@ -32,9 +64,19 @@
         { "de": "High-Res Downloads", "en": "High-res downloads" }
       ],
       "extras": [
-        { "id": "e_drone", "label": "Drohnen-Aufnahmen", "price": 80 },
-        { "id": "e_photobooth", "label": "Photobooth-Verleih", "price": 150 },
-        { "id": "e_usb", "label": "USB-Stick Box", "price": 25 }
+        {
+          "id": "ext_express",
+          "type": "select",
+          "label": { "de": "Express-Bearbeitung", "en": "Express Editing" },
+          "options": [
+            { "id": "standard", "label": { "de": "Standard (1-2 Wochen)", "en": "Standard (1-2 Weeks)" }, "price": 0 },
+            { "id": "express48", "label": { "de": "Express (48 Stunden) (+60€)", "en": "Express (48 Hours) (+60€)" }, "price": 60 },
+            { "id": "overnight", "label": { "de": "Overnight (24 Stunden) (+120€)", "en": "Overnight (24 Hours) (+120€)" }, "price": 120 }
+          ]
+        },
+        { "id": "e_drone", "type": "checkbox", "label": { "de": "Drohnen-Aufnahmen", "en": "Drone Shots" }, "price": 80 },
+        { "id": "e_photobooth", "type": "checkbox", "label": { "de": "Photobooth-Verleih", "en": "Photobooth Rental" }, "price": 150 },
+        { "id": "e_usb", "type": "checkbox", "label": { "de": "USB-Stick Box", "en": "USB Stick Box" }, "price": 25 }
       ],
       "bulkDiscounts": [
         { "count": 1, "discountPercent": 5 },
@@ -54,8 +96,40 @@
         { "de": "Andenken fürs Leben", "en": "Lifelong memories" }
       ],
       "extras": [
-        { "id": "pet_action", "label": "Action-Szenen (Highspeed)", "price": 30 },
-        { "id": "pet_print", "label": "Leinwand-Druck (40x60)", "price": 45 }
+        {
+          "id": "ext_photos",
+          "type": "select",
+          "label": { "de": "Mehr bearbeitete Bilder", "en": "More edited photos" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine zusätzlichen Bilder", "en": "No additional photos" }, "price": 0 },
+            { "id": "plus10", "label": { "de": "+10 Bilder (+10€)", "en": "+10 Photos (+10€)" }, "price": 10 },
+            { "id": "plus25", "label": { "de": "+25 Bilder (+20€)", "en": "+25 Photos (+20€)" }, "price": 20 },
+            { "id": "plus50", "label": { "de": "+50 Bilder (+35€)", "en": "+50 Photos (+35€)" }, "price": 35 }
+          ]
+        },
+        {
+          "id": "ext_location",
+          "type": "select",
+          "label": { "de": "Zusätzliche Location", "en": "Additional Location" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine zusätzliche Location", "en": "No additional location" }, "price": 0 },
+            { "id": "plus1", "label": { "de": "+1 Location (+30€)", "en": "+1 Location (+30€)" }, "price": 30 },
+            { "id": "plus2", "label": { "de": "+2 Locations (+55€)", "en": "+2 Locations (+55€)" }, "price": 55 }
+          ]
+        },
+        {
+          "id": "ext_time",
+          "type": "select",
+          "label": { "de": "Verlängerung der Shooting-Zeit", "en": "Extended shooting time" },
+          "options": [
+            { "id": "none", "label": { "de": "Keine Verlängerung", "en": "No extension" }, "price": 0 },
+            { "id": "plus30m", "label": { "de": "+30 Minuten (+25€)", "en": "+30 Minutes (+25€)" }, "price": 25 },
+            { "id": "plus1h", "label": { "de": "+1 Stunde (+50€)", "en": "+1 Hour (+50€)" }, "price": 50 },
+            { "id": "plus2h", "label": { "de": "+2 Stunden (+90€)", "en": "+2 Hours (+90€)" }, "price": 90 }
+          ]
+        },
+        { "id": "pet_action", "type": "checkbox", "label": { "de": "Action-Szenen (Highspeed)", "en": "Action Shots (Highspeed)" }, "price": 30 },
+        { "id": "pet_print", "type": "checkbox", "label": { "de": "Leinwand-Druck (40x60)", "en": "Canvas Print (40x60)" }, "price": 45 }
       ],
       "bulkDiscounts": [
         { "count": 1, "discountPercent": 5 },

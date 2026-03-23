@@ -472,14 +472,38 @@
                 return;
             }
 
-            div.innerHTML = pkg.extras.map(ex => `
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
-                    <input type="checkbox" class="extra-cb" data-id="${ex.id}" data-price="${ex.price}" 
-                        ${checkedExtraIds.includes(ex.id) ? 'checked' : ''}
-                        onchange="calculatePrice('${prefix}')">
-                    <span>${ex.label} (+${ex.price}€)</span>
-                </label>
-            `).join('');
+            div.innerHTML = pkg.extras.map(ex => {
+                if (ex.type === 'select') {
+                    // Find which option is selected (format extraId:optionId)
+                    let selectedOptId = 'none';
+                    const found = checkedExtraIds.find(id => id.startsWith(ex.id + ':'));
+                    if (found) selectedOptId = found.split(':')[1];
+
+                    const optionsHtml = ex.options.map(opt => `
+                        <option value="${opt.id}" data-price="${opt.price}" ${opt.id === selectedOptId ? 'selected' : ''}>
+                            ${opt.label.de} (${opt.price}€)
+                        </option>
+                    `).join('');
+
+                    return `
+                        <div style="grid-column: 1/-1; margin-bottom: 0.5rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.2rem;">${ex.label.de}</label>
+                            <select class="form-control extra-select" data-id="${ex.id}" onchange="calculatePrice('${prefix}')" style="width: 100%; font-size: 0.85rem; height: 38px;">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" class="extra-cb" data-id="${ex.id}" data-price="${ex.price}" 
+                                ${checkedExtraIds.includes(ex.id) ? 'checked' : ''}
+                                onchange="calculatePrice('${prefix}')">
+                            <span>${ex.label.de || ex.label} (+${ex.price}€)</span>
+                        </label>
+                    `;
+                }
+            }).join('');
         }
 
         function calculatePrice(prefix) {
@@ -509,9 +533,25 @@
             
             // Add Extras
             let extrasTotal = 0;
+            let extrasCount = 0;
+
+            // Checkboxes
             const checks = document.querySelectorAll(`#${prefix}-extras-list .extra-cb:checked`);
-            checks.forEach(cb => extrasTotal += parseFloat(cb.getAttribute('data-price')) || 0);
-            const extrasCount = checks.length;
+            checks.forEach(cb => {
+                extrasTotal += parseFloat(cb.getAttribute('data-price')) || 0;
+                extrasCount++;
+            });
+
+            // Selects
+            const selects = document.querySelectorAll(`#${prefix}-extras-list .extra-select`);
+            selects.forEach(sel => {
+                const opt = sel.options[sel.selectedIndex];
+                const price = parseFloat(opt.getAttribute('data-price')) || 0;
+                extrasTotal += price;
+                if (opt.value !== 'none' && opt.value !== 'standard' && opt.value !== 'opt0') {
+                    extrasCount++;
+                }
+            });
             
             let total = basePrice + extrasTotal;
 
@@ -637,7 +677,10 @@
             const price = document.getElementById('c-price').value;
             const notes = document.getElementById('c-notes').value.trim();
 
-            const selectedExtras = Array.from(document.querySelectorAll('#c-extras-list .extra-cb:checked')).map(cb => cb.getAttribute('data-id'));
+            const selectedExtras = [
+                ...Array.from(document.querySelectorAll('#c-extras-list .extra-cb:checked')).map(cb => cb.getAttribute('data-id')),
+                ...Array.from(document.querySelectorAll('#c-extras-list .extra-select')).map(sel => `${sel.getAttribute('data-id')}:${sel.value}`)
+            ];
             const discount = {
                 value: parseFloat(document.getElementById('c-discount-value').value) || 0,
                 type: document.getElementById('c-discount-type').value
@@ -697,7 +740,10 @@
             const price    = document.getElementById('e-price').value;
             const notes    = document.getElementById('e-notes').value.trim();
 
-            const selectedExtras = Array.from(document.querySelectorAll('#e-extras-list .extra-cb:checked')).map(cb => cb.getAttribute('data-id'));
+            const selectedExtras = [
+                ...Array.from(document.querySelectorAll('#e-extras-list .extra-cb:checked')).map(cb => cb.getAttribute('data-id')),
+                ...Array.from(document.querySelectorAll('#e-extras-list .extra-select')).map(sel => `${sel.getAttribute('data-id')}:${sel.value}`)
+            ];
             const discount = {
                 value: parseFloat(document.getElementById('e-discount-value').value) || 0,
                 type: document.getElementById('e-discount-type').value

@@ -298,81 +298,99 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    // --- Dynamic Pricing & Extras Logic (Unified with Admin) ---
+    let pricingData = null;
 
-    // --- Dynamic Pricing & Extras Logic (Migrated from booking.html) ---
-
-    // Guard against infinite loop: renderExtras -> updatePricing -> updateContent -> languageChanged -> renderExtras
-    let isRenderingExtras = false;
-
-    // Extras Configuration
-    const extrasConfig = {
-        portrait: ['photos', 'location', 'time_standard'],
-        pet: ['photos', 'location', 'time_standard'],
-        event: ['duration_event', 'express'],
-        other: []
-    };
-
-    const pricing = {
-        photos: { plus10: 10, plus25: 20, plus50: 35 },
-        location: { plus1: 30, plus2: 55 },
-        time: { plus30m: 25, plus1h: 50, plus2h: 90 },
-        express: { express: 60, overnight: 120 }
-    };
+    async function fetchPricingData() {
+        try {
+            const res = await fetch('api/get-pricing.php?t=' + Date.now());
+            pricingData = await res.json();
+            // Trigger initial render of extras if package is already selected
+            if (bookingValues.service && bookingValues.service.value) {
+                renderExtras(bookingValues.service.value);
+            }
+        } catch (e) {
+            console.error('Failed to fetch pricing for calendar', e);
+        }
+    }
 
     function renderExtras(service) {
-        if (!bookingValues.extrasContainer) return;
-        if (isRenderingExtras) return; // Prevent infinite loop
-        isRenderingExtras = true;
-
+        if (!bookingValues.extrasContainer || !pricingData) return;
+        
         bookingValues.extrasContainer.innerHTML = '';
-        const config = extrasConfig[service] || extrasConfig['portrait'];
-
-        // Handle "other" visibility
-        const dateInput = document.getElementById('date');
-        const timeInput = document.getElementById('time');
-
-        // Always require date and time when using the calendar interface
-        if (dateInput) dateInput.setAttribute('required', 'required');
-        if (timeInput) timeInput.setAttribute('required', 'required');
-
+        const pkg = pricingData.packages.find(p => p.id === service);
+        
         const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
 
-        if (config.length === 0) {
-            bookingValues.extrasContainer.innerHTML = `<p style="color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.none'] || 'Keine speziellen Extras für diese Auswahl.'}</p>`;
+        if (!pkg || !pkg.extras || pkg.extras.length === 0) {
+            if (service !== 'other') {
+                bookingValues.extrasContainer.innerHTML = `<p style="color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.none'] || 'Keine speziellen Extras für diese Auswahl.'}</p>`;
+            }
             updatePricing();
-            isRenderingExtras = false;
             return;
         }
 
-        config.forEach(type => {
+        pkg.extras.forEach(ex => {
             let html = '';
-            // (Same HTML generation logic as before, just compact)
-            if (type === 'photos') {
-                html = `<div class="form-group"><label>${t['contact.form.extras.photos.label'] || 'Mehr bearbeitete Bilder'}</label><select name="extra_photos" class="form-control"><option value="none">${t['contact.form.extras.photos.opt0'] || 'Keine zusätzlichen Bilder'}</option><option value="plus10">${t['contact.form.extras.photos.opt1'] || '+10 Bilder'}</option><option value="plus25">${t['contact.form.extras.photos.opt2'] || '+25 Bilder'}</option><option value="plus50">${t['contact.form.extras.photos.opt3'] || '+50 Bilder'}</option></select></div>`;
-            } else if (type === 'location') {
-                html = `<div class="form-group"><label>${t['contact.form.extras.location.label'] || 'Zusätzliche Location'}</label><select name="extra_location" class="form-control"><option value="none">${t['contact.form.extras.location.opt0'] || 'Keine zusätzliche Location'}</option><option value="plus1">${t['contact.form.extras.location.opt1'] || '+1 Location'}</option><option value="plus2">${t['contact.form.extras.location.opt2'] || '+2 Locations'}</option></select></div>`;
-            } else if (type === 'time_standard') {
-                html = `<div class="form-group"><label>${t['contact.form.extras.time.label'] || 'Verlängerung der Shooting-Zeit'}</label><select name="extra_time" class="form-control"><option value="none">${t['contact.form.extras.time.opt0'] || 'Keine Verlängerung'}</option><option value="plus30m">${t['contact.form.extras.time.opt1'] || '+30 Minuten'}</option><option value="plus1h">${t['contact.form.extras.time.opt2'] || '+1 Stunde'}</option><option value="plus2h">${t['contact.form.extras.time.opt3'] || '+2 Stunden'}</option></select></div>`;
-            } else if (type === 'duration_event') {
-                html = `<div class="form-group"><label>${t['contact.form.extras.duration.label'] || 'Buchungsdauer'}</label><select name="event_duration" class="form-control"><option value="2h">${t['contact.form.extras.duration.opt2'] || '2 Stunden (Minimum)'}</option><option value="3h">${t['contact.form.extras.duration.opt3'] || '3 Stunden'}</option><option value="4h">${t['contact.form.extras.duration.opt4'] || '4 Stunden'}</option><option value="5h">${t['contact.form.extras.duration.opt5'] || '5 Stunden'}</option><option value="6h">${t['contact.form.extras.duration.opt6'] || '6 Stunden'}</option><option value="8h">${t['contact.form.extras.duration.opt8'] || '8 Stunden'}</option><option value="open">${t['contact.form.extras.duration.open'] || 'Open End'}</option></select><small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.duration.open_note'] || 'Hinweis: Open End basiert auf 8 Stunden. Jede weitere Stunde wird mit 50€ berechnet.'}</small></div>`;
-            } else if (type === 'express') {
-                html = `<div class="form-group"><label>${t['contact.form.extras.express.label'] || 'Express-Bearbeitung'}</label><select name="extra_express" class="form-control"><option value="standard">${t['contact.form.extras.express.opt0'] || 'Standard (1-2 Wochen)'}</option><option value="express">${t['contact.form.extras.express.opt1'] || 'Express (48 Stunden)'}</option><option value="overnight">${t['contact.form.extras.express.opt2'] || 'Overnight (24 Stunden)'}</option></select></div>`;
+            const label = ex.label[currentLanguage] || ex.label.de || ex.label;
+            
+            if (ex.type === 'select') {
+                const optionsHtml = ex.options.map(opt => `
+                    <option value="${opt.id}" data-price="${opt.price}">
+                        ${opt.label[currentLanguage] || opt.label.de || opt.label}
+                    </option>
+                `).join('');
+                
+                html = `
+                    <div class="form-group">
+                        <label>${label}</label>
+                        <select name="extra_${ex.id}" class="form-control extra-input" data-extra-id="${ex.id}" data-type="select">
+                            ${optionsHtml}
+                        </select>
+                    </div>`;
+            } else {
+                html = `
+                    <div class="form-group" style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px; cursor:pointer;">
+                        <input type="checkbox" name="extra_${ex.id}" class="extra-input" data-extra-id="${ex.id}" data-type="checkbox" data-price="${ex.price || 0}" style="width:20px; height:20px; cursor:pointer;">
+                        <label style="margin-bottom:0; cursor:pointer; flex:1;">${label} (+${ex.price}€)</label>
+                    </div>`;
             }
-            bookingValues.extrasContainer.innerHTML += html;
+            bookingValues.extrasContainer.insertAdjacentHTML('beforeend', html);
         });
 
-        // Attach listeners to new inputs
-        const inputs = bookingValues.extrasContainer.querySelectorAll('select');
+        // Add special Duration for Event if not handled by extras
+        if (service === 'event') {
+            const hasDuration = pkg.extras.some(e => e.id === 'event_duration');
+            if (!hasDuration) {
+                const durationHtml = `
+                    <div class="form-group">
+                        <label>${t['contact.form.extras.duration.label'] || 'Buchungsdauer'}</label>
+                        <select name="event_duration" class="form-control extra-input">
+                            <option value="2h">2 Stunden (Minimum)</option>
+                            <option value="3h">3 Stunden</option>
+                            <option value="4h">4 Stunden</option>
+                            <option value="5h">5 Stunden</option>
+                            <option value="6h">6 Stunden</option>
+                            <option value="8h">8 Stunden</option>
+                            <option value="open">Open End</option>
+                        </select>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.duration.open_note'] || 'Hinweis: Open End basiert auf 8 Stunden.'}</small>
+                    </div>`;
+                bookingValues.extrasContainer.insertAdjacentHTML('afterbegin', durationHtml);
+            }
+        }
+
+        // Attach listeners
+        const inputs = bookingValues.extrasContainer.querySelectorAll('.extra-input');
         inputs.forEach(input => {
             input.addEventListener('change', updatePricing);
         });
 
         updatePricing();
-        isRenderingExtras = false;
     }
 
     function updatePricing() {
-        if (!bookingValues.service) return;
+        if (!bookingValues.service || !pricingData) return;
 
         const priceSummary = document.getElementById('price-summary');
         const priceBreakdown = document.getElementById('price-breakdown');
@@ -380,104 +398,116 @@ document.addEventListener('DOMContentLoaded', () => {
         const priceTotal = document.getElementById('price-total');
 
         const selectedService = bookingValues.service.value;
-        const extrasContainer = bookingValues.extrasContainer;
+        const pkg = pricingData.packages.find(p => p.id === selectedService);
+        if (!pkg) {
+            priceSummary.style.display = 'none';
+            return;
+        }
 
-        const basePrices = { portrait: 125, pet: 125, event: 100, other: 0 };
-        let basePrice = basePrices[selectedService] || 0;
-        let durationHours = 0;
-        let durationDiscount = 0;
-        let durationDiscountPercent = 0;
-
+        let basePrice = pkg.price || 0;
+        let durationHours = 1;
+        
         // Event Logic
-        const durationSelect = extrasContainer.querySelector('select[name="event_duration"]');
+        const durationSelect = bookingValues.extrasContainer.querySelector('select[name="event_duration"]');
         if (selectedService === 'event' && durationSelect) {
             const durationValue = durationSelect.value;
             if (durationValue.endsWith('h')) durationHours = parseInt(durationValue);
             else if (durationValue === 'open') durationHours = 8;
-
-            basePrice = 100 * durationHours;
-
-            // Discounts
-            if (durationHours >= 8) { durationDiscountPercent = 25; durationDiscount = Math.round(basePrice * 0.25); }
-            else if (durationHours >= 6) { durationDiscountPercent = 20; durationDiscount = Math.round(basePrice * 0.20); }
-            else if (durationHours >= 4) { durationDiscountPercent = 15; durationDiscount = Math.round(basePrice * 0.15); }
-
-            basePrice -= durationDiscount;
+            basePrice = pkg.price * durationHours;
         }
 
         let extrasTotal = 0;
+        let extrasCount = 0;
         let breakdown = [];
-        let selectedCount = 0;
 
         // Collect Extras
-        const selectors = ['extra_photos', 'extra_location', 'extra_time', 'extra_express'];
-        const pricingGroups = { 'extra_photos': pricing.photos, 'extra_location': pricing.location, 'extra_time': pricing.time, 'extra_express': pricing.express };
+        const inputs = bookingValues.extrasContainer.querySelectorAll('.extra-input');
+        inputs.forEach(input => {
+            if (input.name === 'event_duration') return;
 
-        selectors.forEach(name => {
-            const select = extrasContainer.querySelector(`select[name="${name}"]`);
-            if (select && select.value !== 'none' && select.value !== 'standard') {
-                const price = pricingGroups[name][select.value] || 0;
-                if (price > 0) {
-                    breakdown.push({ name: select.options[select.selectedIndex].text, price });
+            const type = input.dataset.type;
+            if (type === 'select') {
+                const opt = input.options[input.selectedIndex];
+                const price = parseFloat(opt.dataset.price) || 0;
+                if (price > 0 || (opt.value !== 'none' && opt.value !== 'standard')) {
                     extrasTotal += price;
-                    selectedCount++;
+                    if (opt.value !== 'none' && opt.value !== 'standard') {
+                        extrasCount++;
+                        breakdown.push({ name: opt.text.replace(/\s*\(\+\d+€\)/, ''), price });
+                    }
                 }
+            } else if (type === 'checkbox' && input.checked) {
+                const price = parseFloat(input.dataset.price) || 0;
+                extrasTotal += price;
+                extrasCount++;
+                breakdown.push({ name: input.nextElementSibling.innerText.replace(/\s*\(\+\d+€\)/, ''), price });
             }
         });
 
-        if (basePrice === 0 && breakdown.length === 0) {
-            priceSummary.style.display = 'none';
-            updateHiddenInputs(0, 'Allgemeine Anfrage: 0€', '0€', 'Allgemeine Anfrage', 'Keine Extras', 'Kein Rabatt');
-            return;
+        let subtotal = basePrice + extrasTotal;
+        let totalPercentDiscount = 0;
+        let totalFlatDiscount = 0;
+
+        // Apply Percent-First Discounts
+        // 1. Bulk Discount
+        if (pkg.bulkDiscounts && extrasCount > 0) {
+            const bd = pkg.bulkDiscounts.find(d => d.count === extrasCount);
+            if (bd) totalPercentDiscount += bd.discountPercent;
         }
 
+        // 2. Global Discount (if percent)
+        if (pricingData.globalDiscount && pricingData.globalDiscount.active) {
+            if (pricingData.globalDiscount.type === 'percent') {
+                totalPercentDiscount += pricingData.globalDiscount.value;
+            } else {
+                totalFlatDiscount += pricingData.globalDiscount.value;
+            }
+        }
+
+        let finalPrice = subtotal * (1 - (totalPercentDiscount / 100));
+        finalPrice -= totalFlatDiscount;
+        finalPrice = Math.max(0, finalPrice);
+
+        // Rendering Summary
         priceSummary.style.display = 'block';
-
         let breakdownHTML = '';
-        if (basePrice > 0) {
-            const serviceName = bookingValues.service.options[bookingValues.service.selectedIndex].text;
-            breakdownHTML += `<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500;"><span>${serviceName}${selectedService === 'event' ? ` (${durationHours}h)` : ''}</span><span>${basePrice}€</span></div>`;
-            if (durationDiscount > 0) breakdownHTML += `<div style="font-size: 0.85rem; color: var(--accent-color); margin-bottom: 0.5rem;">✨ ${durationDiscountPercent}% Rabatt für ${durationHours}h Buchung</div>`;
-            if (breakdown.length > 0) breakdownHTML += `<div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0.5rem 0; padding-top: 0.5rem;"></div>`;
+        const serviceName = bookingValues.service.options[bookingValues.service.selectedIndex].text;
+        breakdownHTML += `<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500;"><span>${serviceName}${selectedService === 'event' ? ` (${durationHours}h)` : ''}</span><span>${basePrice}€</span></div>`;
+        
+        if (breakdown.length > 0) {
+            breakdownHTML += `<div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0.5rem 0; padding-top: 0.5rem;"></div>`;
+            breakdownHTML += breakdown.map(item => `<div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"><span>${item.name}</span><span>+${item.price}€</span></div>`).join('');
         }
-
-        breakdownHTML += breakdown.map(item => `<div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"><span>${item.name.replace(/\s*\(\+\d+€\)/, '')}</span><span>+${item.price}€</span></div>`).join('');
         priceBreakdown.innerHTML = breakdownHTML;
 
-        // Bundle Discount
-        let extrasDiscount = 0;
-        let extrasDiscountPercentage = 0;
-        if (selectedCount >= 3) { extrasDiscountPercentage = 20; extrasDiscount = Math.round(extrasTotal * 0.20); }
-        else if (selectedCount === 2) { extrasDiscountPercentage = 15; extrasDiscount = Math.round(extrasTotal * 0.15); }
-
-        if (extrasDiscount > 0) {
+        // Discount Section
+        if (totalPercentDiscount > 0 || totalFlatDiscount > 0) {
             priceDiscount.style.display = 'block';
-            priceDiscount.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>🎉 Bundle-Rabatt (${extrasDiscountPercentage}%)</span><span>-${extrasDiscount}€</span></div>`;
+            let discText = [];
+            if (totalPercentDiscount > 0) discText.push(`${totalPercentDiscount}%`);
+            if (totalFlatDiscount > 0) discText.push(`-${totalFlatDiscount}€`);
+            priceDiscount.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>🎉 Rabatt (${discText.join(' / ')})</span><span>-${Math.round(subtotal - finalPrice)}€</span></div>`;
         } else {
             priceDiscount.style.display = 'none';
         }
 
-        const finalTotal = basePrice + extrasTotal - extrasDiscount;
-        const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
-        priceTotal.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>${t['booking.price_summary.total'] || 'Gesamt:'}</span><span>${finalTotal}€</span></div>`;
+        const t = translations[currentLanguage] || {};
+        priceTotal.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>${t['booking.price_summary.total'] || 'Gesamt:'}</span><span>${Math.round(finalPrice)}€</span></div>`;
 
-        // Populate inputs for EmailJS
-        updateHiddenInputs(finalTotal,
-            priceBreakdown.innerText, // Simple text representation
-            basePrice > 0 ? `${selectedService}: ${basePrice}€` : 'Preis auf Anfrage',
-            breakdown.map(i => `${i.name}: ${i.price}€`).join(', ') || 'Keine Extras',
-            extrasDiscount > 0 ? `-${extrasDiscount}€` : 'Kein Rabatt'
-        );
+        updateHiddenInputs(Math.round(finalPrice), breakdownHTML.replace(/<[^>]*>/g, ' '), basePrice, breakdown.map(i => `${i.name}: ${i.price}€`).join(', '), (subtotal - finalPrice) > 0 ? `-${Math.round(subtotal - finalPrice)}€` : 'None');
     }
 
     function updateHiddenInputs(total, details, base, extras, discount) {
         if (document.getElementById('total_price_input')) document.getElementById('total_price_input').value = `${total}€`;
         if (document.getElementById('price_details_input')) document.getElementById('price_details_input').value = details;
-        if (document.getElementById('base_price_input')) document.getElementById('base_price_input').value = base;
+        if (document.getElementById('base_price_input')) document.getElementById('base_price_input').value = `${base}€`;
         if (document.getElementById('extras_breakdown_input')) document.getElementById('extras_breakdown_input').value = extras;
         if (document.getElementById('discount_breakdown_input')) document.getElementById('discount_breakdown_input').value = discount;
     }
 
     // Initialize
+    fetchPricingData();
+    initCalendar();
+ // Initialize
     initCalendar();
 });
