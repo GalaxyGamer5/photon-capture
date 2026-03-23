@@ -429,7 +429,7 @@
                         statusLabel.textContent = "Erfolgreich gespeichert!";
                         statusLabel.style.color = "#4caf50";
                     }
-                    alert("Erfolgreich gespeichert!\nBytes: " + result.bytes + "\nErstes Paket (DE): " + result.received_first);
+                    alert("Erfolgreich gespeichert!\nBytes: " + result.bytes + "\nErstes Paket (DE): " + result.received_first + "\nDateipfad: " + result.path);
                 } else {
                     const errMsg = "Fehler: " + (result.error || "Unbekannter Fehler");
                     if (statusLabel) {
