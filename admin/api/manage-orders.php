@@ -42,6 +42,10 @@ function saveOrders($path, $data) {
     return false;
 }
 
+require_once __DIR__ . '/pricing_utils.php';
+$pricingFile = __DIR__ . '/../../data/pricing.json';
+$pricing = json_decode(file_get_contents($pricingFile), true);
+
 // ── GET Action ────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
@@ -74,13 +78,13 @@ switch ($action) {
             'clientName' => $input['clientName'] ?? 'Unbekannt',
             'package' => $input['package'] ?? '',
             'packageLabel' => $input['packageLabel'] ?? '',
-            'price' => $input['price'] ?? '0€',
             'status' => 'neu',
             'notes' => $input['notes'] ?? '',
             'selectedExtras' => $input['selectedExtras'] ?? [],
             'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro'],
             'hours' => $input['hours'] ?? null
         ];
+        $newOrder['price'] = calculateOrderPrice($newOrder, $pricing);
         array_unshift($db['orders'], $newOrder);
         $success = saveOrders($file, $db);
         break;
@@ -92,11 +96,14 @@ switch ($action) {
                 $o['clientName'] = $input['clientName'] ?? $o['clientName'];
                 $o['package'] = $input['package'] ?? $o['package'];
                 $o['packageLabel'] = $input['packageLabel'] ?? $o['packageLabel'];
-                $o['price'] = $input['price'] ?? $o['price'];
                 $o['notes'] = $input['notes'] ?? $o['notes'];
                 $o['selectedExtras'] = $input['selectedExtras'] ?? ($o['selectedExtras'] ?? []);
                 $o['discount'] = $input['discount'] ?? ($o['discount'] ?? ['value' => 0, 'type' => 'euro']);
                 $o['hours'] = $input['hours'] ?? ($o['hours'] ?? null);
+                
+                // Recalculate price on update
+                $o['price'] = calculateOrderPrice($o, $pricing);
+                
                 $success = true;
                 break;
             }

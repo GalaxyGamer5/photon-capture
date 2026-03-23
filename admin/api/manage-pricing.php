@@ -27,6 +27,24 @@ if (file_exists($file) && !is_writable($file)) {
 
 if (file_put_contents($file, $jsonData)) {
     @chmod($file, 0777); // Ensure it stays writable
+    
+    // Recalculate ALL orders based on new pricing
+    require_once __DIR__ . '/pricing_utils.php';
+    $ordersFile = __DIR__ . '/../../data/orders.json';
+    if (file_exists($ordersFile)) {
+        $ordersDb = json_decode(file_get_contents($ordersFile), true);
+        if ($ordersDb && isset($ordersDb['orders'])) {
+            foreach ($ordersDb['orders'] as &$order) {
+                // Update price using new pricing $data
+                $order['price'] = calculateOrderPrice($order, $data);
+            }
+            // Save orders back
+            $updatedOrdersJson = json_encode($ordersDb, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            file_put_contents($ordersFile, $updatedOrdersJson);
+            @chmod($ordersFile, 0777);
+        }
+    }
+
     echo json_encode(['success' => true]);
 } else {
     $error = error_get_last();
