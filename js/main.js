@@ -58,18 +58,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
 
+                // Calculate display price with global discount
+                let displayPrice = pkg.price;
+                let originalPriceHtml = '';
+                
+                if (loadedPricingData.globalDiscount && loadedPricingData.globalDiscount.active) {
+                    const gd = loadedPricingData.globalDiscount;
+                    originalPriceHtml = `<span class="original-price" style="text-decoration: line-through; opacity: 0.5; font-size: 0.8em; margin-right: 0.5rem;">${pkg.price}€</span>`;
+                    
+                    if (gd.type === 'percent') {
+                        displayPrice = Math.round(pkg.price * (1 - (gd.value / 100)));
+                    } else {
+                        displayPrice = pkg.price - gd.value;
+                    }
+                }
+
                 const unitHtml = pkg.priceUnit[lang] ? `<span>${pkg.priceUnit[lang]}</span>` : '';
                 const customizeText = lang === 'en' ? 'Customize Package (Extras)' : 'Paket anpassen (Extras)';
                 const btnText = lang === 'en' ? 'Send Request' : 'Anfrage senden';
 
                 card.innerHTML = `
                     <h3>${pkg.title[lang]}</h3>
-                    <div class="price">${pkg.price}${unitHtml}</div>
+                    <div class="price">${originalPriceHtml}${displayPrice}€${unitHtml}</div>
                     <ul class="pricing-features">
                         ${featuresHtml}
                     </ul>
                     <a href="javascript:void(0)" class="customize-link" data-package="${pkg.id}">${customizeText}</a>
-                    <a href="${pkg.buttonUrl}" class="cta-button" style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);">${btnText}</a>
+                    <a href="calendar.html?package=${pkg.id}" class="cta-button" style="background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);">${btnText}</a>
                 `;
                 pricingGrid.appendChild(card);
             });
@@ -83,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p style="color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
                     ${cust.desc[lang]}
                 </p>
-                <a href="${cust.buttonUrl}" class="cta-button" style="background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary);">
+                <a href="calendar.html?package=custom" class="cta-button" style="background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary);">
                     ${cust.btn[lang]}
                 </a>
             `;
