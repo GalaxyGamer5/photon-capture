@@ -187,7 +187,8 @@
                         const isFavorite = favorites.has(i);
 
                         // Use secure delivery API for watermarking/protection
-                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg`;
+                        // Added timestamp cache-breaker to force update if protection was just toggled
+                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg&v=${Date.now()}`;
 
                         item.innerHTML = `
                         <div class="selection-checkbox" style="display: none;">

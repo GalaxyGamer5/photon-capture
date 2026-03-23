@@ -38,7 +38,7 @@ if (file_exists($usersFile)) {
         $usersData = json_decode($matches[1], true);
         foreach ($usersData['users'] as $u) {
             if ($u['username'] === $user['username']) {
-                $isProtected = isset($u['isProtected']) ? $u['isProtected'] : false;
+                $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
                 break;
             }
         }
