@@ -46,28 +46,36 @@ if (file_exists($usersFile)) {
 }
 
 // Image processing with GD
-$info = getimagesize($image_path);
-$mime = $info['mime'];
+if (!function_exists('imagecreatefromjpeg')) {
+    // GD not installed, fallback to serving original
+    header('Content-Type: ' . ($mime ?? 'image/jpeg'));
+    readfile($image_path);
+    exit;
+}
 
 // Support only common formats for watermark
+$image = null;
 if ($mime === 'image/jpeg') {
-    $image = imagecreatefromjpeg($image_path);
+    $image = @imagecreatefromjpeg($image_path);
 } elseif ($mime === 'image/png') {
-    $image = imagecreatefrompng($image_path);
+    $image = @imagecreatefrompng($image_path);
 } elseif ($mime === 'image/webp') {
-    $image = imagecreatefromwebp($image_path);
-} else {
-    // Unsupported format for processing, serve raw
+    $image = @imagecreatefromwebp($image_path);
+}
+
+if (!$image) {
+    // Failed to create image resource, serving original
     header('Content-Type: ' . $mime);
     readfile($image_path);
     exit;
 }
 
-if ($isProtected && $image) {
+if ($isProtected) {
     // 1. Apply slight blur
-    // Gaussian blur done 3 times for a "noticeable but viewable" effect
-    for ($i = 0; $i < 3; $i++) {
-        imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
+    if (function_exists('imagefilter')) {
+        for ($i = 0; $i < 3; $i++) {
+            imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
+        }
     }
 
     // 2. Apply Watermark Overlay
@@ -75,7 +83,7 @@ if ($isProtected && $image) {
     $height = imagesy($image);
     
     // Create a semi-transparent color for the watermark
-    $white = imagecolorallocatealpha($image, 255, 255, 255, 80); // 80 is roughly 40% transparency
+    $white = imagecolorallocatealpha($image, 255, 255, 255, 90); // 90 is roughly 30% opacity
     
     // Draw repeating "PHOTON CAPTURE" text
     $text = "PHOTON-CAPTURE";
@@ -85,26 +93,21 @@ if ($isProtected && $image) {
     $textHeight = imagefontheight($fontSize);
     
     // Grid of watermarks
-    for ($x = 50; $x < $width; $x += $textWidth + 200) {
-        for ($y = 50; $y < $height; $y += 200) {
+    for ($x = 50; $x < $width; $x += $textWidth + 250) {
+        for ($y = 50; $y < $height; $y += 250) {
             imagestring($image, $fontSize, $x, $y, $text, $white);
         }
     }
-    
-    // Also a big one in the center
-    $centerText = "COPYRIGHT PHOTON-CAPTURE - PREVIEW ONLY";
-    $centerTextWidth = imagefontwidth($fontSize) * strlen($centerText);
-    imagestring($image, $fontSize, ($width - $centerTextWidth) / 2, $height / 2, $centerText, $white);
 }
 
 // Serve the image
-header('Content-Type: image/jpeg'); // Output as JPEG for consistency
-header('Cache-Control: public, max-age=3600'); // Cache for 1 hour
+header('Content-Type: image/jpeg'); 
+header('Cache-Control: public, max-age=3600'); 
 
 if ($isProtected) {
-    imagejpeg($image, null, 75); // Lower quality for previews
+    imagejpeg($image, null, 75); 
 } else {
-    imagejpeg($image, null, 95); // High quality for unlocked
+    imagejpeg($image, null, 90); 
 }
 
 imagedestroy($image);
