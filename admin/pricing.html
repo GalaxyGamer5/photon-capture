@@ -423,9 +423,8 @@
                     if (statusLabel) {
                         statusLabel.textContent = "Erfolgreich gespeichert!";
                         statusLabel.style.color = "#4caf50";
-                    } else {
-                        alert("Erfolgreich gespeichert!");
                     }
+                    alert("Erfolgreich gespeichert!\nBytes: " + result.bytes + "\nErstes Paket (DE): " + result.received_first);
                 } else {
                     const errMsg = "Fehler: " + (result.error || "Unbekannter Fehler");
                     if (statusLabel) {

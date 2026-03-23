@@ -39,7 +39,8 @@ if ($jsonData === false) {
 $result = file_put_contents($file, $jsonData);
 
 if ($result !== false) {
-    echo json_encode(['success' => true, 'bytes' => $result]);
+    $firstPkg = isset($data['packages'][0]['title']['de']) ? $data['packages'][0]['title']['de'] : 'N/A';
+    echo json_encode(['success' => true, 'bytes' => $result, 'received_first' => $firstPkg]);
 } else {
     echo json_encode(['success' => false, 'error' => 'Failed to write pricing data.']);
 }
