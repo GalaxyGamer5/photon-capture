@@ -382,14 +382,22 @@
         }
 
         async function savePricingData() {
+            console.log("Save initiated...");
+            if (!pricingData) {
+                alert("Fehler: Daten wurden noch nicht geladen.");
+                return;
+            }
+
             // Force blur on current active element to ensure all oninput/onchange are processed
             if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
                 document.activeElement.blur();
             }
 
             const statusLabel = document.getElementById('save-status');
-            statusLabel.textContent = "Speichere...";
-            statusLabel.style.color = "var(--text-primary)";
+            if (statusLabel) {
+                statusLabel.textContent = "Speichere...";
+                statusLabel.style.color = "var(--text-primary)";
+            }
 
             try {
                 // Pre-clean bulk discounts: Ensure we only keep those matching current extra count
@@ -412,15 +420,29 @@
                 const result = await res.json();
 
                 if (result.success) {
-                    statusLabel.textContent = "Erfolgreich gespeichert!";
-                    statusLabel.style.color = "#4caf50";
+                    if (statusLabel) {
+                        statusLabel.textContent = "Erfolgreich gespeichert!";
+                        statusLabel.style.color = "#4caf50";
+                    } else {
+                        alert("Erfolgreich gespeichert!");
+                    }
                 } else {
-                    statusLabel.textContent = "Fehler: " + (result.error || "Unbekannter Fehler");
-                    statusLabel.style.color = "#ff4d4d";
+                    const errMsg = "Fehler: " + (result.error || "Unbekannter Fehler");
+                    if (statusLabel) {
+                        statusLabel.textContent = errMsg;
+                        statusLabel.style.color = "#ff4d4d";
+                    } else {
+                        alert(errMsg);
+                    }
                 }
             } catch (e) {
-                statusLabel.textContent = "Fehler: " + e.message;
-                statusLabel.style.color = "#ff4d4d";
+                console.error("Save error:", e);
+                if (statusLabel) {
+                    statusLabel.textContent = "Fehler: " + e.message;
+                    statusLabel.style.color = "#ff4d4d";
+                } else {
+                    alert("Kritischer Fehler beim Speichern: " + e.message);
+                }
             }
 
             setTimeout(() => { if (statusLabel) statusLabel.textContent = ''; }, 3000);
