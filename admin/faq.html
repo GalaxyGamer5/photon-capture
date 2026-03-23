@@ -99,20 +99,7 @@
             if (!faqData) return;
 
             let html = `
-                <div class="faq-card">
-                    <h3>Allgemeiner Titel</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Titel (DE)</label>
-                            <input type="text" value="${faqData.title.de}" onchange="faqData.title.de = this.value">
-                        </div>
-                        <div class="form-group">
-                            <label>Titel (EN)</label>
-                            <input type="text" value="${faqData.title.en}" onchange="faqData.title.en = this.value">
-                        </div>
-                    </div>
-                </div>
-                <h2 style="margin-top: 2rem; margin-bottom: 1rem;">Fragen & Antworten</h2>
+                <h2 style="margin-top: 1rem; margin-bottom: 1rem;">Fragen & Antworten</h2>
                 <div id="faq-items-list">
             `;
             
