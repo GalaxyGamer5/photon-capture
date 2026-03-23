@@ -229,6 +229,16 @@
         /* ── Create/Edit form note field ── */
         .notes-count { font-size: 0.75rem; color: var(--text-secondary); text-align: right; margin-top: 0.3rem; }
 
+        /* Fix truncated select text */
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23b0b0b0' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 1.25rem) center;
+            padding-right: 3rem !important;
+            text-overflow: ellipsis;
+        }
+
         /* ── Responsive ────────── */
         @media (max-width: 768px) {
             td:nth-child(3), th:nth-child(3) { display: none; } /* hide date */
@@ -285,9 +295,9 @@
                 <label>Paket *</label>
                 <select id="c-package" class="form-control" onchange="onPackageChange('c')">
                     <option value="">– Paket wählen –</option>
-                    <option value="portrait" data-label="Porträt-Session" data-price="125€">Porträt-Session (125€)</option>
-                    <option value="event" data-label="Event-Begleitung" data-price="100€/h">Event-Begleitung (100€/h)</option>
-                    <option value="pet" data-label="Tierfotografie" data-price="125€">Tierfotografie (125€)</option>
+                    <option value="portrait" data-label="Porträt-Session" data-price="125">Porträt-Session</option>
+                    <option value="event" data-label="Event-Begleitung" data-price="100">Event-Begleitung</option>
+                    <option value="pet" data-label="Tierfotografie" data-price="125">Tierfotografie</option>
                     <option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>
                 </select>
             </div>
@@ -352,9 +362,9 @@
                 <label>Paket *</label>
                 <select id="e-package" class="form-control" onchange="onPackageChange('e')">
                     <option value="">– Paket wählen –</option>
-                    <option value="portrait" data-label="Porträt-Session" data-price="125">Porträt-Session (125€)</option>
-                    <option value="event" data-label="Event-Begleitung" data-price="100">Event-Begleitung (100€/h)</option>
-                    <option value="pet" data-label="Tierfotografie" data-price="125">Tierfotografie (125€)</option>
+                    <option value="portrait" data-label="Porträt-Session" data-price="125">Porträt-Session</option>
+                    <option value="event" data-label="Event-Begleitung" data-price="100">Event-Begleitung</option>
+                    <option value="pet" data-label="Tierfotografie" data-price="125">Tierfotografie</option>
                     <option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>
                 </select>
             </div>
