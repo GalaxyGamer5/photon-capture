@@ -15,6 +15,11 @@
         .btn-small { background: rgba(255, 255, 255, 0.1); border: none; color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; }
         .btn-delete { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); margin-left: 0.5rem; }
         #save-status { margin-left: 1rem; font-weight: bold; }
+        .features-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .feature-item { display: flex; gap: 0.5rem; align-items: center; }
+        .bulk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .bulk-card { background: rgba(0,242,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(0,242,255,0.1); }
+        .switch { display: flex; align-items: center; gap: 1rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -53,35 +58,149 @@
 
         function render() {
             if (!pricingData) return;
-            let html = '';
+            let html = `<h2>Pakete & Leistungen</h2>`;
             
             pricingData.packages.forEach((pkg, pkgIdx) => {
                 html += `
                 <div class="card">
-                    <h3>Paket: ${pkg.id.toUpperCase()}</h3>
+                    <h3 style="margin-top:0;">Paket: ${pkg.id.toUpperCase()}</h3>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Titel (DE)</label>
-                            <input type="text" value="${pkg.title.de}" oninput="update('packages', ${pkgIdx}, 'title', 'de', this.value)">
+                        <div class="form-group"><label>Titel (DE)</label><input type="text" value="${pkg.title.de}" oninput="update('packages', ${pkgIdx}, 'title', 'de', this.value)"></div>
+                        <div class="form-group"><label>Titel (EN)</label><input type="text" value="${pkg.title.en}" oninput="update('packages', ${pkgIdx}, 'title', 'en', this.value)"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Preis (€)</label><input type="text" value="${pkg.price}" oninput="updateVal('packages', ${pkgIdx}, 'price', this.value)"></div>
+                        <div class="form-group"><label>Einheit (DE)</label><input type="text" value="${pkg.priceUnit.de}" oninput="update('packages', ${pkgIdx}, 'priceUnit', 'de', this.value)"></div>
+                        <div class="form-group"><label>Einheit (EN)</label><input type="text" value="${pkg.priceUnit.en}" oninput="update('packages', ${pkgIdx}, 'priceUnit', 'en', this.value)"></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+                        <div>
+                            <h4>Inklusiv-Leistungen</h4>
+                            <div class="features-list">
+                                ${(pkg.features || []).map((f, fIdx) => `
+                                    <div class="feature-item">
+                                        <input type="text" placeholder="DE" value="${f.de}" oninput="updateArr('packages', ${pkgIdx}, 'features', ${fIdx}, 'de', this.value)">
+                                        <input type="text" placeholder="EN" value="${f.en}" oninput="updateArr('packages', ${pkgIdx}, 'features', ${fIdx}, 'en', this.value)">
+                                        <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'features', ${fIdx})">X</button>
+                                    </div>
+                                `).join('')}
+                                <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'features', {de:'', en:''})">+ Hinzufügen</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Preis (€)</label>
-                            <input type="text" value="${pkg.price}" oninput="updateVal('packages', ${pkgIdx}, 'price', this.value)">
+                        <div>
+                            <h4>Zusatzperks (Extras)</h4>
+                            <div class="features-list">
+                                ${(pkg.extras || []).map((ext, eIdx) => `
+                                    <div class="feature-item" style="flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 8px;">
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <input type="text" placeholder="Label" value="${ext.label}" oninput="updateArr('packages', ${pkgIdx}, 'extras', ${eIdx}, 'label', this.value)">
+                                            <input type="text" style="width: 80px;" placeholder="€" value="${ext.price}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'price', this.value)">
+                                            <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'extras', ${eIdx})">X</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'extras', {id:'p_'+Date.now(), label:'', price:0})">+ Perk</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:2rem; border-top:1px dashed #333; padding-top:1rem;">
+                        <h4>Sammelrabatte</h4>
+                        <div class="bulk-grid">
+                            ${(pkg.extras || []).map((_, i) => {
+                                const count = i + 1;
+                                const discounts = Array.isArray(pkg.bulkDiscounts) ? pkg.bulkDiscounts : [];
+                                const bd = discounts.find(d => d.count === count) || { count, discountPercent: 0 };
+                                return `
+                                    <div class="bulk-card">
+                                        <label>${count} Perk${count>1?'s':''}</label>
+                                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                                            <input type="text" value="${bd.discountPercent}" oninput="updateBulk(${pkgIdx}, ${count}, this.value)"> %
+                                        </div>
+                                    </div>`;
+                            }).join('')}
                         </div>
                     </div>
                 </div>`;
             });
 
+            // Custom Section
+            const cStr = pricingData.custom;
+            html += `
+                <div class="card" style="margin-top:3rem;">
+                    <h3>Individuelle Anfrage</h3>
+                    <div class="form-row">
+                        <div class="form-group"><label>Titel (DE)</label><input type="text" value="${cStr.title.de}" oninput="update('custom', null, 'title', 'de', this.value)"></div>
+                        <div class="form-group"><label>Titel (EN)</label><input type="text" value="${cStr.title.en}" oninput="update('custom', null, 'title', 'en', this.value)"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Text (DE)</label><textarea rows="3" oninput="update('custom', null, 'desc', 'de', this.value)">${cStr.desc.de}</textarea></div>
+                        <div class="form-group"><label>Text (EN)</label><textarea rows="3" oninput="update('custom', null, 'desc', 'en', this.value)">${cStr.desc.en}</textarea></div>
+                    </div>
+                </div>`;
+
+            // Global Discount
+            const gd = pricingData.globalDiscount || { active: false, label: "", type: "percent", value: 0 };
+            html += `
+                <div class="card" style="border: 1px solid var(--accent);">
+                    <div style="display:flex; justify-content:space-between;">
+                        <h3>Globaler Rabatt (Aktion)</h3>
+                        <label class="switch">
+                            <input type="checkbox" ${gd.active?'checked':''} onchange="update('globalDiscount', null, 'active', null, this.checked)" style="width: auto;">
+                            Aktion Aktiv
+                        </label>
+                    </div>
+                    <div class="form-row" style="margin-top:1rem;">
+                        <div class="form-group" style="flex:2;"><label>Label</label><input type="text" value="${gd.label}" oninput="update('globalDiscount', null, 'label', null, this.value)"></div>
+                        <div class="form-group"><label>Wert</label><input type="text" value="${gd.value}" oninput="update('globalDiscount', null, 'value', null, this.value)"></div>
+                        <div class="form-group"><label>Typ</label>
+                            <select onchange="update('globalDiscount', null, 'type', null, this.value)">
+                                <option value="percent" ${gd.type==='percent'?'selected':''}>Prozent</option>
+                                <option value="euro" ${gd.type==='euro'?'selected':''}>Euro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div><div style="height:100px;"></div>`;
+
             container.innerHTML = html;
         }
 
+        // --- UPDATERS ---
         window.update = (path, idx, prop, lang, val) => {
-            if (lang) pricingData[path][idx][prop][lang] = val;
-            else pricingData[path][idx][prop] = val;
+            let target = (idx === null) ? pricingData[path] : pricingData[path][idx];
+            if (lang) target[prop][lang] = val; else target[prop] = val;
         }
         window.updateVal = (path, idx, prop, val) => {
             let n = parseFloat(val.replace(',', '.'));
             pricingData[path][idx][prop] = isNaN(n) ? 0 : n;
+        }
+        window.updateArr = (path, pIdx, arrName, itemIdx, lang, val) => {
+            pricingData[path][pIdx][arrName][itemIdx][lang] = val;
+        }
+        window.updateArrVal = (path, pIdx, arrName, itemIdx, prop, val) => {
+            let n = parseFloat(val.replace(',', '.'));
+            pricingData[path][pIdx][arrName][itemIdx][prop] = isNaN(n) ? 0 : n;
+        }
+        window.addArrItem = (path, pIdx, arrName, template) => {
+            if (!pricingData[path][pIdx][arrName]) pricingData[path][pIdx][arrName] = [];
+            pricingData[path][pIdx][arrName].push(JSON.parse(JSON.stringify(template)));
+            render();
+        }
+        window.removeArrItem = (path, pIdx, arrName, itemIdx) => {
+            pricingData[path][pIdx][arrName].splice(itemIdx, 1);
+            render();
+        }
+        window.updateBulk = (pIdx, count, val) => {
+            let pkg = pricingData.packages[pIdx];
+            if (!pkg.bulkDiscounts) pkg.bulkDiscounts = [];
+            let bd = pkg.bulkDiscounts.find(d => d.count === count);
+            if (!bd) {
+                bd = { count, discountPercent: 0 };
+                pkg.bulkDiscounts.push(bd);
+            }
+            let n = parseFloat(val.replace(',', '.'));
+            bd.discountPercent = isNaN(n) ? 0 : n;
         }
 
         async function savePricing() {
@@ -91,20 +210,21 @@
             status.textContent = "Speichere...";
             status.style.color = "white";
 
+            // Cleanup bulk discounts before saving
+            pricingData.packages.forEach(pkg => {
+                const maxCount = (pkg.extras || []).length;
+                pkg.bulkDiscounts = (pkg.bulkDiscounts || []).filter(d => d.count <= maxCount);
+            });
+
             try {
                 const res = await fetch('api/manage-pricing.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(pricingData)
                 });
-                
                 const text = await res.text();
                 let result;
-                try {
-                    result = JSON.parse(text);
-                } catch(e) {
-                    throw new Error("Invalid JSON: " + text.substring(0, 200));
-                }
+                try { result = JSON.parse(text); } catch(e) { throw new Error("Invalid Response: " + text.substring(0, 100)); }
 
                 if (result.success) {
                     status.textContent = "Gespeichert!";
@@ -114,8 +234,7 @@
                     status.style.color = "#ff4d4d";
                 }
             } catch (e) {
-                console.error("Save error:", e);
-                status.textContent = "Netzwerkfehler: " + e.message;
+                status.textContent = "Fehler: " + e.message;
                 status.style.color = "#ff4d4d";
             }
             btn.disabled = false;
