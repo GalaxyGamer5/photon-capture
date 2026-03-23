@@ -36,7 +36,10 @@ if (file_put_contents($file, $jsonData)) {
         if ($ordersDb && isset($ordersDb['orders'])) {
             foreach ($ordersDb['orders'] as &$order) {
                 // Update price using new pricing $data
-                $order['price'] = calculateOrderPrice($order, $data);
+                $res = calculateOrderPrice($order, $data);
+                $order['price'] = $res['price'];
+                $order['originalPrice'] = $res['originalPrice'];
+                $order['discountText'] = $res['discountText'];
             }
             // Save orders back
             $updatedOrdersJson = json_encode($ordersDb, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

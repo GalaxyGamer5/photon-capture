@@ -570,7 +570,10 @@
                         <td style="color:var(--text-secondary); font-size:0.85rem;">${formatDate(o.createdAt)}</td>
                         <td style="font-weight:600;">${escHtml(o.clientName)}</td>
                         <td>${escHtml(o.packageLabel || o.package)} ${o.hours ? `(${o.hours}h)` : ''}</td>
-                        <td style="font-weight:600;">${o.price ? o.price.toString().replace('€','').replace('.', ',') : '0,00'}€</td>
+                        <td style="font-weight:600;">
+                            <div>${o.price ? o.price.toString().replace('€','').replace('.', ',') : '0,00'}€</div>
+                            ${o.discountText ? `<div style="font-size:0.75rem; color:var(--accent); font-weight:400; margin-top:2px;">${o.discountText}</div>` : ''}
+                        </td>
                         <td><span class="badge badge-${o.status}">${STATUS_LABELS[o.status] || o.status}</span></td>
                         <td>
                             <button class="btn-action btn-edit" onclick="openEditModal('${o.id}')">✏ Bearbeiten</button>

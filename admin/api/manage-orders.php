@@ -84,7 +84,10 @@ switch ($action) {
             'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro'],
             'hours' => $input['hours'] ?? null
         ];
-        $newOrder['price'] = calculateOrderPrice($newOrder, $pricing);
+        $res = calculateOrderPrice($newOrder, $pricing);
+        $newOrder['price'] = $res['price'];
+        $newOrder['originalPrice'] = $res['originalPrice'];
+        $newOrder['discountText'] = $res['discountText'];
         array_unshift($db['orders'], $newOrder);
         $success = saveOrders($file, $db);
         break;
@@ -102,7 +105,10 @@ switch ($action) {
                 $o['hours'] = $input['hours'] ?? ($o['hours'] ?? null);
                 
                 // Recalculate price on update
-                $o['price'] = calculateOrderPrice($o, $pricing);
+                $res = calculateOrderPrice($o, $pricing);
+                $o['price'] = $res['price'];
+                $o['originalPrice'] = $res['originalPrice'];
+                $o['discountText'] = $res['discountText'];
                 
                 $success = true;
                 break;

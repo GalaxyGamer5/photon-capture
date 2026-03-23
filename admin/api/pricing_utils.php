@@ -34,35 +34,55 @@ function calculateOrderPrice($order, $pricing) {
             }
         }
     }
-    $total += $extrasTotal;
+    $total = $basePrice + $extrasTotal;
+    $originalPrice = $total;
 
     // Apply Global Discount
+    $globalDiscountVal = 0;
     if (isset($pricing['globalDiscount']) && $pricing['globalDiscount']['active']) {
         $gd = $pricing['globalDiscount'];
         if ($gd['type'] === 'percent') {
-            $total *= (1 - ((float)$gd['value'] / 100));
+            $globalDiscountVal = $total * ((float)$gd['value'] / 100);
         } else {
-            $total -= (float)$gd['value'];
+            $globalDiscountVal = (float)$gd['value'];
         }
     }
+    $total -= $globalDiscountVal;
 
     // Apply Package-Specific Bulk Discount
+    $bulkDiscountVal = 0;
     if (isset($pkg['bulkDiscounts']) && $extrasCount > 0) {
         foreach ($pkg['bulkDiscounts'] as $bd) {
             if ((int)$bd['count'] === $extrasCount) {
-                $total *= (1 - ((float)$bd['discountPercent'] / 100));
+                $bulkDiscountVal = $total * ((float)$bd['discountPercent'] / 100);
+                $total -= $bulkDiscountVal;
                 break;
             }
         }
     }
 
     // Apply Manual Discount (stored in order)
+    $manualDiscountVal = 0;
     $manual = $order['discount'] ?? ['value' => 0, 'type' => 'euro'];
     if ($manual['type'] === 'percent') {
-        $total *= (1 - ((float)$manual['value'] / 100));
+        $manualDiscountVal = $total * ((float)$manual['value'] / 100);
     } else {
-        $total -= (float)$manual['value'];
+        $manualDiscountVal = (float)$manual['value'];
+    }
+    $total -= $manualDiscountVal;
+
+    $finalPrice = max(0, $total);
+    $totalSavings = $originalPrice - $finalPrice;
+    $discountText = "";
+
+    if ($totalSavings > 0 && $originalPrice > 0) {
+        $percent = round(($totalSavings / $originalPrice) * 100);
+        $discountText = $percent . "% Rabatt";
     }
 
-    return number_format(max(0, $total), 2, '.', '');
+    return [
+        'price' => number_format($finalPrice, 2, '.', ''),
+        'originalPrice' => number_format($originalPrice, 2, '.', ''),
+        'discountText' => $discountText
+    ];
 }
