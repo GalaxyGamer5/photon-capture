@@ -6,7 +6,7 @@ window.usersDatabase = {
             "username": "demo",
             "passwordHash": "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8",
             "name": "Demo User",
-            "folder": "demo-gallery",
+            "folder": "demo",
             "imageCount": 12,
             "isProtected": true
         }

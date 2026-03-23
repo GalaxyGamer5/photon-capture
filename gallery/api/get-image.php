@@ -74,11 +74,13 @@ if (!$image) {
 }
 
 if ($isProtected) {
-    // 1. Apply slight blur
+    // 1. Apply more aggressive blur
     if (function_exists('imagefilter')) {
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 6; $i++) { // Increased passes from 3 to 6
             imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
         }
+        // Add a bit of pixelation for extra protection
+        imagefilter($image, IMG_FILTER_PIXELATE, 2, true);
     }
 
     // 2. Apply Watermark Overlay
@@ -86,8 +88,8 @@ if ($isProtected) {
     $height = imagesy($image);
     
     // Create colors
-    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 95); // White semi-trans
-    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 110);    // Black semi-trans for contrast
+    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 60); // More opaque white (60 instead of 95)
+    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 80);    // More opaque black (80 instead of 110)
     
     $text = "PHOTON-CAPTURE";
     $fontSize = 5; 
@@ -95,22 +97,32 @@ if ($isProtected) {
     $textWidth = imagefontwidth($fontSize) * strlen($text);
     $textHeight = imagefontheight($fontSize);
     
-    // Dense diagonal grid of watermarks
-    for ($y = -200; $y < $height + 200; $y += 200) {
-        for ($x = -200; $x < $width + 200; $x += 400) {
-            // Shadow for readability
+    // More dense diagonal grid of watermarks
+    $spacing_x = 250;
+    $spacing_y = 150;
+    
+    for ($y = -200; $y < $height + 200; $y += $spacing_y) {
+        $offset_x = ($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2;
+        for ($x = -200 + $offset_x; $x < $width + 200; $x += $spacing_x) {
+            // Stronger shadow for readability
+            imagestring($image, $fontSize, $x + 2, $y + 2, $text, $color_black);
             imagestring($image, $fontSize, $x + 1, $y + 1, $text, $color_black);
             imagestring($image, $fontSize, $x, $y, $text, $color_main);
         }
     }
 
-    // Centered Banner
+    // Centered Banner - More prominent
     $bannerText = "PREVIEW - UNTIL PAID";
-    $bannerWidth = imagefontwidth($fontSize) * strlen($bannerText);
+    $bannerFontSize = 5;
+    $bannerWidth = imagefontwidth($bannerFontSize) * strlen($bannerText);
     
-    // Draw a semi-transparent dark strip behind the banner
-    imagefilledrectangle($image, 0, ($height/2) - 20, $width, ($height/2) + 20, $color_black);
-    imagestring($image, $fontSize, ($width - $bannerWidth) / 2, ($height / 2) - 8, $bannerText, $color_main);
+    // Draw a dark strip behind the banner
+    imagefilledrectangle($image, 0, ($height/2) - 30, $width, ($height/2) + 30, $color_black);
+    // Draw the text multiple times for "bold" effect
+    for($o = -1; $o <= 1; $o++) {
+        imagestring($image, $bannerFontSize, ($width - $bannerWidth) / 2 + $o, ($height / 2) - 8, $bannerText, $color_main);
+        imagestring($image, $bannerFontSize, ($width - $bannerWidth) / 2, ($height / 2) - 8 + $o, $bannerText, $color_main);
+    }
 }
 
 // Serve the image

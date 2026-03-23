@@ -220,13 +220,13 @@
 
             // Try alternative image extensions if the default .jpg fails
             window.tryNextExtension = function(img) {
-                const src = img.src;
+                let src = img.src;
                 let newSrc = null;
 
-                if (src.match(/\.jpg$/i)) {
-                    newSrc = src.replace(/\.jpg$/i, '.png');
-                } else if (src.match(/\.png$/i)) {
-                    newSrc = src.replace(/\.png$/i, '.webp');
+                if (src.includes('.jpg')) {
+                    newSrc = src.replace('.jpg', '.png');
+                } else if (src.includes('.png')) {
+                    newSrc = src.replace('.png', '.webp');
                 }
                 
                 if (newSrc) {
@@ -303,10 +303,11 @@
             };
 
             function updateLightbox() {
-                const imgSrc = `${imageFolder}/${currentIndex}.jpg`;
-                lightboxImg.src = imgSrc;
+                // Use secure delivery API for the lightbox too
+                const apiSrc = `api/get-image.php?f=${user.folder}&i=${currentIndex}.jpg&v=${Date.now()}`;
+                lightboxImg.src = apiSrc;
                 lightboxImg.onerror = function() { tryNextExtension(this); };
-                downloadBtn.href = imgSrc;
+                downloadBtn.href = apiSrc;
                 updateLightboxFavoriteBtn(currentIndex);
             }
 
