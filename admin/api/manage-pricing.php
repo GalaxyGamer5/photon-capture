@@ -10,11 +10,16 @@ if (!$data) {
 }
 
 $file = __DIR__ . '/../../data/pricing.json';
+
+// Try to fix permissions if file exists
+if (file_exists($file)) {
+    @chmod($file, 0777);
+}
+
 $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 if (file_put_contents($file, $jsonData)) {
-    $firstTitle = isset($data['packages'][0]['title']['de']) ? $data['packages'][0]['title']['de'] : 'N/A';
-    echo json_encode(['success' => true, 'bytes' => strlen($jsonData), 'received_first' => $firstTitle, 'path' => realpath($file)]);
+    echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'error' => 'Failed to write pricing data to ' . $file]);
+    echo json_encode(['success' => false, 'error' => 'Failed to write pricing data. Check file permissions.']);
 }

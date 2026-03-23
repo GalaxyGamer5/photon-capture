@@ -382,9 +382,7 @@
         }
 
         async function savePricingData() {
-            alert("Save Pricing initiated...");
             if (!pricingData) {
-                alert("Fehler: Daten wurden noch nicht geladen.");
                 return;
             }
 
@@ -429,14 +427,11 @@
                         statusLabel.textContent = "Erfolgreich gespeichert!";
                         statusLabel.style.color = "#4caf50";
                     }
-                    alert("Erfolgreich gespeichert!\nBytes: " + result.bytes + "\nErstes Paket (DE): " + result.received_first + "\nDateipfad: " + result.path);
                 } else {
                     const errMsg = "Fehler: " + (result.error || "Unbekannter Fehler");
                     if (statusLabel) {
                         statusLabel.textContent = errMsg;
                         statusLabel.style.color = "#ff4d4d";
-                    } else {
-                        alert(errMsg);
                     }
                 }
             } catch (e) {
@@ -444,8 +439,6 @@
                 if (statusLabel) {
                     statusLabel.textContent = "Fehler: " + e.message;
                     statusLabel.style.color = "#ff4d4d";
-                } else {
-                    alert("Kritischer Fehler beim Speichern: " + e.message);
                 }
             }
 
