@@ -1,140 +1,41 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preise Verwalten | Photon Admin</title>
-    <script>alert("HTML Head Script executing...");</script>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .pricing-admin-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-        }
-
-        .package-card {
-            background: var(--surface-light);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-        }
-
-        .form-row {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: inherit;
-        }
-
-        .features-list {
-            margin-top: 1rem;
-            padding-left: 1rem;
-            border-left: 2px solid var(--border-color);
-        }
-
-        .feature-item {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-            align-items: center;
-        }
-
-        .feature-item input {
-            flex: 1;
-        }
-
-        .btn-small {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .btn-small:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-delete {
-            background: rgba(255, 77, 77, 0.2);
-            color: #ff4d4d;
-        }
-
-        .btn-delete:hover {
-            background: rgba(255, 77, 77, 0.3);
-        }
-
-        #save-status {
-            text-align: right;
-            margin-top: 1rem;
-            font-weight: bold;
-        }
-
-        .discount-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .global-discount-box {
-            background: rgba(0, 242, 255, 0.05);
-            border: 1px solid var(--accent);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 2rem;
-        }
+        .pricing-admin-container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+        .card { background: var(--surface-light); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 2rem; }
+        .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { flex: 1; min-width: 0; }
+        label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem; }
+        input, textarea, select { width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); }
+        .btn-small { background: rgba(255, 255, 255, 0.1); border: none; color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; }
+        .btn-delete { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); margin-left: 0.5rem; }
+        #save-status { margin-left: 1rem; font-weight: bold; }
     </style>
 </head>
-
 <body>
     <div class="dashboard-container">
         <header class="header">
             <div class="welcome-text">
                 <h1>Preise Verwalten</h1>
-                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
-                        Dashboard</a></p>
+                <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück</a></p>
             </div>
-            <button onclick="savePricingData()" class="btn">Änderungen Speichern</button>
+            <div style="display: flex; align-items: center;">
+                <button onclick="savePricing();" class="btn" id="save-btn">Änderungen Speichern</button>
+                <div id="save-status"></div>
+            </div>
         </header>
 
         <div class="pricing-admin-container" id="editor-container">
-            <div style="text-align: center; padding: 2rem;">Lade Daten...</div>
+            <div style="text-align: center; padding: 4rem;">Lade Daten...</div>
         </div>
     </div>
 
     <script>
-        alert("Admin Script wird geladen...");
         if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
 
         let pricingData = null;
@@ -144,320 +45,75 @@
             try {
                 const res = await fetch('api/get-pricing.php?t=' + Date.now());
                 pricingData = await res.json();
-                renderEditor();
+                render();
             } catch (e) {
-                console.error("Load error:", e);
-                container.innerHTML = '<div style="color: red;">Fehler beim Laden.</div>';
-                alert("Fehler beim Laden der Preis-Daten: " + e.message);
+                container.innerHTML = '<div style="color:red">Fehler beim Laden: ' + e.message + '</div>';
             }
         }
 
-        function renderEditor() {
+        function render() {
             if (!pricingData) return;
-
-            let html = `<h2>Pakete & Leistungen</h2>`;
-
-            pricingData.packages.forEach((pkg, pkgIndex) => {
+            let html = '';
+            
+            pricingData.packages.forEach((pkg, pkgIdx) => {
                 html += `
-                <div class="package-card" data-pkg-index="${pkgIndex}" style="border-left: 4px solid var(--accent);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="margin:0;">Paket: ${pkg.id.toUpperCase()}</h3>
-                        <span style="font-size: 0.8rem; opacity: 0.6;">Basis-Paket Einstellungen</span>
-                    </div>
-
+                <div class="card">
+                    <h3>Paket: ${pkg.id.toUpperCase()}</h3>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Titel (DE)</label>
-                            <input type="text" value="${pkg.title.de}" oninput="updatePkg(${pkgIndex}, 'title', 'de', this.value)">
+                            <input type="text" value="${pkg.title.de}" oninput="update('packages', ${pkgIdx}, 'title', 'de', this.value)">
                         </div>
                         <div class="form-group">
-                            <label>Titel (EN)</label>
-                            <input type="text" value="${pkg.title.en}" oninput="updatePkg(${pkgIndex}, 'title', 'en', this.value)">
+                            <label>Preis (€)</label>
+                            <input type="text" value="${pkg.price}" oninput="updateVal('packages', ${pkgIdx}, 'price', this.value)">
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Basis-Preis (€)</label>
-                            <input type="text" value="${pkg.price}" oninput="updatePkgVal(${pkgIndex}, 'price', this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Einheit (DE) (z.B. /Stunde)</label>
-                            <input type="text" value="${pkg.priceUnit.de || ''}" oninput="updatePkg(${pkgIndex}, 'priceUnit', 'de', this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Einheit (EN) (z.B. /hour)</label>
-                            <input type="text" value="${pkg.priceUnit.en || ''}" oninput="updatePkg(${pkgIndex}, 'priceUnit', 'en', this.value)">
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
-                        <!-- Features Column -->
-                        <div>
-                            <h4>Inklusiv-Leistungen (Features)</h4>
-                            <div class="features-list">
-                                ${(pkg.features || []).map((feat, featIndex) => `
-                                    <div class="feature-item" style="margin-bottom: 0.5rem;">
-                                        <input type="text" placeholder="DE" value="${feat.de}" oninput="updateFeat(${pkgIndex}, ${featIndex}, 'de', this.value)">
-                                        <input type="text" placeholder="EN" value="${feat.en}" oninput="updateFeat(${pkgIndex}, ${featIndex}, 'en', this.value)">
-                                        <button class="btn-small btn-delete" onclick="removeFeature(${pkgIndex}, ${featIndex})">X</button>
-                                    </div>
-                                `).join('')}
-                                <button class="btn-small" style="margin-top: 0.5rem;" onclick="addFeature(${pkgIndex})">+ Feature</button>
-                            </div>
-                        </div>
-
-                        <!-- Perks Column -->
-                        <div>
-                            <h4>Zusatzperks (Extras)</h4>
-                            <div class="features-list">
-                                ${(pkg.extras || []).map((ext, extIndex) => `
-                                    <div class="feature-item" style="margin-bottom: 1rem; flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 8px;">
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            <input type="text" placeholder="Bezeichnung" value="${ext.label}" oninput="updatePkgExtra(${pkgIndex}, ${extIndex}, 'label', this.value)">
-                                            <input type="text" style="width: 80px;" placeholder="Preis" value="${ext.price}" oninput="updatePkgExtra(${pkgIndex}, ${extIndex}, 'price', this.value)">
-                                            <button class="btn-small btn-delete" onclick="removePkgExtra(${pkgIndex}, ${extIndex})">X</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                                <button class="btn-small" style="margin-top: 0.5rem;" onclick="addPkgExtra(${pkgIndex})">+ Perk Hinzufügen</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Package Bulk Discounts -->
-                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
-                        <h4>Sammelrabatt (nach Anzahl gewählter Perks)</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                            Lege fest, wie viel Rabatt der Kunde erhält, wenn er X Zusatzperks bucht.
-                        </p>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
-                            ${(pkg.extras || []).map((_, i) => {
-                                try {
-                                    const count = i + 1;
-                                    const discounts = Array.isArray(pkg.bulkDiscounts) ? pkg.bulkDiscounts : [];
-                                    const bd = discounts.find(d => d.count === count) || { count, discountPercent: 0 };
-                                    return `
-                                    <div style="background: rgba(0,242,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(0,242,255,0.1);">
-                                        <label style="font-size: 0.8rem; display: block; margin-bottom: 0.4rem;">${count} Zusatz-Perk${count > 1 ? 's' : ''}</label>
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <input type="text" value="${bd.discountPercent}" 
-                                                oninput="updatePkgBulk(${pkgIndex}, ${count}, this.value)" 
-                                                style="padding: 0.4rem; font-size: 0.9rem;">
-                                            <span>%</span>
-                                        </div>
-                                    </div>
-                                `;
-                                } catch(e) {
-                                    console.error(e);
-                                    return '<div style="color:red">Error in discount row</div>';
-                                }
-                }).join('')}
-                        </div>
-                        ${pkg.extras && pkg.extras.length === 0 ? '<p style="font-size: 0.9rem; color: var(--text-secondary); font-style: italic;">Füge zuerst Perks hinzu, um Rabattstufen festzulegen.</p>' : ''}
-                    </div>
-                </div>
-                `;
+                </div>`;
             });
 
-            // Custom Request Section
-            html += `
-                <h2 style="margin-top: 4rem;">Andere Einstellungen</h2>
-                <div class="package-card">
-                    <h3>Individuelle Anfrage (Custom)</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Titel (DE)</label>
-                            <input type="text" value="${pricingData.custom.title.de}" oninput="updateCustom('title', 'de', this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Titel (EN)</label>
-                            <input type="text" value="${pricingData.custom.title.en}" oninput="updateCustom('title', 'en', this.value)">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Text (DE)</label>
-                            <textarea rows="3" oninput="updateCustom('desc', 'de', this.value)">${pricingData.custom.desc.de}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Text (EN)</label>
-                            <textarea rows="3" oninput="updateCustom('desc', 'en', this.value)">${pricingData.custom.desc.en}</textarea>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // --- GLOBAL DISCOUNT Section ---
-            const gd = pricingData.globalDiscount || { active: false, label: "", type: "percent", value: 0 };
-            html += `
-                <div class="global-discount-box">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 style="margin: 0; background:none; -webkit-text-fill-color: var(--accent);">Globaler Rabatt (z.B. Black Friday)</h2>
-                        <label class="switch" style="display: flex; align-items: center; gap: 1rem; cursor: pointer; font-weight: 600;">
-                            <input type="checkbox" ${gd.active ? 'checked' : ''} onchange="updateGlobal('active', this.checked)" style="width: auto;">
-                            <span>Aktion aktiv</span>
-                        </label>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 2;">
-                            <label>Aktions-Label (z.B. "Winter Sale")</label>
-                            <input type="text" value="${gd.label}" oninput="updateGlobal('label', this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Rabatt-Wert</label>
-                            <input type="text" value="${gd.value}" oninput="updateGlobal('value', this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Rabatt-Typ</label>
-                            <select onchange="updateGlobal('type', this.value)" style="width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
-                                <option value="percent" ${gd.type === 'percent' ? 'selected' : ''}>Prozent (%)</option>
-                                <option value="euro" ${gd.type === 'euro' ? 'selected' : ''}>Euro (€)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            html += `<div id="save-status"></div><div style="height: 100px;"></div>`;
             container.innerHTML = html;
         }
 
-        // --- UPDATER FUNCTIONS ---
-
-        function parseVal(val) {
-            if (typeof val === 'string') val = val.replace(',', '.');
-            const num = parseFloat(val);
-            return isNaN(num) ? 0 : num;
+        window.update = (path, idx, prop, lang, val) => {
+            if (lang) pricingData[path][idx][prop][lang] = val;
+            else pricingData[path][idx][prop] = val;
+        }
+        window.updateVal = (path, idx, prop, val) => {
+            let n = parseFloat(val.replace(',', '.'));
+            pricingData[path][idx][prop] = isNaN(n) ? 0 : n;
         }
 
-        window.updatePkgVal = (pkgIndex, prop, val) => {
-            pricingData.packages[pkgIndex][prop] = (prop === 'price') ? parseVal(val) : val;
-        }
-        window.updatePkg = (pkgIndex, prop, lang, val) => {
-            if (!pricingData.packages[pkgIndex][prop]) pricingData.packages[pkgIndex][prop] = {};
-            pricingData.packages[pkgIndex][prop][lang] = val;
-        }
-
-        // Features
-        window.updateFeat = (pkgIndex, featIndex, lang, val) => { pricingData.packages[pkgIndex].features[featIndex][lang] = val; }
-        window.addFeature = (pkgIndex) => {
-            if (!pricingData.packages[pkgIndex].features) pricingData.packages[pkgIndex].features = [];
-            pricingData.packages[pkgIndex].features.push({ de: "", en: "" });
-            renderEditor();
-        }
-        window.removeFeature = (pkgIndex, featIndex) => {
-            pricingData.packages[pkgIndex].features.splice(featIndex, 1);
-            renderEditor();
-        }
-
-        // Perks
-        window.updatePkgExtra = (pkgIndex, extIndex, prop, val) => {
-            pricingData.packages[pkgIndex].extras[extIndex][prop] = (prop === 'price') ? parseVal(val) : val;
-        }
-        window.addPkgExtra = (pkgIndex) => {
-            if (!pricingData.packages[pkgIndex].extras) pricingData.packages[pkgIndex].extras = [];
-            pricingData.packages[pkgIndex].extras.push({ id: 'p_' + Date.now(), label: '', price: 0 });
-            renderEditor();
-        }
-        window.removePkgExtra = (pkgIndex, extIndex) => {
-            pricingData.packages[pkgIndex].extras.splice(extIndex, 1);
-            // Also clean up bulk discounts for counts that no longer exist
-            const maxCount = pricingData.packages[pkgIndex].extras.length;
-            pricingData.packages[pkgIndex].bulkDiscounts = (pricingData.packages[pkgIndex].bulkDiscounts || [])
-                .filter(d => d.count <= maxCount);
-            renderEditor();
-        }
-
-        // Bulk (Count-based)
-        window.updatePkgBulk = (pkgIndex, count, val) => {
-            if (!pricingData.packages[pkgIndex].bulkDiscounts) pricingData.packages[pkgIndex].bulkDiscounts = [];
-            let bd = pricingData.packages[pkgIndex].bulkDiscounts.find(d => d.count === count);
-            if (!bd) {
-                bd = { count, discountPercent: 0 };
-                pricingData.packages[pkgIndex].bulkDiscounts.push(bd);
-            }
-            bd.discountPercent = parseVal(val);
-        }
-
-        // Custom Request
-        window.updateCustom = (prop, lang, val) => {
-            if (!pricingData.custom[prop]) pricingData.custom[prop] = {};
-            pricingData.custom[prop][lang] = val;
-        }
-
-        // Global
-        window.updateGlobal = (prop, val) => {
-            if (!pricingData.globalDiscount) pricingData.globalDiscount = { active: false, label: "", type: "percent", value: 0 };
-            pricingData.globalDiscount[prop] = (prop === 'value') ? parseVal(val) : val;
-        }
-
-        async function savePricingData() {
-            if (!pricingData) {
-                alert("Fehler: Daten wurden noch nicht geladen.");
-                return;
-            }
-
-            // Force blur on current active element to ensure all oninput/onchange are processed
-            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
-                document.activeElement.blur();
-            }
-
-            const statusLabel = document.getElementById('save-status');
-            if (statusLabel) {
-                statusLabel.textContent = "Speichere...";
-                statusLabel.style.color = "var(--text-primary)";
-            }
+        async function savePricing() {
+            const btn = document.getElementById('save-btn');
+            const status = document.getElementById('save-status');
+            btn.disabled = true;
+            status.textContent = "Speichere...";
+            status.style.color = "white";
 
             try {
-                // Pre-clean bulk discounts: Ensure we only keep those matching current extra count
-                pricingData.packages.forEach(pkg => {
-                    const maxCount = (pkg.extras || []).length;
-                    pkg.bulkDiscounts = (pkg.bulkDiscounts || []).filter(d => d.count <= maxCount);
-                });
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
                 const res = await fetch('api/manage-pricing.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(pricingData),
-                    signal: controller.signal
+                    body: JSON.stringify(pricingData)
                 });
-                clearTimeout(timeoutId);
-                
-                if (!res.ok) {
-                    const text = await res.text();
-                    throw new Error(`HTTP ${res.status}: ${text.substring(0, 100)}`);
-                }
-
                 const result = await res.json();
-
                 if (result.success) {
-                    if (statusLabel) {
-                        statusLabel.textContent = "Erfolgreich gespeichert!";
-                        statusLabel.style.color = "#4caf50";
-                    }
+                    status.textContent = "Gespeichert!";
+                    status.style.color = "#4caf50";
                 } else {
-                    const errMsg = "Fehler: " + (result.error || "Unbekannter Fehler");
-                    if (statusLabel) {
-                        statusLabel.textContent = errMsg;
-                        statusLabel.style.color = "#ff4d4d";
-                    }
+                    status.textContent = "Fehler: " + result.error;
+                    status.style.color = "#ff4d4d";
                 }
             } catch (e) {
-                console.error("Save error:", e);
-                if (statusLabel) {
-                    statusLabel.textContent = "Fehler: " + e.message;
-                    statusLabel.style.color = "#ff4d4d";
-                }
+                status.textContent = "Netzwerkfehler";
+                status.style.color = "#ff4d4d";
             }
-
-            setTimeout(() => { if (statusLabel) statusLabel.textContent = ''; }, 3000);
+            btn.disabled = false;
+            setTimeout(() => { status.textContent = ''; }, 3000);
         }
 
         loadPricing();
     </script>
 </body>
-
 </html>
