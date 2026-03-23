@@ -10,6 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 $file = __DIR__ . '/../../data/orders.json';
 
 // Helper: Load
@@ -23,7 +26,20 @@ function loadOrders($path) {
 
 // Helper: Save
 function saveOrders($path, $data) {
-    return file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false;
+    $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if (!$jsonData) return false;
+
+    // If file exists and is not writable, TRY deleting it (requires directory write permission)
+    if (file_exists($path) && !is_writable($path)) {
+        @unlink($path);
+    }
+
+    $res = file_put_contents($path, $jsonData);
+    if ($res !== false) {
+        @chmod($path, 0777);
+        return true;
+    }
+    return false;
 }
 
 // ── GET Action ────────────────────────────────────────────────────────
