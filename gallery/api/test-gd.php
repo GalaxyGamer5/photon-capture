@@ -5,6 +5,7 @@ echo "imagecreatefromjpeg exists: " . (function_exists('imagecreatefromjpeg') ? 
 echo "imagecreatefrompng exists: " . (function_exists('imagecreatefrompng') ? 'Yes' : 'No') . "\n";
 echo "imagefilter exists: " . (function_exists('imagefilter') ? 'Yes' : 'No') . "\n";
 echo "imagettftext exists: " . (function_exists('imagettftext') ? 'Yes' : 'No') . "\n";
+echo "Imagick class exists: " . (class_exists('Imagick') ? 'Yes' : 'No') . "\n";
 
 $img = @imagecreatetruecolor(100, 100);
 if ($img) {
