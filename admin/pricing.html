@@ -53,6 +53,42 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Accordion for Perks */
+        .perk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .perk-header:hover { background: rgba(255, 255, 255, 0.08); }
+        .perk-header .arrow { 
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .perk-item.expanded .perk-header .arrow { transform: rotate(180deg); }
+        .perk-details { 
+            display: none; 
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .perk-item.expanded .perk-details { display: block; }
+        .perk-item.expanded .perk-header {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            background: rgba(0, 242, 255, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -90,6 +126,7 @@
         }
 
         let activeTab = localStorage.getItem('activePricingTab') || 'pkg_portrait';
+        let expandedPerks = new Set(); // Stores "pkgIdx:eIdx" strings
 
         function render() {
             if (!pricingData) return;
@@ -142,49 +179,70 @@
                                 <div class="features-list">
                                     ${(pkg.extras || []).map((ext, eIdx) => {
                                         const isSelect = ext.type === 'select';
+                                        const isExpanded = expandedPerks.has(`${pkgIdx}:${eIdx}`);
                                         return `
-                                        <div class="feature-item" style="flex-direction: column; align-items: stretch; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05);">
-                                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                                <select style="width: 120px;" onchange="updateExtraType(${pkgIdx}, ${eIdx}, this.value)">
-                                                    <option value="checkbox" ${!isSelect?'selected':''}>Checkbox</option>
-                                                    <option value="select" ${isSelect?'selected':''}>Dropdown</option>
-                                                </select>
-                                                <input type="text" placeholder="ID (z.B. ext_photos)" value="${ext.id}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'id', this.value)">
-                                                <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'extras', ${eIdx})" style="margin-top:0">Löschen</button>
-                                            </div>
-                                            
-                                            <div class="form-row">
-                                                <div class="form-group"><label>Label (DE)</label><input type="text" value="${ext.label.de || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'de', this.value)"></div>
-                                                <div class="form-group"><label>Label (EN)</label><input type="text" value="${ext.label.en || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'en', this.value)"></div>
-                                            </div>
-
-                                            ${!isSelect ? `
-                                                <div class="form-group"><label>Preis (€)</label><input type="text" value="${ext.price || 0}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'price', this.value)"></div>
-                                            ` : `
-                                                <div style="margin-top: 0.5rem; border-left: 2px solid var(--accent); padding-left: 1rem;">
-                                                    <label style="font-weight: bold; font-size: 0.8rem; margin-bottom: 0.5rem; display: block;">Optionen</label>
-                                                    <div class="features-list">
-                                                        ${(ext.options || []).map((opt, oIdx) => `
-                                                            <div class="feature-item" style="background: rgba(0,242,255,0.03); padding: 0.5rem; border-radius: 4px;">
-                                                                <div style="display:flex; flex-direction:column; gap:0.3rem; flex:1;">
-                                                                    <input type="text" placeholder="ID" value="${opt.id}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'id', null, this.value)" style="font-size:0.75rem; padding:0.3rem;">
-                                                                    <div style="display:flex; gap:0.3rem;">
-                                                                        <input type="text" placeholder="DE" value="${opt.label.de}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'de', this.value)" style="font-size:0.8rem; padding:0.4rem;">
-                                                                        <input type="text" placeholder="EN" value="${opt.label.en}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'en', this.value)" style="font-size:0.8rem; padding:0.4rem;">
-                                                                    </div>
-                                                                </div>
-                                                                <input type="text" style="width: 50px;" placeholder="€" value="${opt.price}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'price', null, this.value)">
-                                                                <button class="btn-small btn-delete" onclick="removeExtraOption(${pkgIdx}, ${eIdx}, ${oIdx})">×</button>
-                                                            </div>
-                                                        `).join('')}
-                                                        <button class="btn-small" onclick="addExtraOption(${pkgIdx}, ${eIdx})">+ Option</button>
-                                                    </div>
+                                        <div class="perk-item ${isExpanded ? 'expanded' : ''}" style="margin-bottom: 0.5rem;">
+                                            <div class="perk-header" onclick="togglePerk(${pkgIdx}, ${eIdx})">
+                                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                                    <span style="font-weight:600; font-size:0.9rem; color: ${isExpanded ? 'var(--text-primary)' : 'var(--text-secondary)'};">
+                                                        ${ext.label.de || 'Neuer Perk'} 
+                                                        <small style="opacity:0.6; font-weight:400; margin-left:0.5rem;">(${ext.type === 'select' ? 'Dropdown' : 'Checkbox'})</small>
+                                                    </span>
                                                 </div>
-                                            `}
+                                                <span class="arrow">▼</span>
+                                            </div>
+                                            <div class="perk-details">
+                                                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                                                    <div class="form-group">
+                                                        <label>Typ</label>
+                                                        <select style="width: 100%;" onchange="updateExtraType(${pkgIdx}, ${eIdx}, this.value)">
+                                                            <option value="checkbox" ${!isSelect?'selected':''}>Checkbox</option>
+                                                            <option value="select" ${isSelect?'selected':''}>Dropdown</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>ID</label>
+                                                        <input type="text" placeholder="ID (z.B. ext_photos)" value="${ext.id}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'id', this.value)">
+                                                    </div>
+                                                    <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'extras', ${eIdx})" style="height: 38px; margin-top:24px;">Löschen</button>
+                                                </div>
+                                                
+                                                <div class="form-row">
+                                                    <div class="form-group"><label>Label (DE)</label><input type="text" value="${ext.label.de || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'de', this.value)"></div>
+                                                    <div class="form-group"><label>Label (EN)</label><input type="text" value="${ext.label.en || ''}" oninput="updateExtraLabel(${pkgIdx}, ${eIdx}, 'en', this.value)"></div>
+                                                </div>
+
+                                                ${!isSelect ? `
+                                                    <div class="form-group"><label>Preis (€)</label><input type="text" value="${ext.price || 0}" oninput="updateArrVal('packages', ${pkgIdx}, 'extras', ${eIdx}, 'price', this.value)"></div>
+                                                ` : `
+                                                    <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                                                        <label style="font-weight: bold; font-size: 0.8rem; margin-bottom: 0.75rem; display: block; color: var(--accent);">Dropdown-Optionen</label>
+                                                        <div class="features-list">
+                                                            ${(ext.options || []).map((opt, oIdx) => `
+                                                                <div class="feature-item" style="background: rgba(0,242,255,0.03); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(0,242,255,0.05);">
+                                                                    <div style="display:flex; flex-direction:column; gap:0.5rem; flex:1;">
+                                                                        <input type="text" placeholder="ID" value="${opt.id}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'id', null, this.value)" style="font-size:0.75rem; opacity:0.7; padding:0.3rem;">
+                                                                        <div style="display:flex; gap:0.4rem;">
+                                                                            <input type="text" placeholder="Label DE" value="${opt.label.de}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'de', this.value)" style="font-size:0.85rem;">
+                                                                            <input type="text" placeholder="Label EN" value="${opt.label.en}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'label', 'en', this.value)" style="font-size:0.85rem;">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style="text-align:right;">
+                                                                        <label style="font-size:0.7rem;">Preis (€)</label>
+                                                                        <input type="text" style="width: 60px; text-align:center;" value="${opt.price}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'price', null, this.value)">
+                                                                    </div>
+                                                                    <button class="btn-small btn-delete" onclick="removeExtraOption(${pkgIdx}, ${eIdx}, ${oIdx})" style="margin-top:20px;">×</button>
+                                                                </div>
+                                                            `).join('')}
+                                                            <button class="btn-small" onclick="addExtraOption(${pkgIdx}, ${eIdx})" style="width:100%;">+ Option hinzufügen</button>
+                                                        </div>
+                                                    </div>
+                                                `}
+                                            </div>
                                         </div>
                                         `;
                                     }).join('')}
-                                    <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'extras', {id:'ext_'+Date.now(), type:'checkbox', label:{de:'', en:''}, price:0})">+ Neuer Perk</button>
+                                    <button class="btn-small" onclick="addArrItem('packages', ${pkgIdx}, 'extras', {id:'ext_'+Date.now(), type:'checkbox', label:{de:'', en:''}, price:0})" style="width:100%; margin-top:1rem; border: 1px dashed var(--border-color);">+ Neuen Perk hinzufügen</button>
                                 </div>
                             </div>
                         </div>
@@ -258,6 +316,13 @@
         window.switchTab = (tabId) => {
             activeTab = tabId;
             localStorage.setItem('activePricingTab', tabId);
+            render();
+        }
+
+        window.togglePerk = (pkgIdx, eIdx) => {
+            const key = `${pkgIdx}:${eIdx}`;
+            if (expandedPerks.has(key)) expandedPerks.delete(key);
+            else expandedPerks.add(key);
             render();
         }
 
