@@ -13,15 +13,22 @@ if (!$data) {
 
 $file = __DIR__ . '/../../data/pricing.json';
 
-// Try to fix permissions if file exists
-if (file_exists($file)) {
-    @chmod($file, 0777);
-}
-
 $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
+if (!$jsonData) {
+    echo json_encode(['success' => false, 'error' => 'JSON Encoding failed: ' . json_last_error_msg()]);
+    exit;
+}
+
+// If file exists and is not writable, TRY deleting it (requires directory write permission)
+if (file_exists($file) && !is_writable($file)) {
+    @unlink($file);
+}
+
 if (file_put_contents($file, $jsonData)) {
+    @chmod($file, 0777); // Ensure it stays writable
     echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'error' => 'Failed to write pricing data. Check file permissions.']);
+    $error = error_get_last();
+    echo json_encode(['success' => false, 'error' => 'Failed to write to file: ' . ($error['message'] ?? 'Unknown error')]);
 }
