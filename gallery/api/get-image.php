@@ -23,12 +23,21 @@ $requested_image = basename($requested_image);
 $image_path = __DIR__ . '/../assets/' . $requested_folder . '/' . $requested_image;
 
 if (!file_exists($image_path)) {
+    // Fallback if running from flattened /api/ instead of /gallery/api/
+    $image_path = __DIR__ . '/../gallery/assets/' . $requested_folder . '/' . $requested_image;
+}
+
+if (!file_exists($image_path)) {
     http_response_code(404);
     exit('Image not found');
 }
 
 // Load users database to check protection status
 $usersFile = __DIR__ . '/../data/users.js';
+if (!file_exists($usersFile)) {
+    $usersFile = __DIR__ . '/../gallery/data/users.js';
+}
+
 $isProtected = false;
 
 if (file_exists($usersFile)) {
