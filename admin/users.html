@@ -22,6 +22,21 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        @media (max-width: 768px) {
+            .user-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .user-card > div {
+                width: 100%;
+            }
+            .user-card .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 

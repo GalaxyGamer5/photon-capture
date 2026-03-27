@@ -886,9 +886,49 @@ section {
         transform: translateY(-8px) rotate(-45deg);
     }
 
+    /* Move Navigation Actions inside the overlay menu on mobile */
     .nav-actions {
-        margin-left: auto;
-        margin-right: 1.5rem;
+        position: fixed;
+        bottom: 6rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        margin: 0;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s ease;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+        gap: 1.5rem;
+    }
+
+    .nav-links.active ~ .nav-actions {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+        transition-delay: 0.3s;
+    }
+
+    /* Fix grids squishing on mobile */
+    .contact-container,
+    .pricing-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2.5rem;
+    }
+
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .footer-links .separator {
+        display: none;
     }
 }
 
