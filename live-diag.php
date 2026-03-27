@@ -22,6 +22,8 @@ function listDir($dir, $prefix = '') {
 }
 
 echo "Current Directory: " . __DIR__ . "\n";
-echo "--- Root Structure ---\n";
-listDir(__DIR__);
+echo "--- Gallery Data ---\n";
+listDir(__DIR__ . '/gallery/data');
+echo "\n--- Gallery Assets ---\n";
+listDir(__DIR__ . '/gallery/assets');
 ?>
