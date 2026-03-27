@@ -13,7 +13,6 @@ $requested_folder = isset($_GET['f']) ? $_GET['f'] : '';
 $requested_image = isset($_GET['i']) ? $_GET['i'] : '';
 
 // Ensure user only accesses their own folder
-error_log("Watermark debug: Request folder=$requested_folder, image=$requested_image, user=" . ($user['username'] ?? 'NONE'));
 if ($requested_folder !== $user['folder']) {
     http_response_code(403);
     exit('Access Denied');
@@ -108,7 +107,7 @@ if ($isProtected) {
     $spacing_y = 150;
     
     for ($y = -200; $y < $height + 200; $y += $spacing_y) {
-        $offset_x = (int)(($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2);
+        $offset_x = (int)((int)($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2);
         for ($x = -200 + $offset_x; $x < $width + 200; $x += $spacing_x) {
             // Draw text with explicit integer coordinates to prevent Deprecated warnings
             imagestring($image, $fontSize, (int)($x + 2), (int)($y + 2), $text, $color_black);
@@ -147,5 +146,5 @@ if ($isProtected) {
     imagejpeg($image, null, 90); 
 }
 
-imagedestroy($image);
+// imagedestroy($image); (Deprecated in PHP 8.5+)
 ?>
