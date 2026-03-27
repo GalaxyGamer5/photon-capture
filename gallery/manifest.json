@@ -1,0 +1,18 @@
+{
+  "name": "Photon Capture Client Portal",
+  "short_name": "Photon Gallery",
+  "description": "Ihre persönliche Fotogalerie von Photon Capture",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#00f2ff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "../assets/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

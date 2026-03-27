@@ -560,4 +560,49 @@ header .container {
     font-size: 0.75rem;
     padding: 0.4rem 0.8rem;
 }
+
+/* PWA Mobile Touch Targets & UI visibility */
+.gallery-overlay {
+    opacity: 1; /* Always show actions on touch devices since hover is unavailable */
+    padding: 0.75rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+}
+
+.lightbox-close {
+    top: 1rem;
+    right: 1rem;
+    font-size: 2.5rem; /* Larger tap target */
+    padding: 0.5rem;
+}
+
+.lightbox-nav {
+    width: 44px;
+    height: 44px;
+}
+
+.lightbox-prev {
+    left: 0.5rem;
+}
+
+.lightbox-next {
+    right: 0.5rem;
+}
+
+.lightbox-download {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.6rem 1.2rem;
+}
+}
+
+/* Stack to 1 column on extremely small screens */
+@media (max-width: 400px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
 }
