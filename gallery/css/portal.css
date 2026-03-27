@@ -453,12 +453,25 @@ header .container {
     position: absolute;
     top: 2rem;
     right: 2rem;
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
     font-size: 2rem;
     cursor: pointer;
     z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
 .lightbox-nav {
@@ -476,11 +489,64 @@ header .container {
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
 }
 
 .lightbox-nav:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Lightbox Favorite Button */
+.lightbox-favorite {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1002;
+}
+
+.lightbox-favorite:hover {
+    transform: translateY(-2px) scale(1.1);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-favorite svg {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white; /* Default color */
+}
+
+/* pleasing pop animation when active */
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1.15); }
+}
+
+.lightbox-favorite.active {
+    background: rgba(255, 51, 102, 0.15);
+    border-color: rgba(255, 51, 102, 0.4);
+}
+
+.lightbox-favorite.active svg {
+    animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    fill: var(--accent-color);
+    color: var(--accent-color);
+    filter: drop-shadow(0 0 8px rgba(255, 51, 102, 0.5));
 }
 
 .lightbox-prev {
@@ -597,6 +663,13 @@ header .container {
     bottom: 1rem;
     right: 1rem;
     padding: 0.6rem 1.2rem;
+}
+
+.lightbox-favorite {
+    bottom: 1rem;
+    left: 1rem;
+    width: 44px;
+    height: 44px;
 }
 }
 
