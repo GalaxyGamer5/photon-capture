@@ -1,11 +1,31 @@
 <?php
-// Strict diagnostic to check the actual active files!
-$path1 = '/usr/share/nginx/html/photon-capture/gallery/api/get-image.php';
-$path2 = '/usr/share/nginx/html/photon-capture/api/get-image.php';
+// Strict diagnostic to find users.js
+header('Content-Type: text/plain');
 
-echo "Path1 (gallery/api) exists: " . (file_exists($path1) ? "YES" : "NO") . "\n";
-if (file_exists($path1)) echo "Path1 fix: " . (strpos(file_get_contents($path1), '(int)(int)') !== false ? "FIXED" : "OLD") . "\n";
+$paths = [
+    __DIR__ . '/data/users.js',
+    __DIR__ . '/gallery/data/users.js',
+    '/usr/share/nginx/html/photon-capture/data/users.js',
+    '/usr/share/nginx/html/photon-capture/gallery/data/users.js'
+];
 
-echo "Path2 (api/) exists: " . (file_exists($path2) ? "YES" : "NO") . "\n";
-if (file_exists($path2)) echo "Path2 fix: " . (strpos(file_get_contents($path2), '(int)(int)') !== false ? "FIXED" : "OLD") . "\n";
+echo "Looking for users.js...\n";
+foreach ($paths as $p) {
+    if (file_exists($p)) {
+        echo "FOUND: $p\n";
+        $content = file_get_contents($p);
+        preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches);
+        if (isset($matches[1])) {
+            echo "REGEX OK! Parsed user database.\n";
+            $data = json_decode($matches[1], true);
+            foreach ($data['users'] as $u) {
+                if ($u['username'] === 'Robin Morgenstern') {
+                    echo "Robin isProtected: " . (isset($u['isProtected']) && $u['isProtected'] ? 'TRUE' : 'FALSE') . "\n";
+                }
+            }
+        }
+    } else {
+        echo "MISSING: $p\n";
+    }
+}
 ?>
