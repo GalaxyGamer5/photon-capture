@@ -101,14 +101,12 @@
             let html = '';
             // Backend renames logically to 1.jpg, 2.jpg...
             for (let i = 1; i <= count; i++) {
-                // Note: The files could theoretically be .png, but the system natively assumes .jpg for preview rendering.
-                // We'll just try to load .jpg, the browser will handle standard image serving.
-                const imgPath = `../gallery/assets/${encodeURIComponent(currentUser.folder)}/${i}.jpg`;
+                const imgPath = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${i}.jpg`;
                 const relPath = `gallery/assets/${currentUser.folder}/${i}.jpg`;
                 
                 html += `
                 <div class="gallery-item" id="item-${i}">
-                    <img src="${imgPath}?v=${Date.now()}" alt="Foto ${i}">
+                    <img src="${imgPath}&v=${Date.now()}" alt="Foto ${i}">
                     <button class="delete-btn" onclick="deleteImage('${relPath}', ${i})">Löschen</button>
                     <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">#${i}</div>
                 </div>`;
