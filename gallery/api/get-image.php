@@ -88,13 +88,9 @@ if ($isProtected) {
     // Ensure alpha blending is on for TrueColor images
     imagealphablending($image, true);
 
-    // 1. Apply more aggressive blur
+    // 1. Apply ultra-fast Pixelation for protection (replaces slow Gaussian blur)
     if (function_exists('imagefilter')) {
-        for ($i = 0; $i < 6; $i++) { // Increased passes from 3 to 6
-            imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
-        }
-        // Add a bit of pixelation for extra protection
-        imagefilter($image, IMG_FILTER_PIXELATE, 2, true);
+        imagefilter($image, IMG_FILTER_PIXELATE, 20, true);
     }
 
     // 2. Apply Watermark Overlay
