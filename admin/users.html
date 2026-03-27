@@ -133,6 +133,9 @@
                         <span style="display: block; color: var(--accent); font-weight: 600;">${user.imageCount} Bilder</span>
                         
                         <div style="display: flex; gap: 0.5rem;">
+                            <a href="manage-gallery.html?user=${encodeURIComponent(user.username)}" class="btn" style="width: auto; background: var(--accent); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                                📁 Galerie verwalten
+                            </a>
                             <button onclick="toggleProtection(${index})" class="btn" style="width: auto; background: ${isProtected ? 'rgba(76,175,80,0.2)' : 'rgba(255,152,0,0.2)'}; color: ${isProtected ? '#4caf50' : '#ff9800'}; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid currentColor;">
                                 ${isProtected ? '🔓 Jetzt Freigeben' : '🔒 Watermark aktivieren'}
                             </button>

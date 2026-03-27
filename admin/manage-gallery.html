@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Verwalten | Photon Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+        .gallery-item { position: relative; border-radius: 8px; overflow: hidden; background: var(--surface-dark); border: 1px solid var(--border); aspect-ratio: 1; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 77, 77, 0.9); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
+        .delete-btn:hover { background: #ff3333; }
+        .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 3rem 2rem; text-align: center; margin-bottom: 2rem; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s; }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.05); }
+        #progress-bar { height: 4px; background: var(--accent); width: 0%; transition: width 0.3s; margin-top: 1rem; border-radius: 2px; }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div>
+                <h1 id="pageTitle">Galerie laden...</h1>
+                <p><a href="users.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zur Kundenübersicht</a></p>
+            </div>
+            <div>
+                <span id="imageCountBadge" class="badge" style="background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; font-size: 1rem;">0 Bilder</span>
+            </div>
+        </header>
+
+        <section class="upload-section">
+            <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); margin-bottom: 1rem;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Fotos hochladen</h3>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">Klicken oder Dateien hierher ziehen (JPG, PNG)</p>
+                <input type="file" id="fileInput" multiple accept="image/jpeg, image/png" style="display: none;">
+                <div id="progress-bar-container" style="display: none; width: 100%; background: var(--surface-dark); border-radius: 2px; margin-top: 1.5rem;">
+                    <div id="progress-bar"></div>
+                </div>
+                <div id="upload-status" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);"></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Hochgeladene Fotos</h2>
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- Javascript will populate this -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Auth check
+        if (sessionStorage.getItem('photon_admin_auth') !== 'true') window.location.href = 'index.html';
+
+        const params = new URLSearchParams(window.location.search);
+        const usernameParam = params.get('user');
+        if (!usernameParam) window.location.href = 'users.html';
+
+        let currentUser = null;
+        let usersData = null;
+
+        async function init() {
+            try {
+                // Fetch the users database
+                const response = await fetch('api/get_users.php');
+                const text = await response.text();
+                const jsonStr = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/)[1];
+                usersData = JSON.parse(jsonStr);
+
+                // Find the user
+                currentUser = usersData.users.find(u => u.username === usernameParam);
+                if (!currentUser) throw new Error("Benutzer nicht gefunden");
+
+                document.getElementById('pageTitle').innerText = 'Galerie: ' + currentUser.name;
+                updateGrid();
+            } catch (e) {
+                alert("Fehler beim Laden: " + e.message);
+                window.location.href = 'users.html';
+            }
+        }
+
+        function updateGrid() {
+            const count = currentUser.imageCount || 0;
+            document.getElementById('imageCountBadge').innerText = count + ' Bilder';
+            
+            const grid = document.getElementById('galleryGrid');
+            if (count === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Noch keine Fotos hochgeladen. Lade jetzt welche hoch!</p>';
+                return;
+            }
+
+            let html = '';
+            // Backend renames logically to 1.jpg, 2.jpg...
+            for (let i = 1; i <= count; i++) {
+                // Note: The files could theoretically be .png, but the system natively assumes .jpg for preview rendering.
+                // We'll just try to load .jpg, the browser will handle standard image serving.
+                const imgPath = `../gallery/assets/${encodeURIComponent(currentUser.folder)}/${i}.jpg`;
+                const relPath = `gallery/assets/${currentUser.folder}/${i}.jpg`;
+                
+                html += `
+                <div class="gallery-item" id="item-${i}">
+                    <img src="${imgPath}?v=${Date.now()}" onerror="this.src=this.src.replace('.jpg','.png')" alt="Foto ${i}">
+                    <button class="delete-btn" onclick="deleteImage('${relPath}', ${i})">Löschen</button>
+                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">#${i}</div>
+                </div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        async function deleteImage(path, index) {
+            if (!confirm(`Möchtest du Bild #${index} wirklich löschen?`)) return;
+
+            try {
+                const res = await fetch('api/delete-media.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paths: [path] })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Force refresh user data to get updated count and names
+                    init(); 
+                } else {
+                    alert("Fehler beim Löschen: " + (data.errors ? data.errors.join(', ') : 'Unbekannter Fehler'));
+                }
+            } catch (e) {
+                alert("Verbindungsfehler");
+            }
+        }
+
+        // Upload Logic
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFiles(e.target.files);
+        });
+
+        async function handleFiles(files) {
+            if (!currentUser) return;
+            const validFiles = Array.from(files).filter(f => f.type === 'image/jpeg' || f.type === 'image/png');
+            if (validFiles.length === 0) return alert("Nur JPG und PNG erlaubt");
+
+            document.getElementById('progress-bar-container').style.display = 'block';
+            const statusLabel = document.getElementById('upload-status');
+            const progressBar = document.getElementById('progress-bar');
+            
+            statusLabel.innerText = "Komprimiere Fotos und lade hoch...";
+            progressBar.style.width = '10%';
+
+            // In a real optimized system, we could compress here before sending.
+            // For now, directly upload to the existing upload-photos.php endpoint
+            const formData = new FormData();
+            formData.append('galleryId', currentUser.id);
+            for (let f of validFiles) formData.append('photos[]', f);
+
+            try {
+                // Using XMLHttpRequest for upload progress tracking
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'api/upload-photos.php', true);
+                
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = Math.max(10, percent) + '%';
+                        statusLabel.innerText = `Lade hoch... ${Math.round(percent)}%`;
+                    }
+                };
+
+                xhr.onload = () => {
+                    document.getElementById('progress-bar-container').style.display = 'none';
+                    if (xhr.status === 200) {
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            if (res.success) {
+                                statusLabel.innerText = `${res.uploaded} Fotos erfolgreich hochgeladen!`;
+                                init(); // Refresh
+                            } else {
+                                alert("Upload Fehler: " + res.error);
+                                statusLabel.innerText = "Fehler aufgetreten.";
+                            }
+                        } catch (e) {
+                            alert("Server Fehler aufgetreten");
+                        }
+                    }
+                };
+                xhr.send(formData);
+            } catch (e) {
+                alert("Upload failed");
+                document.getElementById('progress-bar-container').style.display = 'none';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
