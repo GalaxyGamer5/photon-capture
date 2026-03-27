@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Path Test</h1>
+    <h2>Path 1: Relative ../gallery/</h2>
+    <img src="../gallery/assets/Robin%20Morgenstern-gallery/1.jpg" width="200" onerror="this.outerHTML='FAILED 1'">
+    
+    <h2>Path 2: Absolute /gallery/</h2>
+    <img src="/gallery/assets/Robin%20Morgenstern-gallery/1.jpg" width="200" onerror="this.outerHTML='FAILED 2'">
+
+    <h2>Path 3: Full HTTPS</h2>
+    <img src="https://photon-capture.de/gallery/assets/Robin%20Morgenstern-gallery/1.jpg" width="200" onerror="this.outerHTML='FAILED 3'">
+
+    <h2>Path 4: get-image.php API</h2>
+    <img src="../gallery/api/get-image.php?f=Robin%20Morgenstern-gallery&i=1.jpg" width="200" onerror="this.outerHTML='FAILED 4'">
+</body>
+</html>
