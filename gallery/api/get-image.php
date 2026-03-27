@@ -13,6 +13,7 @@ $requested_folder = isset($_GET['f']) ? $_GET['f'] : '';
 $requested_image = isset($_GET['i']) ? $_GET['i'] : '';
 
 // Ensure user only accesses their own folder
+error_log("Watermark debug: Request folder=$requested_folder, image=$requested_image, user=" . ($user['username'] ?? 'NONE'));
 if ($requested_folder !== $user['folder']) {
     http_response_code(403);
     exit('Access Denied');
@@ -36,10 +37,12 @@ if (file_exists($usersFile)) {
     preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
     if (isset($matches[1])) {
         $usersData = json_decode($matches[1], true);
-        foreach ($usersData['users'] as $u) {
-            if ($u['username'] === $user['username']) {
-                $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
-                break;
+        if ($usersData && isset($usersData['users'])) {
+            foreach ($usersData['users'] as $u) {
+                if ($u['username'] === $user['username']) {
+                    $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
+                    break;
+                }
             }
         }
     }
@@ -74,6 +77,9 @@ if (!$image) {
 }
 
 if ($isProtected) {
+    // Ensure alpha blending is on for TrueColor images
+    imagealphablending($image, true);
+
     // 1. Apply more aggressive blur
     if (function_exists('imagefilter')) {
         for ($i = 0; $i < 6; $i++) { // Increased passes from 3 to 6
@@ -87,9 +93,9 @@ if ($isProtected) {
     $width = imagesx($image);
     $height = imagesy($image);
     
-    // Create colors
-    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 60); // More opaque white (60 instead of 95)
-    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 80);    // More opaque black (80 instead of 110)
+    // Create colors - Increased opacity (lower alpha value = more opaque)
+    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 30); // Very opaque white (30 instead of 60)
+    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 50);    // Very opaque black (50 instead of 80)
     
     $text = "PHOTON-CAPTURE";
     $fontSize = 5; 
@@ -97,31 +103,37 @@ if ($isProtected) {
     $textWidth = imagefontwidth($fontSize) * strlen($text);
     $textHeight = imagefontheight($fontSize);
     
-    // More dense diagonal grid of watermarks
+    // Dense diagonal grid
     $spacing_x = 250;
     $spacing_y = 150;
     
     for ($y = -200; $y < $height + 200; $y += $spacing_y) {
-        $offset_x = ($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2;
+        $offset_x = (int)(($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2);
         for ($x = -200 + $offset_x; $x < $width + 200; $x += $spacing_x) {
-            // Stronger shadow for readability
-            imagestring($image, $fontSize, $x + 2, $y + 2, $text, $color_black);
-            imagestring($image, $fontSize, $x + 1, $y + 1, $text, $color_black);
-            imagestring($image, $fontSize, $x, $y, $text, $color_main);
+            // Draw text with explicit integer coordinates to prevent Deprecated warnings
+            imagestring($image, $fontSize, (int)($x + 2), (int)($y + 2), $text, $color_black);
+            imagestring($image, $fontSize, (int)($x + 1), (int)($y + 1), $text, $color_black);
+            imagestring($image, $fontSize, (int)$x, (int)$y, $text, $color_main);
         }
     }
 
-    // Centered Banner - More prominent
+    // 3. Centered Banner - Significantly More prominent
     $bannerText = "PREVIEW - UNTIL PAID";
     $bannerFontSize = 5;
     $bannerWidth = imagefontwidth($bannerFontSize) * strlen($bannerText);
     
-    // Draw a dark strip behind the banner
-    imagefilledrectangle($image, 0, ($height/2) - 30, $width, ($height/2) + 30, $color_black);
-    // Draw the text multiple times for "bold" effect
-    for($o = -1; $o <= 1; $o++) {
-        imagestring($image, $bannerFontSize, ($width - $bannerWidth) / 2 + $o, ($height / 2) - 8, $bannerText, $color_main);
-        imagestring($image, $bannerFontSize, ($width - $bannerWidth) / 2, ($height / 2) - 8 + $o, $bannerText, $color_main);
+    // Draw a thick dark strip behind the banner
+    $bannerY = (int)($height / 2);
+    $bannerFullWidth = (int)$width;
+    imagefilledrectangle($image, 0, $bannerY - 40, $bannerFullWidth, $bannerY + 40, $color_black);
+    
+    // Draw the banner text multiple times for bold effect and extra visibility
+    $textX = (int)(($width - $bannerWidth) / 2);
+    $textY = (int)($bannerY - 8);
+    
+    for($o = -2; $o <= 2; $o++) {
+        imagestring($image, $bannerFontSize, $textX + $o, $textY, $bannerText, $color_main);
+        imagestring($image, $bannerFontSize, $textX, $textY + $o, $bannerText, $color_main);
     }
 }
 
