@@ -11,12 +11,45 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
         .gallery-item { position: relative; border-radius: 8px; overflow: hidden; background: var(--surface-dark); border: 1px solid var(--border); aspect-ratio: 1; }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.3s; }
+        .gallery-item img.loading { opacity: 0; }
+        .gallery-item img.loaded  { opacity: 1; }
         .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 77, 77, 0.9); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
         .delete-btn:hover { background: #ff3333; }
         .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 3rem 2rem; text-align: center; margin-bottom: 2rem; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s; }
         .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.05); }
         #progress-bar { height: 4px; background: var(--accent); width: 0%; transition: width 0.3s; margin-top: 1rem; border-radius: 2px; }
+
+        /* Shimmer skeleton shown before thumbnail loads */
+        .gallery-skeleton {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            aspect-ratio: 1;
+        }
+        .gallery-skeleton::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,255,255,0.06) 40%,
+                rgba(255,255,255,0.12) 50%,
+                rgba(255,255,255,0.06) 60%,
+                transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
+        }
+
+        /* Sentinel element that triggers next batch */
+        #gallery-sentinel { height: 8px; grid-column: 1 / -1; }
+        #gallery-load-info { text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; grid-column: 1 / -1; }
         
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
@@ -95,31 +128,115 @@
             }
         }
 
+        // ── Lazy-batch gallery renderer ──────────────────────────────────────
+        const BATCH_SIZE = 30; // images rendered per batch
+        let renderedUpTo = 0;  // how many items are in the DOM already
+        let totalImages  = 0;
+        let sentinelObserver = null;
+
         function updateGrid() {
             const count = currentUser.imageCount || 0;
+            totalImages = count;
+            renderedUpTo = 0;
+
             document.getElementById('imageCountBadge').innerText = count + ' Bilder';
-            
+
             const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+
             if (count === 0) {
                 grid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Noch keine Fotos hochgeladen. Lade jetzt welche hoch!</p>';
                 return;
             }
 
-            let html = '';
-            // Backend renames logically to 1.jpg, 2.jpg...
-            for (let i = 1; i <= count; i++) {
-                const imgPath = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${i}.jpg`;
-                const relPath = `gallery/assets/${currentUser.folder}/${i}.jpg`;
-                
-                html += `
-                <div class="gallery-item" id="item-${i}">
-                    <img src="${imgPath}&v=${Date.now()}" alt="Foto ${i}">
-                    <button class="delete-btn" onclick="deleteImage('${relPath}', ${i})">Löschen</button>
-                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">#${i}</div>
-                </div>`;
-            }
-            grid.innerHTML = html;
+            // Disconnect any previous observer
+            if (sentinelObserver) sentinelObserver.disconnect();
+
+            // Render first batch immediately
+            renderBatch(grid);
+
+            // Attach sentinel + IntersectionObserver for subsequent batches
+            const sentinel = document.createElement('div');
+            sentinel.id = 'gallery-sentinel';
+            grid.appendChild(sentinel);
+
+            const loadInfo = document.createElement('div');
+            loadInfo.id = 'gallery-load-info';
+            updateLoadInfo(loadInfo);
+            grid.appendChild(loadInfo);
+
+            sentinelObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && renderedUpTo < totalImages) {
+                    renderBatch(grid);
+                    updateLoadInfo(loadInfo);
+                }
+            }, { rootMargin: '400px' }); // start loading 400px before sentinel enters view
+
+            sentinelObserver.observe(sentinel);
         }
+
+        function renderBatch(grid) {
+            const sentinel  = document.getElementById('gallery-sentinel');
+            const loadInfo  = document.getElementById('gallery-load-info');
+            const start = renderedUpTo + 1;
+            const end   = Math.min(renderedUpTo + BATCH_SIZE, totalImages);
+
+            for (let i = start; i <= end; i++) {
+                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${i}.jpg&thumb=1`;
+                const relPath  = `gallery/assets/${currentUser.folder}/${i}.jpg`;
+
+                const item = document.createElement('div');
+                item.className = 'gallery-skeleton'; // shimmer while loading
+                item.id = `item-${i}`;
+
+                const img = document.createElement('img');
+                img.alt = `Foto ${i}`;
+                img.loading = 'lazy';
+                img.className = 'loading';
+                img.onload = () => {
+                    img.classList.replace('loading', 'loaded');
+                    item.classList.replace('gallery-skeleton', 'gallery-item');
+                };
+                img.onerror = () => {
+                    item.classList.replace('gallery-skeleton', 'gallery-item');
+                };
+                // Set src after attaching to DOM so lazy loading works correctly
+                img.src = thumbUrl;
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'delete-btn';
+                delBtn.textContent = 'Löschen';
+                delBtn.onclick = () => deleteImage(relPath, i);
+
+                const badge = document.createElement('div');
+                badge.style.cssText = 'position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;font-size:0.75rem;';
+                badge.textContent = `#${i}`;
+
+                item.appendChild(img);
+                item.appendChild(delBtn);
+                item.appendChild(badge);
+
+                // Insert before sentinel and loadInfo
+                grid.insertBefore(item, sentinel);
+            }
+
+            renderedUpTo = end;
+
+            // Remove observer once all images are rendered
+            if (renderedUpTo >= totalImages && sentinelObserver) {
+                sentinelObserver.disconnect();
+                sentinelObserver = null;
+            }
+        }
+
+        function updateLoadInfo(el) {
+            if (renderedUpTo >= totalImages) {
+                el.textContent = `Alle ${totalImages} Bilder geladen`;
+            } else {
+                el.textContent = `${renderedUpTo} von ${totalImages} Bildern geladen – scrollen für mehr`;
+            }
+        }
+        // ── End lazy-batch renderer ──────────────────────────────────────────
 
         async function deleteImage(path, index) {
             if (!confirm(`Möchtest du Bild #${index} wirklich löschen?`)) return;
