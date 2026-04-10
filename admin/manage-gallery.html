@@ -10,11 +10,11 @@
     <style>
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-        .gallery-item { position: relative; border-radius: 8px; overflow: hidden; background: var(--surface-dark); border: 1px solid var(--border); aspect-ratio: 1; }
+        .gallery-item { position: relative; border-radius: 8px; overflow: hidden; background: var(--surface-dark); border: 1px solid var(--border); aspect-ratio: 1; cursor: pointer; }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.3s; }
         .gallery-item img.loading { opacity: 0; }
         .gallery-item img.loaded  { opacity: 1; }
-        .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 77, 77, 0.9); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(255, 77, 77, 0.9); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem; z-index: 2; }
         .delete-btn:hover { background: #ff3333; }
         .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 3rem 2rem; text-align: center; margin-bottom: 2rem; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s; }
         .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.05); }
@@ -50,6 +50,76 @@
         /* Sentinel element that triggers next batch */
         #gallery-sentinel { height: 8px; grid-column: 1 / -1; }
         #gallery-load-info { text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; grid-column: 1 / -1; }
+
+        /* Batch-select checkbox overlay */
+        .gallery-item .item-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.4);
+            cursor: pointer;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .gallery-item.selected .item-checkbox {
+            background: var(--accent, #6c63ff);
+            border-color: var(--accent, #6c63ff);
+        }
+        .gallery-item.selected .item-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .gallery-item.selected {
+            outline: 3px solid var(--accent, #6c63ff);
+            outline-offset: -3px;
+        }
+
+        /* Batch toolbar */
+        #batch-toolbar {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255,77,77,0.12);
+            border: 1px solid rgba(255,77,77,0.3);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+        #batch-toolbar.visible { display: flex; }
+        #batch-toolbar span { flex: 1; font-weight: 600; color: #ff6b6b; }
+        #batch-delete-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        #batch-delete-btn:hover { background: #e03333; }
+        #batch-clear-btn {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        #batch-clear-btn:hover { background: rgba(255,255,255,0.14); }
         
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
@@ -91,6 +161,12 @@
 
         <section>
             <h2>Hochgeladene Fotos</h2>
+            <!-- Batch-delete toolbar -->
+            <div id="batch-toolbar">
+                <span id="batch-label">0 ausgewählt</span>
+                <button id="batch-clear-btn" onclick="clearSelection()">Auswahl aufheben</button>
+                <button id="batch-delete-btn" onclick="batchDelete()">🗑 Ausgewählte löschen</button>
+            </div>
             <div class="gallery-grid" id="galleryGrid">
                 <!-- Javascript will populate this -->
             </div>
@@ -106,7 +182,11 @@
         if (!usernameParam) window.location.href = 'users.html';
 
         let currentUser = null;
-        let usersData = null;
+        let usersData   = null;
+        /** Actual list of filenames fetched from the server (e.g. ['1.jpg','2.jpg',...]) */
+        let imageFiles  = [];
+        /** Set of selected filenames for batch-delete */
+        const selectedFiles = new Set();
 
         async function init() {
             try {
@@ -121,22 +201,45 @@
                 if (!currentUser) throw new Error("Benutzer nicht gefunden");
 
                 document.getElementById('pageTitle').innerText = 'Galerie: ' + currentUser.name;
-                updateGrid();
+
+                // Fetch the actual list of filenames from the server so we always
+                // delete the correct file (the backend renumbers after each deletion).
+                await fetchImageList();
             } catch (e) {
                 alert("Fehler beim Laden: " + e.message);
                 window.location.href = 'users.html';
             }
         }
 
+        async function fetchImageList() {
+            // list-gallery-files.php scans the actual folder on disk so we always
+            // get the real, current filenames (after any rename that followed a deletion).
+            try {
+                const r = await fetch(`api/list-gallery-files.php?folder=${encodeURIComponent(currentUser.folder)}`);
+                const d = await r.json();
+                if (d && d.success && Array.isArray(d.files)) {
+                    imageFiles = d.files;
+                } else {
+                    throw new Error('bad response');
+                }
+            } catch (_) {
+                // Fallback: derive from imageCount stored in users.js
+                const count = currentUser.imageCount || 0;
+                imageFiles = [];
+                for (let i = 1; i <= count; i++) imageFiles.push(i + '.jpg');
+            }
+            selectedFiles.clear();
+            updateBatchToolbar();
+            updateGrid();
+        }
+
         // ── Lazy-batch gallery renderer ──────────────────────────────────────
-        const BATCH_SIZE = 30; // images rendered per batch
-        let renderedUpTo = 0;  // how many items are in the DOM already
-        let totalImages  = 0;
+        const BATCH_SIZE = 30;
+        let renderedUpTo = 0;
         let sentinelObserver = null;
 
         function updateGrid() {
-            const count = currentUser.imageCount || 0;
-            totalImages = count;
+            const count = imageFiles.length;
             renderedUpTo = 0;
 
             document.getElementById('imageCountBadge').innerText = count + ' Bilder';
@@ -149,48 +252,55 @@
                 return;
             }
 
-            // Disconnect any previous observer
             if (sentinelObserver) sentinelObserver.disconnect();
 
-            // Render first batch immediately
             renderBatch(grid);
 
-            // Attach sentinel + IntersectionObserver for subsequent batches
             const sentinel = document.createElement('div');
             sentinel.id = 'gallery-sentinel';
             grid.appendChild(sentinel);
 
             const loadInfo = document.createElement('div');
             loadInfo.id = 'gallery-load-info';
-            updateLoadInfo(loadInfo);
+            updateLoadInfo(loadInfo, count);
             grid.appendChild(loadInfo);
 
             sentinelObserver = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && renderedUpTo < totalImages) {
+                if (entries[0].isIntersecting && renderedUpTo < imageFiles.length) {
                     renderBatch(grid);
-                    updateLoadInfo(loadInfo);
+                    updateLoadInfo(loadInfo, imageFiles.length);
                 }
-            }, { rootMargin: '400px' }); // start loading 400px before sentinel enters view
+            }, { rootMargin: '400px' });
 
             sentinelObserver.observe(sentinel);
         }
 
         function renderBatch(grid) {
-            const sentinel  = document.getElementById('gallery-sentinel');
-            const loadInfo  = document.getElementById('gallery-load-info');
-            const start = renderedUpTo + 1;
-            const end   = Math.min(renderedUpTo + BATCH_SIZE, totalImages);
+            const sentinel = document.getElementById('gallery-sentinel');
+            const start = renderedUpTo;
+            const end   = Math.min(renderedUpTo + BATCH_SIZE, imageFiles.length);
 
-            for (let i = start; i <= end; i++) {
-                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${i}.jpg&thumb=1`;
-                const relPath  = `gallery/assets/${currentUser.folder}/${i}.jpg`;
+            for (let idx = start; idx < end; idx++) {
+                const filename = imageFiles[idx];
+                const relPath  = `gallery/assets/${currentUser.folder}/${filename}`;
+                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${encodeURIComponent(filename)}&thumb=1`;
 
                 const item = document.createElement('div');
-                item.className = 'gallery-skeleton'; // shimmer while loading
-                item.id = `item-${i}`;
+                item.className = 'gallery-skeleton';
+                item.dataset.relpath = relPath;
+                item.dataset.filename = filename;
+
+                // Checkbox for batch-select
+                const checkbox = document.createElement('div');
+                checkbox.className = 'item-checkbox';
+                checkbox.title = 'Auswählen';
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleSelect(item, relPath);
+                });
 
                 const img = document.createElement('img');
-                img.alt = `Foto ${i}`;
+                img.alt = filename;
                 img.loading = 'lazy';
                 img.className = 'loading';
                 img.onload = () => {
@@ -200,57 +310,98 @@
                 img.onerror = () => {
                     item.classList.replace('gallery-skeleton', 'gallery-item');
                 };
-                // Set src after attaching to DOM so lazy loading works correctly
                 img.src = thumbUrl;
 
+                // Single-delete button
                 const delBtn = document.createElement('button');
                 delBtn.className = 'delete-btn';
                 delBtn.textContent = 'Löschen';
-                delBtn.onclick = () => deleteImage(relPath, i);
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteImages([relPath]);
+                });
 
                 const badge = document.createElement('div');
-                badge.style.cssText = 'position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;font-size:0.75rem;';
-                badge.textContent = `#${i}`;
+                badge.style.cssText = 'position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;font-size:0.75rem;z-index:2;';
+                badge.textContent = filename;
 
                 item.appendChild(img);
+                item.appendChild(checkbox);
                 item.appendChild(delBtn);
                 item.appendChild(badge);
 
-                // Insert before sentinel and loadInfo
+                // Clicking the card itself also toggles selection
+                item.addEventListener('click', () => toggleSelect(item, relPath));
+
                 grid.insertBefore(item, sentinel);
             }
 
             renderedUpTo = end;
 
-            // Remove observer once all images are rendered
-            if (renderedUpTo >= totalImages && sentinelObserver) {
+            if (renderedUpTo >= imageFiles.length && sentinelObserver) {
                 sentinelObserver.disconnect();
                 sentinelObserver = null;
             }
         }
 
-        function updateLoadInfo(el) {
-            if (renderedUpTo >= totalImages) {
-                el.textContent = `Alle ${totalImages} Bilder geladen`;
+        function updateLoadInfo(el, total) {
+            if (renderedUpTo >= total) {
+                el.textContent = `Alle ${total} Bilder geladen`;
             } else {
-                el.textContent = `${renderedUpTo} von ${totalImages} Bildern geladen – scrollen für mehr`;
+                el.textContent = `${renderedUpTo} von ${total} Bildern geladen – scrollen für mehr`;
             }
         }
         // ── End lazy-batch renderer ──────────────────────────────────────────
 
-        async function deleteImage(path, index) {
-            if (!confirm(`Möchtest du Bild #${index} wirklich löschen?`)) return;
+        // ── Selection helpers ────────────────────────────────────────────────
+        function toggleSelect(item, relPath) {
+            if (selectedFiles.has(relPath)) {
+                selectedFiles.delete(relPath);
+                item.classList.remove('selected');
+            } else {
+                selectedFiles.add(relPath);
+                item.classList.add('selected');
+            }
+            updateBatchToolbar();
+        }
 
+        function clearSelection() {
+            selectedFiles.clear();
+            document.querySelectorAll('.gallery-item.selected').forEach(el => el.classList.remove('selected'));
+            updateBatchToolbar();
+        }
+
+        function updateBatchToolbar() {
+            const toolbar = document.getElementById('batch-toolbar');
+            const label   = document.getElementById('batch-label');
+            const n = selectedFiles.size;
+            if (n > 0) {
+                toolbar.classList.add('visible');
+                label.textContent = `${n} Bild${n === 1 ? '' : 'er'} ausgewählt`;
+            } else {
+                toolbar.classList.remove('visible');
+            }
+        }
+
+        async function batchDelete() {
+            const paths = Array.from(selectedFiles);
+            if (paths.length === 0) return;
+            if (!confirm(`Möchtest du ${paths.length} Bild${paths.length === 1 ? '' : 'er'} wirklich löschen?`)) return;
+            await deleteImages(paths);
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        async function deleteImages(paths) {
             try {
                 const res = await fetch('api/delete-media.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paths: [path] })
+                    body: JSON.stringify({ paths })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Force refresh user data to get updated count and names
-                    init(); 
+                    // Re-fetch user data AND the real file list so indices are correct
+                    await init();
                 } else {
                     alert("Fehler beim Löschen: " + (data.errors ? data.errors.join(', ') : 'Unbekannter Fehler'));
                 }
