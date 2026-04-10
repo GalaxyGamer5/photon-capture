@@ -45,11 +45,12 @@ systemctl restart php8.3-fpm
 echo "Done."
 
 echo ""
-echo "Verifying:"
-php8.3 -r "
-echo 'max_file_uploads:    ' . ini_get('max_file_uploads')    . PHP_EOL;
-echo 'upload_max_filesize: ' . ini_get('upload_max_filesize') . PHP_EOL;
-echo 'post_max_size:       ' . ini_get('post_max_size')       . PHP_EOL;
-echo 'max_execution_time:  ' . ini_get('max_execution_time')  . PHP_EOL;
-echo 'max_input_time:      ' . ini_get('max_input_time')      . PHP_EOL;
-"
+echo "Verifying values in $PHP_FPM_INI:"
+grep -E "^(max_file_uploads|upload_max_filesize|post_max_size|max_execution_time|max_input_time)\s*=" "$PHP_FPM_INI"
+
+echo ""
+echo "NOTE: 'php8.3 -r' reads the CLI php.ini (/etc/php/8.3/cli/php.ini) which is"
+echo "      a different file — the CLI was not changed, only FPM was. To verify FPM"
+echo "      is actually using these values, visit this URL in your browser after deploy:"
+echo "      https://yoursite.com/admin/api/phpinfo-check.php"
+
