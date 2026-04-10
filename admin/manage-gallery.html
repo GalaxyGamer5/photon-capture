@@ -434,11 +434,10 @@
             const statusLabel = document.getElementById('upload-status');
             const progressBar = document.getElementById('progress-bar');
             
-            statusLabel.innerText = "Komprimiere Fotos und lade hoch...";
+            statusLabel.innerText = "Fotos werden hochgeladen...";
             progressBar.style.width = '10%';
 
-            // In a real optimized system, we could compress here before sending.
-            // For now, directly upload to the existing upload-photos.php endpoint
+            // Photos are pre-compressed by the admin before uploading
             const formData = new FormData();
             formData.append('galleryId', currentUser.id);
             for (let f of validFiles) formData.append('photos[]', f);
