@@ -196,8 +196,22 @@
             }
         }
 
-        function deleteUser(index) {
-            if (confirm('Benutzer wirklich löschen?')) {
+        async function deleteUser(index) {
+            if (confirm('Benutzer wirklich löschen?\n\nACHTUNG: Hierdurch werden auch alle hochgeladenen Bilder dieses Benutzers unwiderruflich vom Server gelöscht!')) {
+                const user = usersData.users[index];
+                
+                // Securely tell the backend to delete the folder full of images
+                try {
+                    await fetch('api/delete-user-folder.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ folder: user.folder })
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Löschen des Bildordners:", e);
+                }
+
+                // Remove from database and UI
                 usersData.users.splice(index, 1);
                 renderUsers();
                 saveUsers();
