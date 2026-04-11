@@ -292,14 +292,36 @@
                 const idx = getGalleryItemIndex(e.target);
                 if (idx === -1) return;
 
+                const isTouch = e.type === 'touchstart';
+
                 if (selectionMode) {
-                    // Start drag selection
-                    isDraggingToSelect = true;
-                    const cb = document.getElementById(`select-${idx}`);
-                    dragTargetState = cb ? !cb.checked : true;
-                    lastHoveredIdx = idx;
+                    if (!isTouch) {
+                        // Mouse immediately enters drag mode
+                        isDraggingToSelect = true;
+                        const cb = document.getElementById(`select-${idx}`);
+                        dragTargetState = cb ? !cb.checked : true;
+                        lastHoveredIdx = idx;
+                    } else {
+                        // Touch waits 500ms to allow native scrolling otherwise
+                        longPressTimer = setTimeout(() => {
+                            isDraggingToSelect = true;
+                            const cb = document.getElementById(`select-${idx}`);
+                            dragTargetState = cb ? !cb.checked : true;
+                            ignoreNextClick = true;
+                            lastHoveredIdx = idx;
+                            
+                            setSelectionState(idx, dragTargetState);
+                            updateSelectionHtml();
+                            
+                            anchorIndex = idx;
+                            lastShiftRange.clear();
+                            lastShiftRange.add(idx);
+                            lastShiftClickTarget = idx;
+                            shiftTargetState = dragTargetState;
+                        }, 500);
+                    }
                 } else {
-                    // Start Long Press timer
+                    // Start Long Press timer outside selection mode
                     longPressTimer = setTimeout(() => {
                         document.getElementById('select-mode-btn').click();
                         setSelectionState(idx, true);
@@ -308,6 +330,8 @@
                         anchorIndex = idx;
                         lastShiftRange.clear();
                         lastShiftRange.add(idx);
+                        lastShiftClickTarget = idx;
+                        shiftTargetState = true;
 
                         isDraggingToSelect = true;
                         dragTargetState = true;
@@ -1025,6 +1049,13 @@
                         .catch(error => console.error('SW registration failed:', error));
                 });
             }
+
+            // Disable mobile's disruptive long-press menu over images so our native 500ms gestures rule
+            document.getElementById('gallery-grid').addEventListener('contextmenu', e => {
+                if (e.target.tagName === 'IMG' || e.target.closest('.gallery-item')) {
+                    e.preventDefault();
+                }
+            });
 
         } // End of initializeGallery
     </script>
