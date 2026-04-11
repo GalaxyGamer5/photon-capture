@@ -104,8 +104,18 @@
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
         <button class="lightbox-close">&times;</button>
-        <button class="lightbox-nav lightbox-prev">&lsaquo;</button>
-        <button class="lightbox-nav lightbox-next">&rsaquo;</button>
+        <button class="lightbox-nav lightbox-prev">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-next">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
         <img src="" alt="Gallery Image" id="lightbox-img">
         <div class="lightbox-actions">
             <button class="lightbox-favorite" id="lightbox-favorite-btn">
@@ -306,18 +316,39 @@
 
             window.openLightbox = (index) => {
                 currentIndex = index;
-                updateLightbox();
+                updateLightbox('none');
                 lightbox.classList.add('active');
                 document.body.style.overflow = 'hidden';
                 updateLightboxFavoriteBtn(index);
             };
 
-            function updateLightbox() {
+            function updateLightbox(direction = null) {
                 // Use secure delivery API for the lightbox too
                 const apiSrc = `api/get-image.php?f=${user.folder}&i=${currentIndex}.jpg&v=${Date.now()}`;
-                lightboxImg.src = apiSrc;
-                lightboxImg.onerror = function() { tryNextExtension(this); };
-                downloadBtn.href = apiSrc;
+                
+                if (direction && direction !== 'none') {
+                    lightboxImg.classList.add(direction === 'next' ? 'slide-out-left' : 'slide-out-right');
+                    
+                    setTimeout(() => {
+                        lightboxImg.onload = () => {
+                            lightboxImg.classList.remove('slide-out-left', 'slide-out-right');
+                            lightboxImg.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
+                            
+                            setTimeout(() => {
+                                lightboxImg.classList.remove('slide-in-right', 'slide-in-left');
+                            }, 300);
+                            lightboxImg.onload = null;
+                        };
+                        lightboxImg.onerror = function() { tryNextExtension(this); };
+                        
+                        lightboxImg.src = apiSrc;
+                        downloadBtn.href = apiSrc;
+                    }, 200);
+                } else {
+                    lightboxImg.src = apiSrc;
+                    lightboxImg.onerror = function() { tryNextExtension(this); };
+                    downloadBtn.href = apiSrc;
+                }
                 updateLightboxFavoriteBtn(currentIndex);
             }
 
@@ -332,22 +363,20 @@
                 e.stopPropagation();
                 if (currentIndex > 1) {
                     currentIndex--;
-                    updateLightbox();
                 } else {
                     currentIndex = imageCount; // Loop
-                    updateLightbox();
                 }
+                updateLightbox('prev');
             });
 
             document.querySelector('.lightbox-next').addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (currentIndex < imageCount) {
                     currentIndex++;
-                    updateLightbox();
                 } else {
                     currentIndex = 1; // Loop
-                    updateLightbox();
                 }
+                updateLightbox('next');
             });
 
             // Close on background click
