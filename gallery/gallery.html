@@ -212,6 +212,8 @@
             let longPressTimer = null;
             let ignoreNextClick = false;
             let lastHoveredIdx = -1;
+            let touchStartX = 0;
+            let touchStartY = 0;
 
             function getGalleryItemIndex(el) {
                 const item = el.closest('.gallery-item');
@@ -293,6 +295,13 @@
                 if (idx === -1) return;
 
                 const isTouch = e.type === 'touchstart';
+                if (isTouch && e.touches && e.touches.length > 0) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                } else {
+                    touchStartX = e.clientX;
+                    touchStartY = e.clientY;
+                }
 
                 if (selectionMode) {
                     if (!isTouch) {
@@ -342,22 +351,27 @@
             }
 
             function handlePointerMove(e) {
-                if (!isDraggingToSelect) {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-                    return;
-                }
-
-                if (e.cancelable) e.preventDefault(); // Prevent scrolling while actively dragging an area
-
                 let clientX = e.clientX;
                 let clientY = e.clientY;
                 if (e.touches && e.touches.length > 0) {
                     clientX = e.touches[0].clientX;
                     clientY = e.touches[0].clientY;
                 }
+
+                if (!isDraggingToSelect) {
+                    if (longPressTimer) {
+                        // Very important: don't cancel long press for microscopic 3px finger wiggles
+                        let diffX = Math.abs(clientX - touchStartX);
+                        let diffY = Math.abs(clientY - touchStartY);
+                        if (diffX > 10 || diffY > 10) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+                    }
+                    return;
+                }
+
+                if (e.cancelable) e.preventDefault(); // Prevent scrolling while actively dragging an area
 
                 const el = document.elementFromPoint(clientX, clientY);
                 if (!el) return;
