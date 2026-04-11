@@ -424,16 +424,23 @@
             let touchStartY = 0;
             let currentScale = 1;
             let initialPinchDistance = null;
+            let isZoomGesture = false;
 
             lightbox.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 1) return; // Multi-touch cancels swipe
+                if (e.touches.length > 1) {
+                    isZoomGesture = true; // Mark entire gesture as a zoom
+                    return;
+                }
+                if (e.touches.length === 1) {
+                    isZoomGesture = false;
+                }
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
 
             lightbox.addEventListener('touchend', (e) => {
                 if (!lightbox.classList.contains('active')) return;
-                if (e.changedTouches.length > 1 || currentScale > 1) return; // zooming cancels swipe
+                if (isZoomGesture) return; // Completely ignore swipe logic if they were zooming
                 
                 const touchEndX = e.changedTouches[0].screenX;
                 const touchEndY = e.changedTouches[0].screenY;
