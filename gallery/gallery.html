@@ -212,8 +212,8 @@
             let longPressTimer = null;
             let ignoreNextClick = false;
             let lastHoveredIdx = -1;
-            let touchStartX = 0;
-            let touchStartY = 0;
+            let selectionTouchStartX = 0;
+            let selectionTouchStartY = 0;
 
             function getGalleryItemIndex(el) {
                 const item = el.closest('.gallery-item');
@@ -296,11 +296,11 @@
 
                 const isTouch = e.type === 'touchstart';
                 if (isTouch && e.touches && e.touches.length > 0) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
+                    selectionTouchStartX = e.touches[0].clientX;
+                    selectionTouchStartY = e.touches[0].clientY;
                 } else {
-                    touchStartX = e.clientX;
-                    touchStartY = e.clientY;
+                    selectionTouchStartX = e.clientX;
+                    selectionTouchStartY = e.clientY;
                 }
 
                 if (selectionMode) {
@@ -361,8 +361,8 @@
                 if (!isDraggingToSelect) {
                     if (longPressTimer) {
                         // Very important: don't cancel long press for microscopic 3px finger wiggles
-                        let diffX = Math.abs(clientX - touchStartX);
-                        let diffY = Math.abs(clientY - touchStartY);
+                        let diffX = Math.abs(clientX - selectionTouchStartX);
+                        let diffY = Math.abs(clientY - selectionTouchStartY);
                         if (diffX > 10 || diffY > 10) {
                             clearTimeout(longPressTimer);
                             longPressTimer = null;
