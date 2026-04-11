@@ -503,12 +503,20 @@ header .container {
 
 .lightbox-actions {
     position: absolute;
-    top: 30px;
-    right: 120px; /* Offset from the close button */
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 15px;
     z-index: 1002;
     align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 15px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .lightbox-favorite, .lightbox-share {
@@ -752,15 +760,6 @@ header .container {
 
     .lightbox-next {
         right: 0.5rem;
-    }
-
-    .lightbox-actions {
-        top: auto;
-        bottom: 2rem;
-        left: 1.5rem;
-        right: 1.5rem;
-        width: calc(100% - 3rem);
-        justify-content: space-between;
     }
 
     .lightbox-download {
