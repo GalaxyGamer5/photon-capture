@@ -205,6 +205,8 @@
             // Advanced Selection gestures state
             let anchorIndex = -1;
             let lastShiftRange = new Set();
+            let shiftTargetState = true;
+            let lastShiftClickTarget = -1;
             let isDraggingToSelect = false;
             let dragTargetState = true; 
             let longPressTimer = null;
@@ -234,30 +236,35 @@
                 const cbList = Array.from(document.querySelectorAll('.selection-checkbox input'));
                 
                 if (isShiftKey && anchorIndex !== -1) {
-                    // Logic to unselect everything in the previous range and the anchor
-                    if (index === anchorIndex) {
-                        lastShiftRange.forEach(idx => setSelectionState(idx, false));
-                        lastShiftRange.clear();
-                        setSelectionState(anchorIndex, false);
-                        anchorIndex = -1; // range dissolved
+                    let targetState = true;
+                    if (index === lastShiftClickTarget) {
+                        shiftTargetState = !shiftTargetState;
+                        targetState = shiftTargetState;
                     } else {
-                        // Undo previous drawn shape, but spare the anchor
-                        lastShiftRange.forEach(idx => {
-                            if (idx !== anchorIndex) setSelectionState(idx, false);
-                        });
-                        lastShiftRange.clear();
+                        shiftTargetState = true;
+                        targetState = true;
+                    }
 
-                        const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === anchorIndex);
-                        const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
-                        const minIdx = Math.min(startIndex, endIndex);
-                        const maxIdx = Math.max(startIndex, endIndex);
+                    // Undo previous range. This resets the items to their original unselected state.
+                    lastShiftRange.forEach(idx => {
+                        if (idx !== anchorIndex) setSelectionState(idx, false);
+                    });
+                    lastShiftRange.clear();
 
-                        for (let n = minIdx; n <= maxIdx; n++) {
-                            const targetImageIdx = parseInt(cbList[n].dataset.imageIndex);
-                            setSelectionState(targetImageIdx, true);
+                    const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === anchorIndex);
+                    const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
+                    const minIdx = Math.min(startIndex, endIndex);
+                    const maxIdx = Math.max(startIndex, endIndex);
+
+                    for (let n = minIdx; n <= maxIdx; n++) {
+                        const targetImageIdx = parseInt(cbList[n].dataset.imageIndex);
+                        setSelectionState(targetImageIdx, targetState);
+                        if (targetState) {
                             lastShiftRange.add(targetImageIdx);
                         }
                     }
+                    
+                    lastShiftClickTarget = index;
                 } else {
                     const cb = document.getElementById(`select-${index}`);
                     if (!cb) return;
@@ -268,9 +275,13 @@
                         anchorIndex = index;
                         lastShiftRange.clear();
                         lastShiftRange.add(index);
+                        lastShiftClickTarget = index;
+                        shiftTargetState = true;
                     } else {
                         anchorIndex = -1;
                         lastShiftRange.clear();
+                        lastShiftClickTarget = -1;
+                        shiftTargetState = false;
                     }
                 }
                 updateSelectionHtml();
