@@ -118,6 +118,7 @@
         </button>
         <img src="" alt="Gallery Image" id="lightbox-img">
         <div class="lightbox-actions">
+            <!-- Favorite button -->
             <button class="lightbox-favorite" id="lightbox-favorite-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -125,6 +126,10 @@
                         d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
                     </path>
                 </svg>
+            </button>
+            <!-- Share button -->
+            <button class="lightbox-share" id="lightbox-share-btn" title="Teilen" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
             </button>
             <a href="#" class="lightbox-download" id="lightbox-download" download>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -414,17 +419,21 @@
                 if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
             });
 
-            // Touch Swipe Gestures
+            // Touch Swipe & Zoom Gestures
             let touchStartX = 0;
             let touchStartY = 0;
+            let currentScale = 1;
+            let initialPinchDistance = null;
 
             lightbox.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) return; // Multi-touch cancels swipe
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
 
             lightbox.addEventListener('touchend', (e) => {
                 if (!lightbox.classList.contains('active')) return;
+                if (e.changedTouches.length > 1 || currentScale > 1) return; // zooming cancels swipe
                 
                 const touchEndX = e.changedTouches[0].screenX;
                 const touchEndY = e.changedTouches[0].screenY;
@@ -448,6 +457,74 @@
                     }
                 }
             }, { passive: true });
+
+            // Pinch-to-Zoom logic
+            lightboxImg.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    lightboxImg.style.transition = 'none'; // Instant scaling
+                }
+            }, { passive: true });
+
+            lightboxImg.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    const scale = currentDistance / initialPinchDistance;
+                    currentScale = Math.max(1, Math.min(scale, 4.0)); // Zoom limit
+                    lightboxImg.style.transform = `scale(${currentScale})`;
+                }
+            }, { passive: false });
+
+            lightboxImg.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    initialPinchDistance = null;
+                    if (currentScale !== 1) {
+                        lightboxImg.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+                        lightboxImg.style.transform = 'scale(1)';
+                        currentScale = 1;
+                    }
+                }
+            }, { passive: true });
+
+            // Web Share API
+            if (navigator.share) {
+                const shareBtn = document.getElementById('lightbox-share-btn');
+                shareBtn.style.display = 'flex';
+                shareBtn.addEventListener('click', async () => {
+                    try {
+                        const apiSrc = downloadBtn.href;
+                        // For modern devices, try sharing the File directly to invoke WhatsApp/Insta payload
+                        const response = await fetch(apiSrc);
+                        const blob = await response.blob();
+                        const file = new File([blob], `PhotonCapture-${currentIndex}.jpg`, { type: blob.type });
+                        
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Photon Capture',
+                                text: 'Schau dir dieses Foto an!'
+                            });
+                        } else {
+                            throw new Error('Fallback');
+                        }
+                    } catch (error) {
+                        // Fallback to URL
+                        try {
+                            await navigator.share({
+                                title: 'Photon Capture',
+                                text: 'Schau dir dieses Foto an!',
+                                url: window.location.origin + window.location.pathname
+                            });
+                        } catch(e) {}
+                    }
+                });
+            }
 
             // Selection Mode
             let selectionMode = false;

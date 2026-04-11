@@ -2733,3 +2733,18 @@ body.loading {
     color: var(--text-secondary);
     grid-column: 1/-1;
 }
+
+/* Skeleton Loaders */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    border-radius: var(--border-radius);
+    pointer-events: none;
+    border: 1px solid var(--glass-border);
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
