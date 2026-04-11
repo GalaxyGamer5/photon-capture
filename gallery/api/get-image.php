@@ -11,6 +11,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 $user = $_SESSION['user'];
 $requested_folder = isset($_GET['f']) ? $_GET['f'] : '';
 $requested_image = isset($_GET['i']) ? $_GET['i'] : '';
+$thumbnail_mode = isset($_GET['thumb']) && $_GET['thumb'] === '1';
 
 // Ensure user only accesses their own folder
 if ($requested_folder !== $user['folder']) {
@@ -56,6 +57,23 @@ if (file_exists($usersFile)) {
     }
 }
 
+// --- Fast Path Cached Thumbnail ---
+if ($thumbnail_mode) {
+    $thumbsDir = dirname($image_path) . '/_thumbs';
+    $cachePrefix = $isProtected ? 'prot_' : 'clean_';
+    $thumbPath = $thumbsDir . '/' . $cachePrefix . $requested_image;
+
+    if (file_exists($thumbPath) && filemtime($thumbPath) >= filemtime($image_path)) {
+        header('Cache-Control: public, max-age=604800'); // 7 days for thumb
+        header('Content-Type: image/jpeg');
+        header('Content-Length: ' . filesize($thumbPath));
+        header('X-Image-Delivered-By: gallery-api-thumb-cached');
+        readfile($thumbPath);
+        exit;
+    }
+}
+// ---
+
 // Image processing with GD
 $info = @getimagesize($image_path);
 $mime = $info['mime'] ?? 'image/jpeg';
@@ -84,13 +102,31 @@ if (!$image) {
     exit;
 }
 
+// --- Resizing Logic ---
+if ($thumbnail_mode) {
+    $origW = imagesx($image);
+    $origH = imagesy($image);
+    $thumbW = 600; // Resize to 600px width for thumbnails
+    
+    if ($origW > $thumbW) {
+        $thumbH = (int)round($origH * $thumbW / $origW);
+        $thumb = imagecreatetruecolor($thumbW, $thumbH);
+        imagecopyresampled($thumb, $image, 0, 0, 0, 0, $thumbW, $thumbH, $origW, $origH);
+        
+        imagedestroy($image);
+        $image = $thumb;
+    }
+}
+// --- End Resizing Logic ---
+
 if ($isProtected) {
     // Ensure alpha blending is on for TrueColor images
     imagealphablending($image, true);
 
     // 1. Apply ultra-fast Pixelation for protection (replaces slow Gaussian blur)
     if (function_exists('imagefilter')) {
-        imagefilter($image, IMG_FILTER_PIXELATE, 20, true);
+        $pixelSize = $thumbnail_mode ? 8 : 20; // smaller pixels for thumb
+        imagefilter($image, IMG_FILTER_PIXELATE, $pixelSize, true);
     }
 
     // 2. Apply Watermark Overlay
@@ -104,12 +140,9 @@ if ($isProtected) {
     $text = "PHOTON-CAPTURE";
     $fontSize = 5; 
     
-    $textWidth = imagefontwidth($fontSize) * strlen($text);
-    $textHeight = imagefontheight($fontSize);
-    
     // Dense diagonal grid
-    $spacing_x = 250;
-    $spacing_y = 150;
+    $spacing_x = $thumbnail_mode ? 120 : 250;
+    $spacing_y = $thumbnail_mode ? 80 : 150;
     
     for ($y = -200; $y < $height + 200; $y += $spacing_y) {
         $offset_x = (int)((int)($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2);
@@ -129,7 +162,8 @@ if ($isProtected) {
     // Draw a thick dark strip behind the banner
     $bannerY = (int)($height / 2);
     $bannerFullWidth = (int)$width;
-    imagefilledrectangle($image, 0, $bannerY - 40, $bannerFullWidth, $bannerY + 40, $color_black);
+    $bannerPadding = $thumbnail_mode ? 20 : 40;
+    imagefilledrectangle($image, 0, $bannerY - $bannerPadding, $bannerFullWidth, $bannerY + $bannerPadding, $color_black);
     
     // Draw the banner text multiple times for bold effect and extra visibility
     $textX = (int)(($width - $bannerWidth) / 2);
@@ -141,9 +175,24 @@ if ($isProtected) {
     }
 }
 
+// Save thumbnail if in thumb mode
+if ($thumbnail_mode && isset($thumbsDir)) {
+    if (!is_dir($thumbsDir)) {
+        @mkdir($thumbsDir, 0755, true);
+    }
+    if (is_dir($thumbsDir) && is_writable($thumbsDir)) {
+        imagejpeg($image, $thumbPath, 80);
+    }
+}
+
 // Serve the image
 header('Content-Type: image/jpeg'); 
-header('Cache-Control: public, max-age=3600'); 
+if ($thumbnail_mode) {
+    header('Cache-Control: public, max-age=604800'); // 7 days for thumb
+    header('X-Image-Delivered-By: gallery-api-thumb-fresh');
+} else {
+    header('Cache-Control: public, max-age=3600'); 
+}
 
 if ($isProtected) {
     imagejpeg($image, null, 75); 
