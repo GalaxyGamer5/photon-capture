@@ -741,6 +741,10 @@ header .container {
         height: 44px;
     }
 
+    .lightbox-nav {
+        display: none !important; /* Hide arrows on mobile devices */
+    }
+
     .lightbox-prev {
         left: 0.5rem;
     }
