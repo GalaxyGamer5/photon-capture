@@ -203,7 +203,8 @@
             const imageCount = user.imageCount || 0;
 
             // Advanced Selection gestures state
-            let lastSelectedIndex = -1;
+            let anchorIndex = -1;
+            let lastShiftRange = new Set();
             let isDraggingToSelect = false;
             let dragTargetState = true; 
             let longPressTimer = null;
@@ -223,29 +224,56 @@
                 cb.checked = state;
                 if (state) selectedImages.add(index);
                 else selectedImages.delete(index);
+            }
+
+            function updateSelectionHtml() {
                 updateSelectionCount();
             }
 
             function toggleImageSelection(index, isShiftKey = false) {
-                const cb = document.getElementById(`select-${index}`);
-                if (!cb) return;
-                const newState = !cb.checked;
+                const cbList = Array.from(document.querySelectorAll('.selection-checkbox input'));
+                
+                if (isShiftKey && anchorIndex !== -1) {
+                    // Logic to unselect everything in the previous range and the anchor
+                    if (index === anchorIndex) {
+                        lastShiftRange.forEach(idx => setSelectionState(idx, false));
+                        lastShiftRange.clear();
+                        setSelectionState(anchorIndex, false);
+                        anchorIndex = -1; // range dissolved
+                    } else {
+                        // Undo previous drawn shape, but spare the anchor
+                        lastShiftRange.forEach(idx => {
+                            if (idx !== anchorIndex) setSelectionState(idx, false);
+                        });
+                        lastShiftRange.clear();
 
-                if (isShiftKey && lastSelectedIndex !== -1 && lastSelectedIndex !== index) {
-                    const cbList = Array.from(document.querySelectorAll('.selection-checkbox input'));
-                    const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === lastSelectedIndex);
-                    const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
-                    
-                    const minIdx = Math.min(startIndex, endIndex);
-                    const maxIdx = Math.max(startIndex, endIndex);
+                        const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === anchorIndex);
+                        const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
+                        const minIdx = Math.min(startIndex, endIndex);
+                        const maxIdx = Math.max(startIndex, endIndex);
 
-                    for (let n = minIdx; n <= maxIdx; n++) {
-                        setSelectionState(parseInt(cbList[n].dataset.imageIndex), newState);
+                        for (let n = minIdx; n <= maxIdx; n++) {
+                            const targetImageIdx = parseInt(cbList[n].dataset.imageIndex);
+                            setSelectionState(targetImageIdx, true);
+                            lastShiftRange.add(targetImageIdx);
+                        }
                     }
                 } else {
+                    const cb = document.getElementById(`select-${index}`);
+                    if (!cb) return;
+                    const newState = !cb.checked;
                     setSelectionState(index, newState);
+
+                    if (newState) {
+                        anchorIndex = index;
+                        lastShiftRange.clear();
+                        lastShiftRange.add(index);
+                    } else {
+                        anchorIndex = -1;
+                        lastShiftRange.clear();
+                    }
                 }
-                lastSelectedIndex = index;
+                updateSelectionHtml();
             }
 
             function handlePointerDown(e) {
@@ -264,6 +292,12 @@
                     longPressTimer = setTimeout(() => {
                         document.getElementById('select-mode-btn').click();
                         setSelectionState(idx, true);
+                        updateSelectionHtml();
+                        
+                        anchorIndex = idx;
+                        lastShiftRange.clear();
+                        lastShiftRange.add(idx);
+
                         isDraggingToSelect = true;
                         dragTargetState = true;
                         ignoreNextClick = true;
@@ -296,8 +330,12 @@
                 const idx = getGalleryItemIndex(el);
                 if (idx !== -1 && idx !== lastHoveredIdx) {
                     setSelectionState(idx, dragTargetState);
+                    updateSelectionHtml();
+                    
                     lastHoveredIdx = idx;
-                    lastSelectedIndex = idx;
+                    anchorIndex = idx; // Update anchor so if they shift click later it continues logically
+                    lastShiftRange.clear();
+                    lastShiftRange.add(idx);
                 }
             }
 
@@ -324,7 +362,21 @@
                     if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
                     e.preventDefault();
                     if (!selectionMode) document.getElementById('select-mode-btn').click();
-                    document.getElementById('select-all-btn').click();
+                    
+                    const allCheckboxes = document.querySelectorAll('.selection-checkbox input');
+                    let allSelected = true;
+                    for (let cb of allCheckboxes) {
+                        if (!cb.checked) {
+                            allSelected = false;
+                            break;
+                        }
+                    }
+                    
+                    if (allSelected && allCheckboxes.length > 0) {
+                        document.getElementById('deselect-all-btn').click();
+                    } else {
+                        document.getElementById('select-all-btn').click();
+                    }
                 }
             });
 
