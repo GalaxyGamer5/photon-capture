@@ -461,6 +461,7 @@ header .container {
     justify-content: center;
     opacity: 0;
     transition: opacity 0.3s ease;
+    touch-action: none;
 }
 
 .lightbox.active {
@@ -740,24 +741,30 @@ header .container {
 }
 
 /* Swipe Animations for Lightbox */
-.slide-out-left {
-    transform: translateX(-50%) !important;
-    opacity: 0 !important;
-    transition: transform 0.1s ease, opacity 0.1s ease !important;
+.anim-slide-out-left {
+    animation: slideOutLeft 0.15s ease-out forwards;
 }
 
-.slide-out-right {
-    transform: translateX(50%) !important;
-    opacity: 0 !important;
-    transition: transform 0.1s ease, opacity 0.1s ease !important;
+.anim-slide-out-right {
+    animation: slideOutRight 0.15s ease-out forwards;
 }
 
-.slide-in-right {
-    animation: slideInRight 0.15s ease-out forwards;
+.anim-slide-in-right {
+    animation: slideInRight 0.18s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-.slide-in-left {
-    animation: slideInLeft 0.15s ease-out forwards;
+.anim-slide-in-left {
+    animation: slideInLeft 0.18s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes slideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-50%); opacity: 0; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(50%); opacity: 0; }
 }
 
 @keyframes slideInRight {

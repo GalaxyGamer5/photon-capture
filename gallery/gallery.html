@@ -344,23 +344,28 @@
                 };
 
                 if (direction && direction !== 'none') {
-                    lightboxImg.classList.add(direction === 'next' ? 'slide-out-left' : 'slide-out-right');
+                    const outClass = direction === 'next' ? 'anim-slide-out-left' : 'anim-slide-out-right';
+                    const inClass = direction === 'next' ? 'anim-slide-in-right' : 'anim-slide-in-left';
+                    
+                    // Reset classes and force reflow to ensure animation restarts
+                    lightboxImg.className = '';
+                    void lightboxImg.offsetWidth; 
+                    lightboxImg.classList.add(outClass);
                     
                     setTimeout(() => {
                         lightboxImg.onload = () => {
-                            lightboxImg.classList.remove('slide-out-left', 'slide-out-right');
-                            lightboxImg.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
+                            lightboxImg.className = inClass;
                             
                             setTimeout(() => {
-                                lightboxImg.classList.remove('slide-in-right', 'slide-in-left');
-                            }, 150);
+                                lightboxImg.classList.remove(inClass);
+                            }, 180);
                             lightboxImg.onload = null;
                             loadHighRes();
                         };
                         lightboxImg.onerror = function() { tryNextExtension(this); };
                         
                         lightboxImg.src = thumbSrc;
-                    }, 100);
+                    }, 140);
                 } else {
                     lightboxImg.src = thumbSrc;
                     lightboxImg.onerror = function() { tryNextExtension(this); };
