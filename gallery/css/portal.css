@@ -134,6 +134,32 @@ header .container {
     color: var(--danger-color);
 }
 
+#favorites-filter-btn {
+    border-color: rgba(255, 51, 102, 0.5);
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+    animation: favPulse 1.5s infinite;
+}
+
+#favorites-filter-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+#favorites-filter-btn.active {
+    background: rgba(255, 51, 102, 0.1);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    animation: none;
+}
+
+@keyframes favPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 51, 102, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+}
+
 /* Auth Pages (Login) */
 .auth-container {
     min-height: 100vh;

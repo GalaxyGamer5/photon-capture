@@ -363,6 +363,41 @@
                 if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
             });
 
+            // Touch Swipe Gestures
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            lightbox.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            lightbox.addEventListener('touchend', (e) => {
+                if (!lightbox.classList.contains('active')) return;
+                
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const swipeThreshold = 50;
+
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Horizontal swipe
+                    if (Math.abs(deltaX) > swipeThreshold) {
+                        if (deltaX > 0) {
+                            document.querySelector('.lightbox-prev').click();
+                        } else {
+                            document.querySelector('.lightbox-next').click();
+                        }
+                    }
+                } else {
+                    // Vertical swipe
+                    if (Math.abs(deltaY) > swipeThreshold) {
+                        closeLightbox();
+                    }
+                }
+            }, { passive: true });
+
             // Selection Mode
             let selectionMode = false;
             const selectedImages = new Set();
