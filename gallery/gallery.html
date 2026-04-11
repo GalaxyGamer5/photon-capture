@@ -336,14 +336,14 @@
                             
                             setTimeout(() => {
                                 lightboxImg.classList.remove('slide-in-right', 'slide-in-left');
-                            }, 300);
+                            }, 150);
                             lightboxImg.onload = null;
                         };
                         lightboxImg.onerror = function() { tryNextExtension(this); };
                         
                         lightboxImg.src = apiSrc;
                         downloadBtn.href = apiSrc;
-                    }, 200);
+                    }, 100);
                 } else {
                     lightboxImg.src = apiSrc;
                     lightboxImg.onerror = function() { tryNextExtension(this); };
