@@ -174,6 +174,9 @@
         });
 
         async function initializeGallery() {
+            // Setup session cache buster once per page load to ensure performance
+            const sessionCacheBuster = Date.now();
+
             // Favorites State
             let favorites = new Set();
             let showFavoritesOnly = false;
@@ -205,8 +208,7 @@
                         const isFavorite = favorites.has(i);
 
                         // Use secure delivery API for watermarking/protection
-                        // Added timestamp cache-breaker to force update if protection was just toggled
-                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg&thumb=1&v=${Date.now()}`;
+                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg&thumb=1&v=${sessionCacheBuster}`;
 
                         item.innerHTML = `
                         <div class="selection-checkbox" style="display: none;">
@@ -323,9 +325,24 @@
             };
 
             function updateLightbox(direction = null) {
-                // Use secure delivery API for the lightbox too
-                const apiSrc = `api/get-image.php?f=${user.folder}&i=${currentIndex}.jpg&v=${Date.now()}`;
+                const targetIndex = currentIndex;
+                const thumbSrc = `api/get-image.php?f=${user.folder}&i=${targetIndex}.jpg&thumb=1&v=${sessionCacheBuster}`;
+                const fullSrc = `api/get-image.php?f=${user.folder}&i=${targetIndex}.jpg&v=${sessionCacheBuster}`;
                 
+                downloadBtn.href = fullSrc;
+
+                const loadHighRes = () => {
+                    const highResImg = new Image();
+                    highResImg.onload = () => {
+                        if (lightbox.classList.contains('active') && currentIndex === targetIndex) {
+                            // Swap silently to high res
+                            lightboxImg.src = highResImg.src;
+                        }
+                    };
+                    highResImg.onerror = function() { tryNextExtension(this); };
+                    highResImg.src = fullSrc;
+                };
+
                 if (direction && direction !== 'none') {
                     lightboxImg.classList.add(direction === 'next' ? 'slide-out-left' : 'slide-out-right');
                     
@@ -338,18 +355,18 @@
                                 lightboxImg.classList.remove('slide-in-right', 'slide-in-left');
                             }, 150);
                             lightboxImg.onload = null;
+                            loadHighRes();
                         };
                         lightboxImg.onerror = function() { tryNextExtension(this); };
                         
-                        lightboxImg.src = apiSrc;
-                        downloadBtn.href = apiSrc;
+                        lightboxImg.src = thumbSrc;
                     }, 100);
                 } else {
-                    lightboxImg.src = apiSrc;
+                    lightboxImg.src = thumbSrc;
                     lightboxImg.onerror = function() { tryNextExtension(this); };
-                    downloadBtn.href = apiSrc;
+                    loadHighRes();
                 }
-                updateLightboxFavoriteBtn(currentIndex);
+                updateLightboxFavoriteBtn(targetIndex);
             }
 
             function closeLightbox() {
