@@ -624,9 +624,6 @@ header .container {
 }
 
 .lightbox-download {
-    position: absolute;
-    bottom: 2rem;
-    right: 2rem;
     background: white;
     color: black;
     padding: 0.75rem 1.5rem;
