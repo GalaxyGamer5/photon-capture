@@ -29,9 +29,11 @@
                 align-items: flex-start;
                 gap: 1rem;
             }
-            .user-card > div {
+
+            .user-card>div {
                 width: 100%;
             }
+
             .user-card .btn {
                 width: 100%;
                 text-align: center;
@@ -106,7 +108,7 @@
                     if (favRes.ok) {
                         favoritesData = await favRes.json();
                     }
-                } catch(e) { console.log('No favorites found'); }
+                } catch (e) { console.log('No favorites found'); }
 
                 renderUsers();
             } catch (e) {
@@ -120,10 +122,10 @@
                 const userFavs = favoritesData[user.username] || [];
                 const favCount = userFavs.length;
                 let favHtml = '';
-                
+
                 if (favCount > 0) {
                     favHtml = `<div style="margin-top: 0.5rem; color: #ff4d4d; font-size: 0.85rem; font-weight: 500;">
-                        ❤️ ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg','')).join(', ')}
+                        ❤️ ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg', '')).join(', ')}
                     </div>`;
                 }
 
@@ -199,7 +201,7 @@
         async function deleteUser(index) {
             if (confirm('Benutzer wirklich löschen?\n\nACHTUNG: Hierdurch werden auch alle hochgeladenen Bilder dieses Benutzers unwiderruflich vom Server gelöscht!')) {
                 const user = usersData.users[index];
-                
+
                 // Securely tell the backend to delete the folder full of images
                 try {
                     await fetch('api/delete-user-folder.php', {

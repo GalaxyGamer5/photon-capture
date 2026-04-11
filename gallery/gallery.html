@@ -202,6 +202,132 @@
             const imageFolder = `assets/${user.folder}`;
             const imageCount = user.imageCount || 0;
 
+            // Advanced Selection gestures state
+            let lastSelectedIndex = -1;
+            let isDraggingToSelect = false;
+            let dragTargetState = true; 
+            let longPressTimer = null;
+            let ignoreNextClick = false;
+            let lastHoveredIdx = -1;
+
+            function getGalleryItemIndex(el) {
+                const item = el.closest('.gallery-item');
+                if (!item) return -1;
+                const cb = item.querySelector('input');
+                return cb ? parseInt(cb.dataset.imageIndex) : -1;
+            }
+
+            function setSelectionState(index, state) {
+                const cb = document.getElementById(`select-${index}`);
+                if (!cb) return;
+                cb.checked = state;
+                if (state) selectedImages.add(index);
+                else selectedImages.delete(index);
+                updateSelectionCount();
+            }
+
+            function toggleImageSelection(index, isShiftKey = false) {
+                const cb = document.getElementById(`select-${index}`);
+                if (!cb) return;
+                const newState = !cb.checked;
+
+                if (isShiftKey && lastSelectedIndex !== -1 && lastSelectedIndex !== index) {
+                    const cbList = Array.from(document.querySelectorAll('.selection-checkbox input'));
+                    const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === lastSelectedIndex);
+                    const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
+                    
+                    const minIdx = Math.min(startIndex, endIndex);
+                    const maxIdx = Math.max(startIndex, endIndex);
+
+                    for (let n = minIdx; n <= maxIdx; n++) {
+                        setSelectionState(parseInt(cbList[n].dataset.imageIndex), newState);
+                    }
+                } else {
+                    setSelectionState(index, newState);
+                }
+                lastSelectedIndex = index;
+            }
+
+            function handlePointerDown(e) {
+                if (e.button && e.button !== 0) return; // Only left click
+                const idx = getGalleryItemIndex(e.target);
+                if (idx === -1) return;
+
+                if (selectionMode) {
+                    // Start drag selection
+                    isDraggingToSelect = true;
+                    const cb = document.getElementById(`select-${idx}`);
+                    dragTargetState = cb ? !cb.checked : true;
+                    lastHoveredIdx = idx;
+                } else {
+                    // Start Long Press timer
+                    longPressTimer = setTimeout(() => {
+                        document.getElementById('select-mode-btn').click();
+                        setSelectionState(idx, true);
+                        isDraggingToSelect = true;
+                        dragTargetState = true;
+                        ignoreNextClick = true;
+                        lastHoveredIdx = idx;
+                    }, 500); // 500ms hold
+                }
+            }
+
+            function handlePointerMove(e) {
+                if (!isDraggingToSelect) {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                    return;
+                }
+
+                if (e.cancelable) e.preventDefault(); // Prevent scrolling while actively dragging an area
+
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+
+                const el = document.elementFromPoint(clientX, clientY);
+                if (!el) return;
+
+                const idx = getGalleryItemIndex(el);
+                if (idx !== -1 && idx !== lastHoveredIdx) {
+                    setSelectionState(idx, dragTargetState);
+                    lastHoveredIdx = idx;
+                    lastSelectedIndex = idx;
+                }
+            }
+
+            function handlePointerUp() {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                isDraggingToSelect = false;
+                lastHoveredIdx = -1;
+            }
+
+            // Bind Events Handlers
+            galleryGrid.addEventListener('mousedown', handlePointerDown);
+            galleryGrid.addEventListener('touchstart', handlePointerDown, {passive: true});
+            window.addEventListener('mousemove', handlePointerMove);
+            window.addEventListener('touchmove', handlePointerMove, {passive: false}); 
+            window.addEventListener('mouseup', handlePointerUp);
+            window.addEventListener('touchend', handlePointerUp);
+
+            // Ctrl+A globally for mass selection
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                    if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+                    e.preventDefault();
+                    if (!selectionMode) document.getElementById('select-mode-btn').click();
+                    document.getElementById('select-all-btn').click();
+                }
+            });
+
             // Render Main Gallery Grid
             function renderGallery() {
                 galleryGrid.innerHTML = '';
@@ -219,7 +345,7 @@
                         const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg&thumb=1&v=${sessionCacheBuster}`;
 
                         item.innerHTML = `
-                        <div class="selection-checkbox" style="display: none;">
+                        <div class="selection-checkbox" style="display: none; pointer-events: none;">
                             <input type="checkbox" id="select-${i}" data-image-index="${i}">
                             <label for="select-${i}"></label>
                         </div>
@@ -234,8 +360,18 @@
                         </div>
                     `;
 
-                        // Add click event to image itself too
-                        item.querySelector('img').addEventListener('click', () => openLightbox(i));
+                        // Add click event to intercept if selection mode is open
+                        item.querySelector('img').addEventListener('click', (e) => {
+                            if (ignoreNextClick) {
+                                ignoreNextClick = false;
+                                return;
+                            }
+                            if (selectionMode) {
+                                toggleImageSelection(i, e.shiftKey);
+                            } else {
+                                openLightbox(i);
+                            }
+                        });
 
                         galleryGrid.appendChild(item);
                     }
