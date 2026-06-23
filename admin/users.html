@@ -39,6 +39,41 @@
                 text-align: center;
             }
         }
+
+        /* Change-password overlay */
+        #changePwOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        #changePwOverlay.open {
+            display: flex;
+        }
+        #changePwBox {
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        #changePwBox h3 {
+            margin: 0 0 1.25rem;
+            font-size: 1.1rem;
+        }
+        #changePwBox .form-group {
+            margin-bottom: 1rem;
+        }
+        #changePwActions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+        }
     </style>
 </head>
 
@@ -77,6 +112,25 @@
             <button onclick="addUser()" class="btn">Hinzufügen</button>
             <button onclick="document.getElementById('addUserForm').style.display='none'" class="btn"
                 style="background: transparent; border: 1px solid var(--border); margin-top: 0.5rem;">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePwOverlay">
+        <div id="changePwBox">
+            <h3 id="changePwTitle">Passwort ändern</h3>
+            <div class="form-group">
+                <label>Neues Passwort</label>
+                <input type="password" id="changePwInput" class="form-control" placeholder="Neues Passwort eingeben">
+            </div>
+            <div class="form-group">
+                <label>Passwort bestätigen</label>
+                <input type="password" id="changePwConfirm" class="form-control" placeholder="Passwort wiederholen">
+            </div>
+            <div id="changePwActions">
+                <button onclick="changePassword()" class="btn" style="flex:1;">Speichern</button>
+                <button onclick="closeChangePw()" class="btn" style="flex:1; background: transparent; border: 1px solid var(--border);">Abbrechen</button>
+            </div>
         </div>
     </div>
 
@@ -149,13 +203,14 @@
                     <div style="text-align: right; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
                         <span style="display: block; color: var(--accent); font-weight: 600;">${user.imageCount} Bilder</span>
                         
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                             <a href="manage-gallery.html?user=${encodeURIComponent(user.username)}" class="btn" style="width: auto; background: var(--accent); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                                 📁 Galerie verwalten
                             </a>
                             <button onclick="toggleProtection(${index})" class="btn" style="width: auto; background: ${isProtected ? 'rgba(76,175,80,0.2)' : 'rgba(255,152,0,0.2)'}; color: ${isProtected ? '#4caf50' : '#ff9800'}; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid currentColor;">
                                 ${isProtected ? '🔓 Jetzt Freigeben' : '🔒 Watermark aktivieren'}
                             </button>
+                            <button onclick="showChangePassword(${index})" class="btn" style="width: auto; background: rgba(100,149,237,0.15); color: #6495ed; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(100,149,237,0.35);">🔑 Passwort ändern</button>
                             <button onclick="deleteUser(${index})" class="btn" style="width: auto; background: rgba(255, 77, 77, 0.1); color: var(--danger); font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(255, 77, 77, 0.2);">Löschen</button>
                         </div>
                     </div>
@@ -226,6 +281,40 @@
             renderUsers();
             saveUsers();
         }
+
+        let changePwIndex = -1;
+
+        function showChangePassword(index) {
+            changePwIndex = index;
+            const user = usersData.users[index];
+            document.getElementById('changePwTitle').textContent = `Passwort ändern – ${user.name}`;
+            document.getElementById('changePwInput').value = '';
+            document.getElementById('changePwConfirm').value = '';
+            document.getElementById('changePwOverlay').classList.add('open');
+            document.getElementById('changePwInput').focus();
+        }
+
+        function closeChangePw() {
+            document.getElementById('changePwOverlay').classList.remove('open');
+            changePwIndex = -1;
+        }
+
+        async function changePassword() {
+            const pw  = document.getElementById('changePwInput').value.trim();
+            const pw2 = document.getElementById('changePwConfirm').value.trim();
+            if (!pw) { alert('Bitte ein neues Passwort eingeben.'); return; }
+            if (pw !== pw2) { alert('Die Passwörter stimmen nicht überein.'); return; }
+            const hash = await sha1(pw);
+            usersData.users[changePwIndex].passwordHash = hash;
+            await saveUsers();
+            closeChangePw();
+            alert('Passwort erfolgreich gespeichert ✓');
+        }
+
+        // Close overlay when clicking outside the box
+        document.getElementById('changePwOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeChangePw();
+        });
 
         async function saveUsers() {
             try {
