@@ -43,7 +43,7 @@ $passwordHash = sha1($password);
 // Find user
 $authenticatedUser = null;
 foreach ($usersData['users'] as $user) {
-    if ($user['username'] === $username && $user['passwordHash'] === $passwordHash) {
+    if (strtolower($user['username']) === strtolower($username) && $user['passwordHash'] === $passwordHash) {
         $authenticatedUser = $user;
         break;
     }
