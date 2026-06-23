@@ -22,7 +22,7 @@ const Auth = {
             const data = window.usersDatabase;
             const passwordHash = await sha1(password);
 
-            const user = data.users.find(u => u.username === username && u.passwordHash === passwordHash);
+            const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.passwordHash === passwordHash);
 
             if (user) {
                 // Store session
