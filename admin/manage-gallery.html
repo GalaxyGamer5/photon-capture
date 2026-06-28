@@ -97,6 +97,17 @@
         }
         #batch-toolbar.visible { display: flex; }
         #batch-toolbar span { flex: 1; font-weight: 600; color: #ff6b6b; }
+        #batch-select-all-btn {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        #batch-select-all-btn:hover { background: rgba(255,255,255,0.14); }
         #batch-delete-btn {
             background: #ff4d4d;
             color: white;
@@ -164,6 +175,7 @@
             <!-- Batch-delete toolbar -->
             <div id="batch-toolbar">
                 <span id="batch-label">0 ausgewählt</span>
+                <button id="batch-select-all-btn" onclick="selectAll()">Alle auswählen</button>
                 <button id="batch-clear-btn" onclick="clearSelection()">Auswahl aufheben</button>
                 <button id="batch-delete-btn" onclick="batchDelete()">🗑 Ausgewählte löschen</button>
             </div>
@@ -187,9 +199,15 @@
         let imageFiles  = [];
         /** Set of selected filenames for batch-delete */
         const selectedFiles = new Set();
+        /** Cache-bust token — updated every init() so stale browser-cached thumbnails
+         *  are never served after a deletion+renumber operation. */
+        let cacheBust = Date.now();
 
         async function init() {
             try {
+                // Bump cache-bust so all thumbnail URLs are fresh after a deletion+renumber
+                cacheBust = Date.now();
+
                 // Fetch the users database
                 const response = await fetch('api/get_users.php');
                 const text = await response.text();
@@ -283,12 +301,15 @@
             for (let idx = start; idx < end; idx++) {
                 const filename = imageFiles[idx];
                 const relPath  = `gallery/assets/${currentUser.folder}/${filename}`;
-                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${encodeURIComponent(filename)}&thumb=1`;
+                // cacheBust ensures the browser never serves a stale cached thumbnail
+                // after the server renumbers files following a deletion.
+                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${encodeURIComponent(filename)}&thumb=1&cb=${cacheBust}`;
 
                 const item = document.createElement('div');
                 item.className = 'gallery-skeleton';
                 item.dataset.relpath = relPath;
                 item.dataset.filename = filename;
+                item.dataset.imgIdx = idx; // ← used by getItemIndex() for range-select
 
                 // Checkbox for batch-select
                 const checkbox = document.createElement('div');
@@ -296,7 +317,7 @@
                 checkbox.title = 'Auswählen';
                 checkbox.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    toggleSelect(item, relPath);
+                    handleItemClick(idx, e.shiftKey);
                 });
 
                 const img = document.createElement('img');
@@ -330,8 +351,12 @@
                 item.appendChild(delBtn);
                 item.appendChild(badge);
 
-                // Clicking the card itself also toggles selection
-                item.addEventListener('click', () => toggleSelect(item, relPath));
+                // Clicking the card (not delete button) toggles selection, respecting Shift
+                item.addEventListener('click', (e) => {
+                    if (ignoreNextClick) { ignoreNextClick = false; return; }
+                    if (e.target.closest('.delete-btn')) return;
+                    handleItemClick(idx, e.shiftKey);
+                });
 
                 grid.insertBefore(item, sentinel);
             }
@@ -353,21 +378,108 @@
         }
         // ── End lazy-batch renderer ──────────────────────────────────────────
 
-        // ── Selection helpers ────────────────────────────────────────────────
-        function toggleSelect(item, relPath) {
-            if (selectedFiles.has(relPath)) {
-                selectedFiles.delete(relPath);
-                item.classList.remove('selected');
-            } else {
+        // ── Selection state ──────────────────────────────────────────────────
+        /** Index into imageFiles[] of the last non-shift click (anchor for range select) */
+        let anchorIdx = -1;
+        /** The range of indices covered by the last shift-click, so we can undo it */
+        let lastShiftRange = new Set();
+        /** Whether the last shift-range was a select (true) or deselect (false) */
+        let shiftTargetState = true;
+        /** The index of the last shift-click target (for toggling the same range) */
+        let lastShiftClickTarget = -1;
+        // Drag-to-select state
+        let isDragging = false;
+        let dragTargetState = true;
+        let lastDragIdx = -1;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        // Long-press (touch) state
+        let longPressTimer = null;
+        let ignoreNextClick = false;
+
+        /** Returns the imageFiles[] index for any element inside a gallery-item card, or -1 */
+        function getItemIndex(el) {
+            const item = el.closest('[data-img-idx]');
+            return item ? parseInt(item.dataset.imgIdx) : -1;
+        }
+
+        /** Set the selected state for an item by its imageFiles[] index */
+        function setSelected(idx, state) {
+            const relPath = `gallery/assets/${currentUser.folder}/${imageFiles[idx]}`;
+            const item = document.querySelector(`[data-img-idx="${idx}"]`);
+            if (state) {
                 selectedFiles.add(relPath);
-                item.classList.add('selected');
+                item && item.classList.add('selected');
+            } else {
+                selectedFiles.delete(relPath);
+                item && item.classList.remove('selected');
+            }
+        }
+
+        /** Returns true if the item at imageFiles[idx] is currently selected */
+        function isSelected(idx) {
+            return selectedFiles.has(`gallery/assets/${currentUser.folder}/${imageFiles[idx]}`);
+        }
+
+        /**
+         * Toggle a single item or apply a shift-click range.
+         * @param {number} idx - imageFiles[] index of the clicked item
+         * @param {boolean} shift - whether Shift was held
+         */
+        function handleItemClick(idx, shift) {
+            if (shift && anchorIdx !== -1) {
+                // Shift-click: select/deselect the range [anchorIdx … idx]
+                let targetState = true;
+                if (idx === lastShiftClickTarget) {
+                    // Clicking the same endpoint again toggles the whole range
+                    shiftTargetState = !shiftTargetState;
+                    targetState = shiftTargetState;
+                } else {
+                    shiftTargetState = true;
+                    targetState = true;
+                }
+
+                // Undo the previous shift-range first
+                lastShiftRange.forEach(i => { if (i !== anchorIdx) setSelected(i, false); });
+                lastShiftRange.clear();
+
+                const minIdx = Math.min(anchorIdx, idx);
+                const maxIdx = Math.max(anchorIdx, idx);
+                for (let i = minIdx; i <= maxIdx; i++) {
+                    if (i < imageFiles.length) {
+                        setSelected(i, targetState);
+                        if (targetState) lastShiftRange.add(i);
+                    }
+                }
+                lastShiftClickTarget = idx;
+            } else {
+                // Normal click: toggle the single item
+                const newState = !isSelected(idx);
+                setSelected(idx, newState);
+                if (newState) {
+                    anchorIdx = idx;
+                    lastShiftRange.clear();
+                    lastShiftRange.add(idx);
+                    lastShiftClickTarget = idx;
+                    shiftTargetState = true;
+                } else {
+                    anchorIdx = -1;
+                    lastShiftRange.clear();
+                    lastShiftClickTarget = -1;
+                    shiftTargetState = false;
+                }
             }
             updateBatchToolbar();
         }
 
+        function selectAll() {
+            imageFiles.forEach((_, i) => setSelected(i, true));
+            updateBatchToolbar();
+        }
+
         function clearSelection() {
-            selectedFiles.clear();
-            document.querySelectorAll('.gallery-item.selected').forEach(el => el.classList.remove('selected'));
+            imageFiles.forEach((_, i) => setSelected(i, false));
+            selectedFiles.clear(); // safety clear in case item not in DOM yet
             updateBatchToolbar();
         }
 
@@ -383,13 +495,122 @@
             }
         }
 
+        // ── Drag-to-select (mouse) ───────────────────────────────────────────
+        const galleryGrid = document.getElementById('galleryGrid');
+
+        galleryGrid.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            const idx = getItemIndex(e.target);
+            if (idx === -1) return;
+            // Don't start drag if clicking delete button
+            if (e.target.closest('.delete-btn')) return;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            isDragging = true;
+            dragTargetState = !isSelected(idx);
+            lastDragIdx = idx;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = Math.abs(e.clientX - dragStartX);
+            const dy = Math.abs(e.clientY - dragStartY);
+            if (dx < 4 && dy < 4) return; // small deadzone to avoid accidental drags
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            if (!el) return;
+            const idx = getItemIndex(el);
+            if (idx !== -1 && idx !== lastDragIdx) {
+                setSelected(idx, dragTargetState);
+                anchorIdx = idx;
+                lastShiftRange.clear();
+                lastShiftRange.add(idx);
+                lastDragIdx = idx;
+                updateBatchToolbar();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            lastDragIdx = -1;
+        });
+
+        // ── Long-press drag-to-select (touch) ────────────────────────────────
+        galleryGrid.addEventListener('touchstart', (e) => {
+            const idx = getItemIndex(e.target);
+            if (idx === -1) return;
+            if (e.target.closest('.delete-btn')) return;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            longPressTimer = setTimeout(() => {
+                isDragging = true;
+                dragTargetState = !isSelected(idx);
+                setSelected(idx, dragTargetState);
+                anchorIdx = idx;
+                lastShiftRange.clear();
+                lastShiftRange.add(idx);
+                lastDragIdx = idx;
+                ignoreNextClick = true;
+                updateBatchToolbar();
+            }, 500);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (longPressTimer) {
+                const dx = Math.abs(e.touches[0].clientX - dragStartX);
+                const dy = Math.abs(e.touches[0].clientY - dragStartY);
+                if (dx > 10 || dy > 10) { clearTimeout(longPressTimer); longPressTimer = null; }
+            }
+            if (!isDragging) return;
+            if (e.cancelable) e.preventDefault();
+            const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            if (!el) return;
+            const idx = getItemIndex(el);
+            if (idx !== -1 && idx !== lastDragIdx) {
+                setSelected(idx, dragTargetState);
+                anchorIdx = idx;
+                lastShiftRange.clear();
+                lastShiftRange.add(idx);
+                lastDragIdx = idx;
+                updateBatchToolbar();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            isDragging = false;
+            lastDragIdx = -1;
+        });
+
+        // ── Keyboard shortcuts ───────────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+            // Ctrl/Cmd + A — toggle select all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault();
+                const allSelected = selectedFiles.size === imageFiles.length && imageFiles.length > 0;
+                if (allSelected) clearSelection(); else selectAll();
+            }
+
+            // Delete / Backspace — delete selected images
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedFiles.size > 0) {
+                e.preventDefault();
+                batchDelete();
+            }
+
+            // Escape — clear selection
+            if (e.key === 'Escape' && selectedFiles.size > 0) {
+                clearSelection();
+            }
+        });
+        // ────────────────────────────────────────────────────────────────────
+
         async function batchDelete() {
             const paths = Array.from(selectedFiles);
             if (paths.length === 0) return;
             if (!confirm(`Möchtest du ${paths.length} Bild${paths.length === 1 ? '' : 'er'} wirklich löschen?`)) return;
             await deleteImages(paths);
         }
-        // ────────────────────────────────────────────────────────────────────
 
         async function deleteImages(paths) {
             try {

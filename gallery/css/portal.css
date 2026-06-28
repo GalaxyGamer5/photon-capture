@@ -474,6 +474,7 @@ header .container {
     max-height: 90vh;
     border-radius: 4px;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    touch-action: none; /* Disable browser native pinch-to-zoom on the image */
 }
 
 .lightbox-close {

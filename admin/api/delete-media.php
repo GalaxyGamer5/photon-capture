@@ -48,6 +48,12 @@ foreach ($input['paths'] as $relPath) {
         if (unlink($fullPath)) {
             $deleted++;
 
+            // Also remove the cached thumbnail for this file (if it exists)
+            $thumbPath = dirname($fullPath) . DIRECTORY_SEPARATOR . '_thumbs' . DIRECTORY_SEPARATOR . basename($fullPath);
+            if (is_file($thumbPath)) {
+                @unlink($thumbPath);
+            }
+
             // Track for bulk update
             if (strpos($fullPath, 'gallery' . DIRECTORY_SEPARATOR . 'assets') !== false) {
                 $affectedGalleryFolders[dirname($fullPath)] = true;
@@ -62,6 +68,7 @@ foreach ($input['paths'] as $relPath) {
         $errors[] = "Not a file: $relPath";
     }
 }
+
 
 // Bulk update gallery users.js
 if (!empty($affectedGalleryFolders)) {
@@ -99,10 +106,18 @@ if (!empty($affectedGalleryFolders)) {
                                             
                                             if ($oldPath !== $newPath && strtolower($file) !== $expectedName) {
                                                 rename($oldPath, $newPath);
+                                                // Also rename the cached thumbnail so it stays in sync
+                                                $thumbsDir = $folder . DIRECTORY_SEPARATOR . '_thumbs';
+                                                $oldThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $file;
+                                                $newThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $expectedName;
+                                                if (is_file($oldThumb)) {
+                                                    rename($oldThumb, $newThumb);
+                                                }
                                             }
                                             $imagesCount++;
                                             $counter++;
                                         }
+
                                     }
                                     $user['imageCount'] = $imagesCount;
                                     $changed = true;

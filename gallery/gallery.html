@@ -672,51 +672,11 @@
                 if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
             });
 
-            // Touch Swipe & Zoom Gestures
+            // Touch Swipe & Pinch-to-Zoom & Pan — all on the lightbox container
+            // Using { passive: false } so e.preventDefault() can block native browser zoom/scroll
             let touchStartX = 0;
             let touchStartY = 0;
             let initialPinchDistance = null;
-
-            lightbox.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 1) {
-                    isZoomGesture = true; // Mark entire gesture as a zoom
-                    return;
-                }
-                if (e.touches.length === 1) {
-                    isZoomGesture = false;
-                }
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-
-            lightbox.addEventListener('touchend', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-                if (isZoomGesture) return; // Completely ignore swipe logic if they were zooming
-                
-                const touchEndX = e.changedTouches[0].screenX;
-                const touchEndY = e.changedTouches[0].screenY;
-                const deltaX = touchEndX - touchStartX;
-                const deltaY = touchEndY - touchStartY;
-                const swipeThreshold = 50;
-
-                if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                    // Horizontal swipe
-                    if (Math.abs(deltaX) > swipeThreshold) {
-                        if (deltaX > 0) {
-                            document.querySelector('.lightbox-prev').click();
-                        } else {
-                            document.querySelector('.lightbox-next').click();
-                        }
-                    }
-                } else {
-                    // Vertical swipe
-                    if (Math.abs(deltaY) > swipeThreshold) {
-                        closeLightbox();
-                    }
-                }
-            }, { passive: true });
-
-            // Pinch-to-Zoom and Pan logic
             let initialScale = 1;
             let pinchCenterX = 0;
             let pinchCenterY = 0;
@@ -724,8 +684,13 @@
             let startDragX = 0;
             let startDragY = 0;
 
-            lightboxImg.addEventListener('touchstart', (e) => {
+            lightbox.addEventListener('touchstart', (e) => {
+                if (!lightbox.classList.contains('active')) return;
+
                 if (e.touches.length === 2) {
+                    // Two fingers: start pinch-to-zoom
+                    e.preventDefault();
+                    isZoomGesture = true;
                     initialPinchDistance = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
                         e.touches[0].pageY - e.touches[1].pageY
@@ -734,49 +699,57 @@
                     pinchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
                     pinchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
                     lightboxImg.style.transition = 'none';
-                } else if (e.touches.length === 1 && currentScale > 1) {
-                    isDragging = true;
-                    startDragX = e.touches[0].pageX - currentX;
-                    startDragY = e.touches[0].pageY - currentY;
-                    lightboxImg.style.transition = 'none';
+                } else if (e.touches.length === 1) {
+                    isZoomGesture = false;
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                    if (currentScale > 1) {
+                        // Single finger pan while zoomed in
+                        isDragging = true;
+                        startDragX = e.touches[0].pageX - currentX;
+                        startDragY = e.touches[0].pageY - currentY;
+                        lightboxImg.style.transition = 'none';
+                    }
                 }
             }, { passive: false });
 
-            lightboxImg.addEventListener('touchmove', (e) => {
+            lightbox.addEventListener('touchmove', (e) => {
+                if (!lightbox.classList.contains('active')) return;
+
                 if (e.touches.length === 2 && initialPinchDistance) {
-                    e.preventDefault(); // prevent native scroll
-                    
+                    e.preventDefault();
+
                     const currentDistance = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
                         e.touches[0].pageY - e.touches[1].pageY
                     );
-                    
+
                     const newScale = Math.max(1, Math.min(initialScale * (currentDistance / initialPinchDistance), 5.0));
                     const ratio = newScale / currentScale;
-                    
+
                     const newPinchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
                     const newPinchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-                    
+
                     const windowCenterX = window.innerWidth / 2;
                     const windowCenterY = window.innerHeight / 2;
-                    
-                    // Zoom towards original pinch center
-                    const deltaX = pinchCenterX - windowCenterX - currentX;
-                    const deltaY = pinchCenterY - windowCenterY - currentY;
-                    
-                    currentX -= deltaX * (ratio - 1);
-                    currentY -= deltaY * (ratio - 1);
-                    
-                    // Pan according to fingers moving across the screen while pinching
+
+                    // Zoom towards pinch center
+                    const dX = pinchCenterX - windowCenterX - currentX;
+                    const dY = pinchCenterY - windowCenterY - currentY;
+
+                    currentX -= dX * (ratio - 1);
+                    currentY -= dY * (ratio - 1);
+
+                    // Pan with finger movement during pinch
                     currentX += (newPinchCenterX - pinchCenterX);
                     currentY += (newPinchCenterY - pinchCenterY);
-                    
+
                     currentScale = newScale;
                     pinchCenterX = newPinchCenterX;
                     pinchCenterY = newPinchCenterY;
-                    
+
                     lightboxImg.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
-                    
+
                 } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
                     e.preventDefault();
                     currentX = e.touches[0].pageX - startDragX;
@@ -785,27 +758,59 @@
                 }
             }, { passive: false });
 
-            lightboxImg.addEventListener('touchend', (e) => {
+            lightbox.addEventListener('touchend', (e) => {
+                if (!lightbox.classList.contains('active')) return;
+
                 if (e.touches.length < 2) {
                     initialPinchDistance = null;
                 }
+
                 if (e.touches.length === 0) {
+                    // All fingers lifted
                     isDragging = false;
-                    // If user zoomed out past 1.05, perfectly snap back to 1.0
-                    if (currentScale <= 1.05) {
-                        currentScale = 1;
-                        currentX = 0;
-                        currentY = 0;
-                        lightboxImg.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-                        lightboxImg.style.transform = 'translate(0px, 0px) scale(1)';
+
+                    if (isZoomGesture) {
+                        // Snap back if barely zoomed
+                        if (currentScale <= 1.05) {
+                            currentScale = 1;
+                            currentX = 0;
+                            currentY = 0;
+                            lightboxImg.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+                            lightboxImg.style.transform = 'translate(0px, 0px) scale(1)';
+                        }
+                        return; // Don't trigger swipe logic after a zoom gesture
                     }
+
+                    // Swipe navigation (only when not zoomed in)
+                    if (currentScale <= 1) {
+                        const touchEndX = e.changedTouches[0].screenX;
+                        const touchEndY = e.changedTouches[0].screenY;
+                        const deltaX = touchEndX - touchStartX;
+                        const deltaY = touchEndY - touchStartY;
+                        const swipeThreshold = 50;
+
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            if (Math.abs(deltaX) > swipeThreshold) {
+                                if (deltaX > 0) {
+                                    document.querySelector('.lightbox-prev').click();
+                                } else {
+                                    document.querySelector('.lightbox-next').click();
+                                }
+                            }
+                        } else {
+                            if (Math.abs(deltaY) > swipeThreshold) {
+                                closeLightbox();
+                            }
+                        }
+                    }
+
                 } else if (e.touches.length === 1 && currentScale > 1) {
-                    // Transitioning from a pinch to a single finger pan without lifting off
+                    // Transition from pinch to single-finger pan
                     isDragging = true;
                     startDragX = e.touches[0].pageX - currentX;
                     startDragY = e.touches[0].pageY - currentY;
                 }
-            }, { passive: true });
+            }, { passive: false });
 
             // Web Share API
             if (navigator.share) {
