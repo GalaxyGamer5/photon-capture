@@ -692,22 +692,22 @@
                     e.preventDefault();
                     isZoomGesture = true;
                     initialPinchDistance = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
                     );
                     initialScale = currentScale;
-                    pinchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                    pinchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                    pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                     lightboxImg.style.transition = 'none';
                 } else if (e.touches.length === 1) {
                     isZoomGesture = false;
-                    touchStartX = e.changedTouches[0].screenX;
-                    touchStartY = e.changedTouches[0].screenY;
+                    touchStartX = e.changedTouches[0].clientX;
+                    touchStartY = e.changedTouches[0].clientY;
                     if (currentScale > 1) {
                         // Single finger pan while zoomed in
                         isDragging = true;
-                        startDragX = e.touches[0].pageX - currentX;
-                        startDragY = e.touches[0].pageY - currentY;
+                        startDragX = e.touches[0].clientX - currentX;
+                        startDragY = e.touches[0].clientY - currentY;
                         lightboxImg.style.transition = 'none';
                     }
                 }
@@ -720,15 +720,15 @@
                     e.preventDefault();
 
                     const currentDistance = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
                     );
 
                     const newScale = Math.max(1, Math.min(initialScale * (currentDistance / initialPinchDistance), 5.0));
                     const ratio = newScale / currentScale;
 
-                    const newPinchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                    const newPinchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                    const newPinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const newPinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
                     const windowCenterX = window.innerWidth / 2;
                     const windowCenterY = window.innerHeight / 2;
@@ -752,8 +752,8 @@
 
                 } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
                     e.preventDefault();
-                    currentX = e.touches[0].pageX - startDragX;
-                    currentY = e.touches[0].pageY - startDragY;
+                    currentX = e.touches[0].clientX - startDragX;
+                    currentY = e.touches[0].clientY - startDragY;
                     lightboxImg.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
                 }
             }, { passive: false });
@@ -783,8 +783,8 @@
 
                     // Swipe navigation (only when not zoomed in)
                     if (currentScale <= 1) {
-                        const touchEndX = e.changedTouches[0].screenX;
-                        const touchEndY = e.changedTouches[0].screenY;
+                        const touchEndX = e.changedTouches[0].clientX;
+                        const touchEndY = e.changedTouches[0].clientY;
                         const deltaX = touchEndX - touchStartX;
                         const deltaY = touchEndY - touchStartY;
                         const swipeThreshold = 50;
@@ -807,8 +807,8 @@
                 } else if (e.touches.length === 1 && currentScale > 1) {
                     // Transition from pinch to single-finger pan
                     isDragging = true;
-                    startDragX = e.touches[0].pageX - currentX;
-                    startDragY = e.touches[0].pageY - currentY;
+                    startDragX = e.touches[0].clientX - currentX;
+                    startDragY = e.touches[0].clientY - currentY;
                 }
             }, { passive: false });
 
