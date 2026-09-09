@@ -2,36 +2,94 @@
 session_start();
 header('Content-Type: application/json');
 
+// Fallback function to read JPEG EXIF Orientation without the PHP exif extension
+if (!function_exists('fallback_get_jpeg_orientation')) {
+    function fallback_get_jpeg_orientation($filename) {
+        $fp = @fopen($filename, 'rb');
+        if (!$fp) return 1;
+        $data = fread($fp, 2);
+        if ($data !== "\xFF\xD8") { fclose($fp); return 1; }
+        while (!feof($fp)) {
+            $marker = fread($fp, 2);
+            if (strlen($marker) < 2) break;
+            $marker_byte = ord($marker[1]);
+            if ($marker_byte === 0xE1) {
+                $len_data = fread($fp, 2);
+                if (strlen($len_data) < 2) break;
+                $len = unpack('n', $len_data)[1];
+                $exif_data = fread($fp, $len - 2);
+                if (substr($exif_data, 0, 6) === "Exif\0\0") {
+                    $tiff_header = substr($exif_data, 6);
+                    $endian = substr($tiff_header, 0, 2);
+                    $is_big = ($endian === 'MM');
+                    if (strlen($tiff_header) >= 8) {
+                        $offset = unpack($is_big ? 'N' : 'V', substr($tiff_header, 4, 4))[1];
+                        if (strlen($tiff_header) >= $offset + 2) {
+                            $num_tags = unpack($is_big ? 'n' : 'v', substr($tiff_header, $offset, 2))[1];
+                            $offset += 2;
+                            for ($i = 0; $i < $num_tags; $i++) {
+                                if (strlen($tiff_header) >= $offset + $i * 12 + 10) {
+                                    $tag = unpack($is_big ? 'n' : 'v', substr($tiff_header, $offset + $i * 12, 2))[1];
+                                    if ($tag === 0x0112) {
+                                        $orientation = unpack($is_big ? 'n' : 'v', substr($tiff_header, $offset + $i * 12 + 8, 2))[1];
+                                        fclose($fp);
+                                        return $orientation;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            } else {
+                $len_data = fread($fp, 2);
+                if (strlen($len_data) < 2) break;
+                $len = unpack('n', $len_data)[1];
+                fseek($fp, $len - 2, SEEK_CUR);
+            }
+        }
+        fclose($fp);
+        return 1;
+    }
+}
+
 // Move image and fix EXIF orientation for JPEGs
 function moveImage($sourcePath, $destinationPath, $mimeType) {
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
+        $oldMemoryLimit = ini_get('memory_limit');
+        @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
+        
+        $orientation = 1;
         if (function_exists('exif_read_data')) {
-            $oldMemoryLimit = ini_get('memory_limit');
-            @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
             $exif = @exif_read_data($sourcePath);
-            if (!empty($exif['Orientation']) && $exif['Orientation'] != 1) {
-                $image = @imagecreatefromjpeg($sourcePath);
-                if ($image) {
-                    $orientation = $exif['Orientation'];
-                    switch ($orientation) {
-                        case 3:
-                            $image = imagerotate($image, 180, 0);
-                            break;
-                        case 6:
-                            $image = imagerotate($image, -90, 0);
-                            break;
-                        case 8:
-                            $image = imagerotate($image, 90, 0);
-                            break;
-                    }
-                    $success = imagejpeg($image, $destinationPath, 95);
-                    imagedestroy($image);
-                    @ini_set('memory_limit', $oldMemoryLimit);
-                    if ($success) return true;
-                }
+            if ($exif !== false && isset($exif['Orientation'])) {
+                $orientation = $exif['Orientation'];
             }
-            @ini_set('memory_limit', $oldMemoryLimit);
+        } else {
+            $orientation = fallback_get_jpeg_orientation($sourcePath);
         }
+        
+        if (!empty($orientation) && $orientation != 1) {
+            $image = @imagecreatefromjpeg($sourcePath);
+            if ($image) {
+                switch ($orientation) {
+                    case 3:
+                        $image = imagerotate($image, 180, 0);
+                        break;
+                    case 6:
+                        $image = imagerotate($image, -90, 0);
+                        break;
+                    case 8:
+                        $image = imagerotate($image, 90, 0);
+                        break;
+                }
+                $success = imagejpeg($image, $destinationPath, 95);
+                imagedestroy($image);
+                @ini_set('memory_limit', $oldMemoryLimit);
+                if ($success) return true;
+            }
+        }
+        @ini_set('memory_limit', $oldMemoryLimit);
     }
     return move_uploaded_file($sourcePath, $destinationPath);
 }
