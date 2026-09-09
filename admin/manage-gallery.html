@@ -656,47 +656,56 @@
             const progressBar = document.getElementById('progress-bar');
             
             statusLabel.innerText = "Fotos werden hochgeladen...";
-            progressBar.style.width = '10%';
+            progressBar.style.width = '0%';
 
-            // Photos are pre-compressed by the admin before uploading
-            const formData = new FormData();
-            formData.append('galleryId', currentUser.id);
-            for (let f of validFiles) formData.append('photos[]', f);
+            let uploadedCount = 0;
+            let errorCount = 0;
+            const totalFiles = validFiles.length;
 
-            try {
-                // Using XMLHttpRequest for upload progress tracking
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'api/upload-photos.php', true);
+            // Upload files sequentially (one by one) to avoid PHP post_max_size and max_file_uploads limits
+            for (let i = 0; i < totalFiles; i++) {
+                const f = validFiles[i];
+                const formData = new FormData();
+                formData.append('galleryId', currentUser.id);
+                formData.append('photos[]', f);
+
+                statusLabel.innerText = `Lade hoch... Datei ${i + 1} von ${totalFiles}`;
                 
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = (e.loaded / e.total) * 100;
-                        progressBar.style.width = Math.max(10, percent) + '%';
-                        statusLabel.innerText = `Lade hoch... ${Math.round(percent)}%`;
-                    }
-                };
-
-                xhr.onload = () => {
-                    document.getElementById('progress-bar-container').style.display = 'none';
-                    if (xhr.status === 200) {
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            if (res.success) {
-                                statusLabel.innerText = `${res.uploaded} Fotos erfolgreich hochgeladen!`;
-                                init(); // Refresh
-                            } else {
-                                alert("Upload Fehler: " + res.error);
-                                statusLabel.innerText = "Fehler aufgetreten.";
-                            }
-                        } catch (e) {
-                            alert("Server Fehler aufgetreten");
+                try {
+                    const response = await fetch('api/upload-photos.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const res = await response.json();
+                        if (res.success) {
+                            uploadedCount += res.uploaded;
+                        } else {
+                            errorCount++;
+                            console.error("Upload Fehler: " + res.error);
                         }
+                    } else {
+                        errorCount++;
                     }
-                };
-                xhr.send(formData);
-            } catch (e) {
-                alert("Upload failed");
-                document.getElementById('progress-bar-container').style.display = 'none';
+                } catch (e) {
+                    errorCount++;
+                    console.error("Upload failed for file", f.name, e);
+                }
+
+                // Update progress bar
+                const percent = ((i + 1) / totalFiles) * 100;
+                progressBar.style.width = Math.max(5, percent) + '%';
+            }
+
+            document.getElementById('progress-bar-container').style.display = 'none';
+            if (errorCount === 0) {
+                statusLabel.innerText = `${uploadedCount} Fotos erfolgreich hochgeladen!`;
+                init(); // Refresh gallery
+            } else {
+                alert(`Upload abgeschlossen: ${uploadedCount} erfolgreich, ${errorCount} Fehler.`);
+                statusLabel.innerText = `Upload abgeschlossen mit Fehlern.`;
+                init(); // Refresh to show whatever uploaded successfully
             }
         }
 
