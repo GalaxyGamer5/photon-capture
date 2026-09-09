@@ -57,7 +57,7 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
 function moveImage($sourcePath, $destinationPath, $mimeType) {
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
         $oldMemoryLimit = ini_get('memory_limit');
-        @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
+        @ini_set('memory_limit', '1024M'); // 100MP files need ~800MB RAM to process
         
         $orientation = 1;
         if (function_exists('exif_read_data')) {

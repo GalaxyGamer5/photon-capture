@@ -66,8 +66,8 @@ function moveImage($sourcePath, $destinationPath, $mimeType) {
     
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
         $oldMemoryLimit = ini_get('memory_limit');
-        $setMem = @ini_set('memory_limit', '512M'); 
-        file_put_contents($log, "  Mem old: $oldMemoryLimit. Set 512M: " . ($setMem !== false ? "ok" : "fail") . "\n", FILE_APPEND);
+        $setMem = @ini_set('memory_limit', '1024M'); 
+        file_put_contents($log, "  Mem old: $oldMemoryLimit. Set 1024M: " . ($setMem !== false ? "ok" : "fail") . "\n", FILE_APPEND);
         
         $orientation = 1;
         if (function_exists('exif_read_data')) {

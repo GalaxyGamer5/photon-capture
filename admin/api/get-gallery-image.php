@@ -59,7 +59,7 @@ if ($thumbnail_mode && function_exists('imagecreatefromjpeg')) {
 
     $src = null;
     $oldMemoryLimit = ini_get('memory_limit');
-    @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
+    @ini_set('memory_limit', '1024M'); // 100MP files need ~800MB RAM to process
 
     if ($mime === 'image/jpeg')  $src = @imagecreatefromjpeg($image_path);
     elseif ($mime === 'image/png')  $src = @imagecreatefrompng($image_path);
