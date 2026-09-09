@@ -10,35 +10,53 @@ header('Content-Type: application/json');
 
 // Move image and fix EXIF orientation for JPEGs
 function moveImage($sourcePath, $destinationPath, $mimeType) {
+    $log = __DIR__ . '/upload-debug.log';
+    file_put_contents($log, "[" . date('H:i:s') . "] Uploading $mimeType\n", FILE_APPEND);
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
         if (function_exists('exif_read_data')) {
             $oldMemoryLimit = ini_get('memory_limit');
-            @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
+            $setMem = @ini_set('memory_limit', '512M'); 
+            file_put_contents($log, "  exif_read_data exists. Mem old: $oldMemoryLimit. Set 512M: " . ($setMem !== false ? "ok" : "fail") . "\n", FILE_APPEND);
+            
             $exif = @exif_read_data($sourcePath);
-            if (!empty($exif['Orientation']) && $exif['Orientation'] != 1) {
-                $image = @imagecreatefromjpeg($sourcePath);
-                if ($image) {
-                    $orientation = $exif['Orientation'];
-                    switch ($orientation) {
-                        case 3:
-                            $image = imagerotate($image, 180, 0);
-                            break;
-                        case 6:
-                            $image = imagerotate($image, -90, 0);
-                            break;
-                        case 8:
-                            $image = imagerotate($image, 90, 0);
-                            break;
+            if ($exif === false) {
+                file_put_contents($log, "  EXIF read returned false\n", FILE_APPEND);
+            } else {
+                $orientation = isset($exif['Orientation']) ? $exif['Orientation'] : 'NONE';
+                file_put_contents($log, "  EXIF Orientation: $orientation\n", FILE_APPEND);
+                
+                if (!empty($exif['Orientation']) && $exif['Orientation'] != 1) {
+                    file_put_contents($log, "  Attempting imagecreatefromjpeg...\n", FILE_APPEND);
+                    $image = @imagecreatefromjpeg($sourcePath);
+                    if ($image) {
+                        file_put_contents($log, "  imagecreatefromjpeg SUCCEEDED\n", FILE_APPEND);
+                        switch ($orientation) {
+                            case 3:
+                                $image = imagerotate($image, 180, 0);
+                                break;
+                            case 6:
+                                $image = imagerotate($image, -90, 0);
+                                break;
+                            case 8:
+                                $image = imagerotate($image, 90, 0);
+                                break;
+                        }
+                        $success = imagejpeg($image, $destinationPath, 95);
+                        file_put_contents($log, "  imagejpeg save: " . ($success ? "SUCCESS" : "FAIL") . "\n", FILE_APPEND);
+                        imagedestroy($image);
+                        @ini_set('memory_limit', $oldMemoryLimit);
+                        if ($success) return true;
+                    } else {
+                        file_put_contents($log, "  imagecreatefromjpeg FAILED (likely out of memory)\n", FILE_APPEND);
                     }
-                    $success = imagejpeg($image, $destinationPath, 95);
-                    imagedestroy($image);
-                    @ini_set('memory_limit', $oldMemoryLimit);
-                    if ($success) return true;
                 }
             }
             @ini_set('memory_limit', $oldMemoryLimit);
+        } else {
+            file_put_contents($log, "  function exif_read_data DOES NOT EXIST on this server\n", FILE_APPEND);
         }
     }
+    file_put_contents($log, "  Falling back to move_uploaded_file\n", FILE_APPEND);
     return move_uploaded_file($sourcePath, $destinationPath);
 }
 
