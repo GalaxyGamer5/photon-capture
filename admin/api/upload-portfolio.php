@@ -2,8 +2,33 @@
 session_start();
 header('Content-Type: application/json');
 
-// Direct move without compression (compression happens on client side)
-function moveImage($sourcePath, $destinationPath) {
+// Move image and fix EXIF orientation for JPEGs
+function moveImage($sourcePath, $destinationPath, $mimeType) {
+    if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
+        if (function_exists('exif_read_data')) {
+            $exif = @exif_read_data($sourcePath);
+            if (!empty($exif['Orientation'])) {
+                $image = @imagecreatefromjpeg($sourcePath);
+                if ($image) {
+                    $orientation = $exif['Orientation'];
+                    switch ($orientation) {
+                        case 3:
+                            $image = imagerotate($image, 180, 0);
+                            break;
+                        case 6:
+                            $image = imagerotate($image, -90, 0);
+                            break;
+                        case 8:
+                            $image = imagerotate($image, 90, 0);
+                            break;
+                    }
+                    $success = imagejpeg($image, $destinationPath, 95);
+                    imagedestroy($image);
+                    if ($success) return true;
+                }
+            }
+        }
+    }
     return move_uploaded_file($sourcePath, $destinationPath);
 }
 
@@ -66,7 +91,7 @@ for ($i = 0; $i < $fileCount; $i++) {
     $filename = $id . '_' . time() . '.' . $ext;
     $targetPath = $targetDir . $filename;
     
-    if (move_uploaded_file($tmp_name, $targetPath)) {
+    if (moveImage($tmp_name, $targetPath, $mimeType)) {
         $uploadedCount++;
         $portfolioData['images'][] = [
             'id' => $id,
