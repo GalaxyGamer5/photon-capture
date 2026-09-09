@@ -12,8 +12,10 @@ header('Content-Type: application/json');
 function moveImage($sourcePath, $destinationPath, $mimeType) {
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
         if (function_exists('exif_read_data')) {
+            $oldMemoryLimit = ini_get('memory_limit');
+            @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
             $exif = @exif_read_data($sourcePath);
-            if (!empty($exif['Orientation'])) {
+            if (!empty($exif['Orientation']) && $exif['Orientation'] != 1) {
                 $image = @imagecreatefromjpeg($sourcePath);
                 if ($image) {
                     $orientation = $exif['Orientation'];
@@ -30,9 +32,11 @@ function moveImage($sourcePath, $destinationPath, $mimeType) {
                     }
                     $success = imagejpeg($image, $destinationPath, 95);
                     imagedestroy($image);
+                    @ini_set('memory_limit', $oldMemoryLimit);
                     if ($success) return true;
                 }
             }
+            @ini_set('memory_limit', $oldMemoryLimit);
         }
     }
     return move_uploaded_file($sourcePath, $destinationPath);

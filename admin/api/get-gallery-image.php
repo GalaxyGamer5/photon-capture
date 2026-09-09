@@ -58,9 +58,14 @@ if ($thumbnail_mode && function_exists('imagecreatefromjpeg')) {
     $mime = $info['mime'] ?? 'image/jpeg';
 
     $src = null;
+    $oldMemoryLimit = ini_get('memory_limit');
+    @ini_set('memory_limit', '512M'); // Large Sony A7V files need more memory
+
     if ($mime === 'image/jpeg')  $src = @imagecreatefromjpeg($image_path);
     elseif ($mime === 'image/png')  $src = @imagecreatefrompng($image_path);
     elseif ($mime === 'image/webp') $src = @imagecreatefromwebp($image_path);
+
+    @ini_set('memory_limit', $oldMemoryLimit);
 
     if ($src) {
         $origW = imagesx($src);
