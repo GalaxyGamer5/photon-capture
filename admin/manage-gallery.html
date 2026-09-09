@@ -669,7 +669,7 @@
                 formData.append('galleryId', currentUser.id);
                 formData.append('photos[]', f);
 
-                statusLabel.innerText = `Lade hoch... Datei ${i + 1} von ${totalFiles}`;
+                statusLabel.innerText = `Lade hoch... ${uploadedCount}/${totalFiles}`;
                 
                 try {
                     const response = await fetch('api/upload-photos.php', {
@@ -681,6 +681,8 @@
                         const res = await response.json();
                         if (res.success) {
                             uploadedCount += res.uploaded;
+                            // Immediately refresh the gallery so the photo is shown
+                            await init();
                         } else {
                             errorCount++;
                             console.error("Upload Fehler: " + res.error);
@@ -694,18 +696,19 @@
                 }
 
                 // Update progress bar
-                const percent = ((i + 1) / totalFiles) * 100;
+                const percent = (uploadedCount / totalFiles) * 100;
                 progressBar.style.width = Math.max(5, percent) + '%';
+                statusLabel.innerText = `Lade hoch... ${uploadedCount}/${totalFiles}`;
             }
 
             document.getElementById('progress-bar-container').style.display = 'none';
             if (errorCount === 0) {
                 statusLabel.innerText = `${uploadedCount} Fotos erfolgreich hochgeladen!`;
-                init(); // Refresh gallery
+                await init(); // Refresh gallery
             } else {
                 alert(`Upload abgeschlossen: ${uploadedCount} erfolgreich, ${errorCount} Fehler.`);
                 statusLabel.innerText = `Upload abgeschlossen mit Fehlern.`;
-                init(); // Refresh to show whatever uploaded successfully
+                await init(); // Refresh to show whatever uploaded successfully
             }
         }
 
