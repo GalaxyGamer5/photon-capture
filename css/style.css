@@ -10,41 +10,43 @@
     --bg-surface: #111111;
     --bg-surface-elevated: #161616;
     --bg-cream: #f4f1ea;
-    
+
     /* Text */
     --text-primary: #ffffff;
     --text-secondary: #8e8e8e;
     --text-muted: #5e5e5e;
     --text-dark: #0b0b0b;
     --text-dark-secondary: #555555;
-    
+
     /* Accent Terracotta / Warm Orange */
     --accent-orange: #ff7a3d;
     --accent-color: #ff7a3d;
     --accent-hover: #ff915c;
-    
+
     /* Borders & Hairlines */
     --border-hairline: #1c1c1c;
     --border-light: #282828;
     --border-cream: #dedad1;
-    
+
     /* Typography */
     --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    
+
     /* Dimensions */
     --max-width: 1200px;
     --header-height: 76px;
     --radius-pill: 9999px;
     --radius-sm: 4px;
-    
+
     /* Transitions */
     --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     --transition-normal: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -78,7 +80,10 @@ img {
     display: block;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
     font-family: inherit;
 }
 
@@ -176,7 +181,8 @@ button, input, select, textarea {
     margin-left: 0.5rem;
 }
 
-.lang-toggle, .portal-link {
+.lang-toggle,
+.portal-link {
     background: transparent;
     border: none;
     color: #ffffff;
@@ -193,7 +199,8 @@ button, input, select, textarea {
     transition: opacity var(--transition-fast), color var(--transition-fast);
 }
 
-.lang-toggle:hover, .portal-link:hover {
+.lang-toggle:hover,
+.portal-link:hover {
     opacity: 1;
     color: var(--accent-orange);
 }
@@ -1477,7 +1484,10 @@ button, input, select, textarea {
     background-color: #141414;
 }
 
-.day-cell.past, .day-cell.booked, .day-cell.unavailable, .day-cell.disabled {
+.day-cell.past,
+.day-cell.booked,
+.day-cell.unavailable,
+.day-cell.disabled {
     color: #383838;
     cursor: not-allowed;
     border-color: transparent;
@@ -1907,20 +1917,20 @@ button, input, select, textarea {
         grid-template-columns: 1fr;
         gap: 3.5rem;
     }
-    
+
     .photographer-frame {
         max-width: 480px;
     }
-    
+
     .service-row {
         grid-template-columns: 60px 1fr;
         row-gap: 1rem;
     }
-    
+
     .service-desc {
         grid-column: 2 / 3;
     }
-    
+
     .editorial-gallery-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1928,25 +1938,28 @@ button, input, select, textarea {
     .camera-roll-stage {
         min-height: 480px;
     }
+
     .camera-roll-viewport {
         height: 480px;
     }
+
     .camera-card {
         width: 300px;
         height: 430px;
         top: -215px;
         left: -150px;
     }
+
     .camera-roll-stage::before,
     .camera-roll-stage::after {
         width: 80px;
     }
-    
+
     .contact-grid {
         grid-template-columns: 1fr;
         gap: 4rem;
     }
-    
+
     .booking-grid {
         grid-template-columns: 1fr;
         gap: 4rem;
@@ -1966,30 +1979,30 @@ button, input, select, textarea {
         gap: 1.5rem;
         border-bottom: 1px solid var(--border-hairline);
     }
-    
+
     .nav-links.active {
         display: flex;
     }
-    
+
     .hamburger {
         display: flex;
     }
-    
+
     .pricing-row {
         grid-template-columns: 40px 1fr;
         row-gap: 0.75rem;
     }
-    
+
     .pkg-features {
         grid-column: 2 / 3;
         padding-right: 0;
     }
-    
+
     .pkg-price {
         grid-column: 2 / 3;
         text-align: left;
     }
-    
+
     .editorial-gallery-grid {
         grid-template-columns: 1fr;
     }
@@ -1998,51 +2011,70 @@ button, input, select, textarea {
         min-height: 410px;
         margin-top: 1.5rem;
     }
+
     .camera-roll-viewport {
         height: 410px;
         perspective: 900px;
     }
+
     .camera-card {
         width: 250px;
         height: 360px;
         top: -180px;
         left: -125px;
     }
+
     .camera-roll-stage::before,
     .camera-roll-stage::after {
         width: 40px;
     }
+
     .roll-nav-btn {
         width: 40px;
         height: 40px;
     }
-    .roll-nav-btn.prev { left: 0.5rem; }
-    .roll-nav-btn.next { right: 0.5rem; }
+
+    .roll-nav-btn.prev {
+        left: 0.5rem;
+    }
+
+    .roll-nav-btn.next {
+        right: 0.5rem;
+    }
+
     .camera-roll-footer {
         flex-direction: column;
         align-items: center;
         gap: 1rem;
     }
+
     .roll-scrubber-wrap {
         width: 100%;
         max-width: 100%;
     }
+
     .lightbox-nav {
         width: 42px;
         height: 42px;
     }
-    .lightbox-prev { left: 0.75rem; }
-    .lightbox-next { right: 0.75rem; }
-    
+
+    .lightbox-prev {
+        left: 0.75rem;
+    }
+
+    .lightbox-next {
+        right: 0.75rem;
+    }
+
     .contact-card-box {
         padding: 2rem 1.5rem;
     }
-    
+
     .booking-stepper {
         gap: 1.5rem;
         overflow-x: auto;
     }
-    
+
     .date-time-row {
         grid-template-columns: 1fr;
         gap: 1.5rem;
