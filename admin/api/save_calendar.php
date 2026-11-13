@@ -31,7 +31,7 @@ try {
     $now = date('Y-m-d H:i:s');
 
     foreach ($data as $date => $val) {
-        $status = is_array($val) ? ($val['status'] ?? 'available') : (string)$val;
+        $status = is_array($val) ? ($val['status'] ?? 'available') : (string) $val;
         $stmt->execute([$date, $status, $now]);
     }
 

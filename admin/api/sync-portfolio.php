@@ -65,3 +65,4 @@ echo json_encode([
     'errors'  => $errors,
     'message' => "{$added} Bilder hinzugefügt, {$skipped} bereits vorhanden."
 ]);
+

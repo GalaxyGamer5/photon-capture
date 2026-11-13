@@ -39,7 +39,8 @@ try {
     ");
 
     foreach ($data['users'] as $u) {
-        if (empty($u['username'])) continue;
+        if (empty($u['username']))
+            continue;
         $uname = trim($u['username']);
         $submittedUsernames[] = $uname;
 
@@ -48,7 +49,7 @@ try {
             $u['passwordHash'] ?? '',
             $u['name'] ?? $uname,
             $u['folder'] ?? ($uname . '-gallery'),
-            (int)($u['imageCount'] ?? 0),
+            (int) ($u['imageCount'] ?? 0),
             isset($u['isProtected']) ? ($u['isProtected'] ? 1 : 0) : 1
         ]);
     }
