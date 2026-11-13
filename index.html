@@ -67,10 +67,70 @@
         <!-- Hero Section -->
         <section id="hero" class="hero-section">
             <div class="hero-bg-media"></div>
+            <!-- Interactive 3D Photon Particle Canvas -->
+            <canvas id="photonCanvas" class="photon-canvas"></canvas>
+
             <div class="container hero-container">
                 <div class="hero-text-content">
                     <span class="section-kicker" data-i18n="hero.kicker">FOTOGRAFIE AUS DRESDEN</span>
                     <h1 class="hero-headline" data-i18n="hero.title">Eure schönsten<br>Momente für die<br>Ewigkeit.</h1>
+                    
+                    <div class="hero-actions">
+                        <button class="photon-trigger-btn" id="photonTriggerBtn" title="Photonen einfangen">
+                            <span class="pt-icon">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            </span>
+                            <span class="pt-label">PHOTONEN EINFANGEN</span>
+                            <span class="pt-badge">CAPTURE</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive 3D Camera Lens & Optical Chamber -->
+                <div class="hero-lens-stage" id="heroLensStage" title="Klicke, um Photonen einzufangen">
+                    <div class="lens-barrel-ring outer">
+                        <span class="lens-mark f-mark">50mm F/1.2 GM</span>
+                        <span class="lens-mark dia-mark">Ø 72mm</span>
+                    </div>
+                    
+                    <div class="lens-barrel-ring mid">
+                        <!-- Aperture Iris Blades -->
+                        <div class="lens-aperture-iris" id="lensApertureIris">
+                            <div class="iris-blade b1"></div>
+                            <div class="iris-blade b2"></div>
+                            <div class="iris-blade b3"></div>
+                            <div class="iris-blade b4"></div>
+                            <div class="iris-blade b5"></div>
+                            <div class="iris-blade b6"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sensor Plane (Where Photons are Captured) -->
+                    <div class="lens-sensor-plane" id="lensSensorPlane">
+                        <div class="sensor-grid-lines"></div>
+
+                        <div class="sensor-image-frame" id="sensorImageFrame">
+                            <img id="sensorCapturedImg" src="" alt="Captured Moment" style="display: none;">
+                            <div class="sensor-placeholder-logo" id="sensorPlaceholderLogo">
+                                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M3 9V5a2 2 0 0 1 2-2h4M19 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+                                </svg>
+                                <span>PHOTON CAPTURE</span>
+                            </div>
+                            <div class="sensor-exposure-flash" id="sensorExposureFlash"></div>
+                        </div>
+
+                        <div class="sensor-hud-overlay">
+                            <span class="sensor-stat status" id="sensorStatusText">STANDBY · READY</span>
+                            <span class="sensor-stat exp" id="sensorExpText">FULL FRAME 36×24</span>
+                        </div>
+                    </div>
+
+                    <!-- Front Glass Element with Optical Reflection -->
+                    <div class="lens-glass-element">
+                        <div class="lens-glare-reflection"></div>
+                    </div>
                 </div>
             </div>
         </section>
