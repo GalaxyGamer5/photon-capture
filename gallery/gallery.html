@@ -521,11 +521,8 @@
                     </div>
                     <img src="${imgSrc}" loading="lazy" alt="Foto ${imageNum}">
                     <div class="gallery-overlay">
-                        <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${imageNum})" style="margin-right: 0.5rem;" title="Als Favorit markieren">
+                        <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${imageNum})" title="Als Favorit markieren">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        </button>
-                        <button class="btn-icon" onclick="openLightbox(${idx})" title="Vollbild">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                         </button>
                     </div>
                 `;

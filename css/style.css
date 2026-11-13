@@ -758,27 +758,6 @@ textarea {
     opacity: 1;
 }
 
-.view-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(23, 23, 22, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-full);
-    transform: translateY(6px);
-    transition: transform var(--transition-fast), border-color var(--transition-fast);
-}
-
-.camera-card.is-center:hover .view-pill {
-    transform: translateY(0);
-    border-color: var(--accent-orange);
-}
-
 /* Film Bottom Bar */
 .film-footer {
     display: flex;
@@ -917,19 +896,6 @@ textarea {
     background: linear-gradient(to right, rgba(224, 90, 43, 0.7), var(--accent-orange));
     border-radius: 2px;
     transition: width 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.roll-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 0.04em;
-}
-
-.roll-hint svg {
-    color: var(--accent-orange);
 }
 
 /* ==========================================================================
