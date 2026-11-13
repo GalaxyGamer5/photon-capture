@@ -1,4 +1,5 @@
 <?php
+// gallery/api/get-favorites.php
 session_start();
 header('Content-Type: application/json');
 
@@ -8,16 +9,18 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true ||
     exit;
 }
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $username = $_SESSION['user']['username'];
-$file = __DIR__ . '/../data/favorites.json';
 
-$favorites = [];
-if (file_exists($file)) {
-    $content = file_get_contents($file);
-    $data = json_decode($content, true);
-    if (is_array($data) && isset($data[$username])) {
-        $favorites = $data[$username];
-    }
+try {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT filename FROM favorites WHERE username = ? ORDER BY id ASC");
+    $stmt->execute([$username]);
+    $favorites = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    echo json_encode(['success' => true, 'favorites' => $favorites ?: []]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }
-
-echo json_encode(['success' => true, 'favorites' => $favorites]);

@@ -1,4 +1,5 @@
 <?php
+// gallery/api/toggle-favorite.php
 session_start();
 header('Content-Type: application/json');
 
@@ -14,35 +15,39 @@ if (!isset($input['image'])) {
     exit;
 }
 
-$image = $input['image'];
+require_once __DIR__ . '/../../includes/db.php';
+
+$image = trim($input['image']);
 $username = $_SESSION['user']['username'];
-$file = __DIR__ . '/../data/favorites.json';
 
-$data = [];
-if (file_exists($file)) {
-    $content = file_get_contents($file);
-    $data = json_decode($content, true) ?: [];
-}
+try {
+    $db = getDB();
 
-if (!isset($data[$username])) {
-    $data[$username] = [];
-}
+    // Check if already favorite
+    $checkStmt = $db->prepare("SELECT id FROM favorites WHERE username = ? AND filename = ?");
+    $checkStmt->execute([$username, $image]);
+    $existing = $checkStmt->fetch();
 
-$index = array_search($image, $data[$username]);
-$isFavorite = false;
+    $isFavorite = false;
+    if ($existing) {
+        // Remove
+        $delStmt = $db->prepare("DELETE FROM favorites WHERE username = ? AND filename = ?");
+        $delStmt->execute([$username, $image]);
+        $isFavorite = false;
+    } else {
+        // Insert
+        $insStmt = $db->prepare("INSERT INTO favorites (username, filename) VALUES (?, ?)");
+        $insStmt->execute([$username, $image]);
+        $isFavorite = true;
+    }
 
-if ($index !== false) {
-    // Remove from favorites
-    array_splice($data[$username], $index, 1);
-} else {
-    // Add to favorites
-    $data[$username][] = $image;
-    $isFavorite = true;
-}
+    // Get updated list
+    $listStmt = $db->prepare("SELECT filename FROM favorites WHERE username = ? ORDER BY id ASC");
+    $listStmt->execute([$username]);
+    $favorites = $listStmt->fetchAll(PDO::FETCH_COLUMN);
 
-if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    echo json_encode(['success' => true, 'isFavorite' => $isFavorite, 'favorites' => $data[$username]]);
-} else {
+    echo json_encode(['success' => true, 'isFavorite' => $isFavorite, 'favorites' => $favorites ?: []]);
+} catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to save favorites']);
+    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }

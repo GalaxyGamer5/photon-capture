@@ -119,38 +119,45 @@ if (!isset($_POST['galleryId']) || !isset($_FILES['photos'])) {
     exit;
 }
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $galleryId = $_POST['galleryId'];
 
-// Load users database to get folder name
-$usersFile = __DIR__ . '/../../gallery/data/users.js';
-if (!file_exists($usersFile)) {
-    echo json_encode(['success' => false, 'error' => 'User database file missing']);
-    exit;
-}
-
-$usersContent = file_get_contents($usersFile);
-if (!$usersContent || !preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches)) {
-    echo json_encode(['success' => false, 'error' => 'Invalid user database format']);
-    exit;
-}
-
-$usersData = json_decode($matches[1], true);
-if (!$usersData || !isset($usersData['users'])) {
-    echo json_encode(['success' => false, 'error' => 'Failed to parse user database']);
-    exit;
-}
-
-// Find the gallery
+$db = null;
 $gallery = null;
-foreach ($usersData['users'] as &$user) {
-    if ($user['id'] === $galleryId) {
-        $gallery = &$user;
-        break;
+try {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, username, folder, image_count FROM users WHERE id = ? OR username = ? LIMIT 1");
+    $stmt->execute([$galleryId, $galleryId]);
+    $uRow = $stmt->fetch();
+    if ($uRow) {
+        $gallery = [
+            'id' => (string)$uRow['id'],
+            'username' => $uRow['username'],
+            'folder' => $uRow['folder'],
+            'imageCount' => (int)$uRow['image_count']
+        ];
+    }
+} catch (Exception $e) {}
+
+// Fallback to users.js if not found in SQL
+$usersFile = __DIR__ . '/../../gallery/data/users.js';
+$usersData = ['users' => []];
+if (!$gallery && file_exists($usersFile)) {
+    $usersContent = file_get_contents($usersFile);
+    if ($usersContent && preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches)) {
+        $usersData = json_decode($matches[1], true) ?: ['users' => []];
+        foreach ($usersData['users'] as &$user) {
+            if ($user['id'] === $galleryId || ($user['username'] ?? '') === $galleryId) {
+                $gallery = &$user;
+                break;
+            }
+        }
     }
 }
 
 if (!$gallery) {
-    echo json_encode(['success' => false, 'error' => 'Gallery not found']);
+    echo json_encode(['success' => false, 'error' => 'Gallery/User not found']);
     exit;
 }
 
@@ -206,17 +213,21 @@ for ($i = 0; $i < $fileCount; $i++) {
     }
 }
 
-// Update user's image count in database
+// Update user's image count in SQL database
+if ($db) {
+    try {
+        $upd = $db->prepare("UPDATE users SET image_count = ? WHERE id = ? OR username = ?");
+        $upd->execute([$currentCount, $gallery['id'], $gallery['username']]);
+        syncUsersJs($db);
+    } catch (Exception $e) {}
+}
+
 $gallery['imageCount'] = $currentCount;
-
-// Save updated users.js
-$jsContent = "// Client-side user database\n";
-$jsContent .= "// In a real application, this would be a server-side database\n";
-$jsContent .= "window.usersDatabase = " . json_encode($usersData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
-
-if (file_put_contents($usersFile, $jsContent) === false) {
-    echo json_encode(['success' => false, 'error' => 'Failed to update user database']);
-    exit;
+if (!empty($usersData['users'])) {
+    $jsContent = "// Client-side user database\n";
+    $jsContent .= "// In a real application, this would be a server-side database\n";
+    $jsContent .= "window.usersDatabase = " . json_encode($usersData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
+    @file_put_contents($usersFile, $jsContent);
 }
 
 echo json_encode([

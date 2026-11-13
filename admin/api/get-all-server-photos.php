@@ -5,23 +5,48 @@ header('Content-Type: application/json');
 $baseDir = realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR;
 $allPhotos = [];
 
-// 1. Portfolio (from JSON index)
-$portfolioFile = $baseDir . 'data/portfolio.json';
-if (file_exists($portfolioFile)) {
-    $data = json_decode(file_get_contents($portfolioFile), true);
-    if (isset($data['images'])) {
-        foreach ($data['images'] as $img) {
-            $fullPath = $baseDir . 'assets/portfolio/' . $img['filename'];
-            $allPhotos[] = [
-                'url'    => '/assets/portfolio/' . $img['filename'],
-                'path'   => 'assets/portfolio/' . $img['filename'],
-                'name'   => $img['filename'],
-                'source' => 'Portfolio',
-                'date'   => $img['date'] ?? '',
-                'size'   => file_exists($fullPath)
-                    ? round(filesize($fullPath) / 1024 / 1024, 2) . ' MB'
-                    : '–'
-            ];
+// 1. Portfolio (from DB with JSON fallback)
+require_once __DIR__ . '/../../includes/db.php';
+
+$portfolioRows = [];
+try {
+    $db = getDB();
+    $stmt = $db->query("SELECT filename, created_at AS date FROM portfolio ORDER BY created_at DESC");
+    $portfolioRows = $stmt->fetchAll();
+} catch (Exception $e) {}
+
+if (!empty($portfolioRows)) {
+    foreach ($portfolioRows as $img) {
+        $fullPath = $baseDir . 'assets/portfolio/' . $img['filename'];
+        $allPhotos[] = [
+            'url'    => '/assets/portfolio/' . $img['filename'],
+            'path'   => 'assets/portfolio/' . $img['filename'],
+            'name'   => $img['filename'],
+            'source' => 'Portfolio',
+            'date'   => $img['date'] ?? '',
+            'size'   => file_exists($fullPath)
+                ? round(filesize($fullPath) / 1024 / 1024, 2) . ' MB'
+                : '–'
+        ];
+    }
+} else {
+    $portfolioFile = $baseDir . 'data/portfolio.json';
+    if (file_exists($portfolioFile)) {
+        $data = json_decode(file_get_contents($portfolioFile), true);
+        if (isset($data['images'])) {
+            foreach ($data['images'] as $img) {
+                $fullPath = $baseDir . 'assets/portfolio/' . $img['filename'];
+                $allPhotos[] = [
+                    'url'    => '/assets/portfolio/' . $img['filename'],
+                    'path'   => 'assets/portfolio/' . $img['filename'],
+                    'name'   => $img['filename'],
+                    'source' => 'Portfolio',
+                    'date'   => $img['date'] ?? '',
+                    'size'   => file_exists($fullPath)
+                        ? round(filesize($fullPath) / 1024 / 1024, 2) . ' MB'
+                        : '–'
+                ];
+            }
         }
     }
 }

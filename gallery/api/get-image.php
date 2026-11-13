@@ -33,24 +33,36 @@ if (!file_exists($image_path)) {
     exit('Image not found');
 }
 
-// Load users database to check protection status
-$usersFile = __DIR__ . '/../data/users.js';
-if (!file_exists($usersFile)) {
-    $usersFile = __DIR__ . '/../gallery/data/users.js';
-}
+// Check protection status (from session, DB, or fallback to users.js)
+$isProtected = isset($user['isProtected']) ? (bool)$user['isProtected'] : false;
 
-$isProtected = false;
-
-if (file_exists($usersFile)) {
-    $usersContent = file_get_contents($usersFile);
-    preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
-    if (isset($matches[1])) {
-        $usersData = json_decode($matches[1], true);
-        if ($usersData && isset($usersData['users'])) {
-            foreach ($usersData['users'] as $u) {
-                if ($u['username'] === $user['username']) {
-                    $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
-                    break;
+if (!isset($user['isProtected'])) {
+    try {
+        require_once __DIR__ . '/../../includes/db.php';
+        $db = getDB();
+        $stmt = $db->prepare("SELECT is_protected FROM users WHERE username = ? LIMIT 1");
+        $stmt->execute([$user['username']]);
+        $val = $stmt->fetchColumn();
+        if ($val !== false) {
+            $isProtected = (bool)$val;
+        }
+    } catch (Exception $e) {
+        $usersFile = __DIR__ . '/../data/users.js';
+        if (!file_exists($usersFile)) {
+            $usersFile = __DIR__ . '/../gallery/data/users.js';
+        }
+        if (file_exists($usersFile)) {
+            $usersContent = file_get_contents($usersFile);
+            preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
+            if (isset($matches[1])) {
+                $usersData = json_decode($matches[1], true);
+                if ($usersData && isset($usersData['users'])) {
+                    foreach ($usersData['users'] as $u) {
+                        if ($u['username'] === $user['username']) {
+                            $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
+                            break;
+                        }
+                    }
                 }
             }
         }

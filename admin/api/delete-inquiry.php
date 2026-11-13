@@ -1,8 +1,9 @@
 <?php
+// admin/api/delete-inquiry.php
 session_start();
 header('Content-Type: application/json');
 
-
+require_once __DIR__ . '/../../includes/db.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 if (!isset($data['id'])) {
@@ -11,30 +12,14 @@ if (!isset($data['id'])) {
 }
 
 $id = $data['id'];
-$file = __DIR__ . '/../../data/inquiries.json';
 
-if (!file_exists($file)) {
-    echo json_encode(['success' => false, 'error' => 'Database not found']);
-    exit;
+try {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM inquiries WHERE id = ?");
+    $stmt->execute([$id]);
+
+    echo json_encode(['success' => true]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
-
-$db = json_decode(file_get_contents($file), true);
-$inquiries = $db['inquiries'] ?? [];
-$found = false;
-
-foreach ($inquiries as $index => $item) {
-    if ($item['id'] === $id) {
-        array_splice($db['inquiries'], $index, 1);
-        $found = true;
-        break;
-    }
-}
-
-if (!$found) {
-    echo json_encode(['success' => false, 'error' => 'Inquiry not found']);
-    exit;
-}
-
-if (file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-}
-echo json_encode(['success' => true]);

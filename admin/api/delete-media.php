@@ -70,63 +70,72 @@ foreach ($input['paths'] as $relPath) {
 }
 
 
-// Bulk update gallery users.js
+require_once __DIR__ . '/../../includes/db.php';
+
+$db = null;
+try {
+    $db = getDB();
+} catch (Exception $e) {}
+
+// Bulk update gallery users
 if (!empty($affectedGalleryFolders)) {
     try {
-        $usersFile = $baseDir . 'gallery' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'users.js';
-        if (file_exists($usersFile)) {
-            $content = file_get_contents($usersFile);
-            if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches)) {
-                $data = json_decode($matches[1], true);
-                if ($data !== null) {
-                    $changed = false;
-                    foreach (array_keys($affectedGalleryFolders) as $folder) {
-                        $folderName = basename($folder);
-                        if (isset($data['users']) && is_array($data['users'])) {
-                            foreach ($data['users'] as &$user) {
-                                if (isset($user['folder']) && $user['folder'] === $folderName) {
-                                    $imagesCount = 0;
-                                    if (is_dir($folder)) {
-                                        $filesList = [];
-                                        foreach (scandir($folder) as $file) {
-                                            if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
-                                                $filesList[] = $file;
-                                            }
-                                        }
-                                        // Natural sort so 2.jpg comes before 10.jpg
-                                        natsort($filesList);
-                                        $filesList = array_values($filesList);
-                                        
-                                        $counter = 1;
-                                        foreach ($filesList as $file) {
-                                            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                                            $expectedName = $counter . '.' . $ext;
-                                            $oldPath = $folder . DIRECTORY_SEPARATOR . $file;
-                                            $newPath = $folder . DIRECTORY_SEPARATOR . $expectedName;
-                                            
-                                            if ($oldPath !== $newPath && strtolower($file) !== $expectedName) {
-                                                rename($oldPath, $newPath);
-                                                // Also rename the cached thumbnail so it stays in sync
-                                                $thumbsDir = $folder . DIRECTORY_SEPARATOR . '_thumbs';
-                                                $oldThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $file;
-                                                $newThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $expectedName;
-                                                if (is_file($oldThumb)) {
-                                                    rename($oldThumb, $newThumb);
-                                                }
-                                            }
-                                            $imagesCount++;
-                                            $counter++;
-                                        }
+        $folderCounts = [];
+        foreach (array_keys($affectedGalleryFolders) as $folder) {
+            $folderName = basename($folder);
+            $imagesCount = 0;
+            if (is_dir($folder)) {
+                $filesList = [];
+                foreach (scandir($folder) as $file) {
+                    if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file)) {
+                        $filesList[] = $file;
+                    }
+                }
+                natsort($filesList);
+                $filesList = array_values($filesList);
 
-                                    }
-                                    $user['imageCount'] = $imagesCount;
-                                    $changed = true;
-                                    break;
-                                }
-                            }
+                $counter = 1;
+                foreach ($filesList as $file) {
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    $expectedName = $counter . '.' . $ext;
+                    $oldPath = $folder . DIRECTORY_SEPARATOR . $file;
+                    $newPath = $folder . DIRECTORY_SEPARATOR . $expectedName;
+
+                    if ($oldPath !== $newPath && strtolower($file) !== $expectedName) {
+                        rename($oldPath, $newPath);
+                        $thumbsDir = $folder . DIRECTORY_SEPARATOR . '_thumbs';
+                        $oldThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $file;
+                        $newThumb  = $thumbsDir . DIRECTORY_SEPARATOR . $expectedName;
+                        if (is_file($oldThumb)) {
+                            rename($oldThumb, $newThumb);
                         }
                     }
-                    if ($changed) {
+                    $imagesCount++;
+                    $counter++;
+                }
+            }
+            $folderCounts[$folderName] = $imagesCount;
+
+            if ($db) {
+                $stmt = $db->prepare("UPDATE users SET image_count = ? WHERE folder = ?");
+                $stmt->execute([$imagesCount, $folderName]);
+            }
+        }
+
+        if ($db) {
+            syncUsersJs($db);
+        } else {
+            $usersFile = $baseDir . 'gallery' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'users.js';
+            if (file_exists($usersFile)) {
+                $content = file_get_contents($usersFile);
+                if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches)) {
+                    $data = json_decode($matches[1], true);
+                    if ($data !== null && isset($data['users']) && is_array($data['users'])) {
+                        foreach ($data['users'] as &$user) {
+                            if (isset($user['folder'], $folderCounts[$user['folder']])) {
+                                $user['imageCount'] = $folderCounts[$user['folder']];
+                            }
+                        }
                         $jsContent = "// Client-side user database\n";
                         $jsContent .= "// In a real application, this would be a server-side database\n";
                         $jsContent .= "window.usersDatabase = " . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
@@ -136,13 +145,19 @@ if (!empty($affectedGalleryFolders)) {
             }
         }
     } catch (\Throwable $e) {
-        $errors[] = "JSON update error (gallery): " . $e->getMessage();
+        $errors[] = "User/gallery update error: " . $e->getMessage();
     }
 }
 
-// Bulk update portfolio.json
+// Bulk update portfolio
 if (!empty($affectedPortfolioFiles)) {
     try {
+        if ($db) {
+            $placeholders = implode(',', array_fill(0, count($affectedPortfolioFiles), '?'));
+            $stmt = $db->prepare("DELETE FROM portfolio WHERE filename IN ($placeholders)");
+            $stmt->execute($affectedPortfolioFiles);
+        }
+
         $portfolioFile = $baseDir . 'data' . DIRECTORY_SEPARATOR . 'portfolio.json';
         if (file_exists($portfolioFile)) {
             $data = json_decode(file_get_contents($portfolioFile), true);
@@ -154,7 +169,7 @@ if (!empty($affectedPortfolioFiles)) {
             }
         }
     } catch (\Throwable $e) {
-        $errors[] = "JSON update error (portfolio): " . $e->getMessage();
+        $errors[] = "Portfolio update error: " . $e->getMessage();
     }
 }
 

@@ -48,14 +48,19 @@ function deleteDirectory($dir) {
     return rmdir($dir);
 }
 
+require_once __DIR__ . '/../../includes/db.php';
+
 // Execute the deletion safely
 if (file_exists($targetDir) && is_dir($targetDir)) {
-    if (deleteDirectory($targetDir)) {
-        echo json_encode(['success' => true, 'message' => 'Folder and files deleted']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to delete some files']);
-    }
-} else {
-    // If the folder didn't exist anyway, consider it a success
-    echo json_encode(['success' => true, 'message' => 'Folder already did not exist']);
+    deleteDirectory($targetDir);
 }
+
+// Delete user from SQL database if matching folder
+try {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM users WHERE folder = ?");
+    $stmt->execute([$folder]);
+    syncUsersJs($db);
+} catch (Exception $e) {}
+
+echo json_encode(['success' => true, 'message' => 'Folder and user deleted']);

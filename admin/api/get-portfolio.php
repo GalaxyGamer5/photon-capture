@@ -1,23 +1,19 @@
 <?php
-session_start();
+// admin/api/get-portfolio.php
 header('Content-Type: application/json');
 
-$file = __DIR__ . '/../../data/portfolio.json';
+require_once __DIR__ . '/../../includes/db.php';
 
-if (!file_exists($file)) {
-    echo json_encode(['success' => true, 'images' => []]);
-    exit;
+try {
+    $db = getDB();
+    $stmt = $db->query("SELECT id, filename, category, created_at AS date FROM portfolio ORDER BY created_at DESC");
+    $images = $stmt->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'images' => $images ?: []
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
-
-$data = json_decode(file_get_contents($file), true);
-
-// Sort by date (newest first)
-$images = $data['images'] ?? [];
-usort($images, function($a, $b) {
-    return strtotime($b['date']) - strtotime($a['date']);
-});
-
-echo json_encode([
-    'success' => true,
-    'images' => array_values($images)
-]);

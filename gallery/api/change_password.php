@@ -1,75 +1,47 @@
 <?php
-// customers/api/change_password.php
+// gallery/api/change_password.php
+session_start();
 header('Content-Type: application/json');
 
-// Get JSON input
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
+require_once __DIR__ . '/../../includes/db.php';
 
-if (!isset($data['userId']) || !isset($data['oldPasswordHash']) || !isset($data['newPasswordHash'])) {
+$input = json_decode(file_get_contents('php://input'), true);
+
+if (!isset($input['userId']) || !isset($input['oldPasswordHash']) || !isset($input['newPasswordHash'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Missing required fields']);
     exit;
 }
 
-$userId = $data['userId'];
-$oldHash = $data['oldPasswordHash'];
-$newHash = $data['newPasswordHash'];
+$userId = $input['userId'];
+$oldHash = $input['oldPasswordHash'];
+$newHash = $input['newPasswordHash'];
 
-$usersFile = __DIR__ . '/../data/users.js';
+try {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, password_hash FROM users WHERE id = ? OR username = ? LIMIT 1");
+    $stmt->execute([$userId, $userId]);
+    $user = $stmt->fetch();
 
-if (!file_exists($usersFile)) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database not found']);
-    exit;
-}
-
-// Read the JS file
-$content = file_get_contents($usersFile);
-
-// Extract JSON part using regex (matches window.usersDatabase = { ... };)
-if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $matches)) {
-    $jsonStr = $matches[1];
-    $userData = json_decode($jsonStr, true);
-
-    if ($userData === null) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Database corruption']);
+    if (!$user) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'User not found']);
         exit;
     }
 
-    // Find user and verify old password
-    $userFound = false;
-    foreach ($userData['users'] as &$user) {
-        if ($user['id'] === $userId) {
-            $userFound = true;
-            if ($user['passwordHash'] === $oldHash) {
-                // Update password
-                $user['passwordHash'] = $newHash;
-                
-                // Save back to file
-                $newJsonStr = json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                $newContent = "window.usersDatabase = " . $newJsonStr . ";";
-                
-                if (file_put_contents($usersFile, $newContent)) {
-                    echo json_encode(['success' => true]);
-                } else {
-                    http_response_code(500);
-                    echo json_encode(['success' => false, 'message' => 'Write error']);
-                }
-                exit;
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Old password incorrect']);
-                exit;
-            }
-        }
+    if ($user['password_hash'] !== $oldHash) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Altes Passwort ist nicht korrekt']);
+        exit;
     }
 
-    if (!$userFound) {
-        echo json_encode(['success' => false, 'message' => 'User not found']);
-    }
+    $updateStmt = $db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+    $updateStmt->execute([$newHash, $user['id']]);
 
-} else {
+    syncUsersJs($db);
+
+    echo json_encode(['success' => true]);
+} catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database format error']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

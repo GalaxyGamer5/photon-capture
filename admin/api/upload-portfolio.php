@@ -115,11 +115,18 @@ if (!file_exists($targetDir)) {
 }
 @chmod($targetDir, 0775);
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $portfolioFile = __DIR__ . '/../../data/portfolio.json';
 $portfolioData = ['images' => []];
 if (file_exists($portfolioFile)) {
-    $portfolioData = json_decode(file_get_contents($portfolioFile), true);
+    $portfolioData = json_decode(file_get_contents($portfolioFile), true) ?: ['images' => []];
 }
+
+$db = null;
+try {
+    $db = getDB();
+} catch (Exception $e) {}
 
 $uploadedCount = 0;
 $errors = [];
@@ -153,15 +160,27 @@ for ($i = 0; $i < $fileCount; $i++) {
     $id = uniqid();
     $filename = $id . '_' . time() . '.' . $ext;
     $targetPath = $targetDir . $filename;
+    $now = date('Y-m-d H:i:s');
     
     if (moveImage($tmp_name, $targetPath, $mimeType)) {
         @chmod($targetPath, 0666);
         $uploadedCount++;
+        
+        // Save to SQL database
+        if ($db) {
+            try {
+                $ins = $db->prepare("INSERT INTO portfolio (id, filename, category, created_at) VALUES (?, ?, ?, ?)");
+                $ins->execute([$id, $filename, $category, $now]);
+            } catch (Exception $e) {
+                $errors[] = "DB error for {$name}: " . $e->getMessage();
+            }
+        }
+
         $portfolioData['images'][] = [
             'id' => $id,
             'filename' => $filename,
             'category' => $category,
-            'date' => date('Y-m-d H:i:s')
+            'date' => $now
         ];
     } else {
         $errors[] = "File {$name}: Failed to compress or save";

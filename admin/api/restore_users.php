@@ -10,6 +10,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $baseDir = realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR;
 $dataDir = $baseDir . 'gallery' . DIRECTORY_SEPARATOR . 'data';
 $assetsDir = $baseDir . 'gallery' . DIRECTORY_SEPARATOR . 'assets';
@@ -19,15 +21,28 @@ $backupsDir = $dataDir . DIRECTORY_SEPARATOR . 'backups';
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? 'list');
 
-// Helper to load current users
-function getCurrentUsers($usersFile) {
-    if (!file_exists($usersFile)) return ['users' => []];
-    $content = @file_get_contents($usersFile);
-    if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $m)) {
-        $data = json_decode($m[1], true);
-        if ($data && isset($data['users'])) return $data;
+function getKnownUserFolders() {
+    $folders = [];
+    try {
+        $db = getDB();
+        $stmt = $db->query("SELECT folder FROM users");
+        $folders = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {}
+
+    // Also check users.js
+    global $usersFile;
+    if (file_exists($usersFile)) {
+        $content = @file_get_contents($usersFile);
+        if (preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $content, $m)) {
+            $data = json_decode($m[1], true);
+            if (!empty($data['users'])) {
+                foreach ($data['users'] as $u) {
+                    if (!empty($u['folder'])) $folders[] = $u['folder'];
+                }
+            }
+        }
     }
-    return ['users' => []];
+    return array_unique($folders);
 }
 
 // 1. List existing backups
@@ -65,15 +80,9 @@ if ($action === 'list') {
     exit;
 }
 
-// 2. Scan gallery/assets/ for folders that exist on disk but are not in users.js
+// 2. Scan gallery/assets/ for folders that exist on disk but are not in database
 if ($action === 'scan_folders') {
-    $current = getCurrentUsers($usersFile);
-    $knownFolders = [];
-    foreach ($current['users'] as $u) {
-        if (!empty($u['folder'])) {
-            $knownFolders[] = $u['folder'];
-        }
-    }
+    $knownFolders = getKnownUserFolders();
 
     $orphanFolders = [];
     if (is_dir($assetsDir)) {
@@ -82,7 +91,6 @@ if ($action === 'scan_folders') {
             if ($item === '.' || $item === '..' || $item === 'demo') continue;
             $itemPath = $assetsDir . DIRECTORY_SEPARATOR . $item;
             if (is_dir($itemPath)) {
-                // Count valid images
                 $files = scandir($itemPath);
                 $imageCount = 0;
                 foreach ($files as $f) {
@@ -93,7 +101,6 @@ if ($action === 'scan_folders') {
 
                 $isKnown = in_array($item, $knownFolders);
                 if (!$isKnown) {
-                    // Suggested clean name from folder name
                     $suggestedName = str_replace(['-gallery', '_gallery', '-', '_'], [' ', ' ', ' ', ' '], $item);
                     $suggestedName = ucwords(trim($suggestedName));
                     $suggestedUser = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', str_replace(['-gallery', '_gallery'], '', $item)));
@@ -133,22 +140,45 @@ if ($action === 'restore') {
 
     $raw = file_get_contents($restorePath);
     $data = json_decode($raw, true);
-    if (!$data || !isset($data['users'])) {
+    if (!$data || !isset($data['users']) || !is_array($data['users'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Ungültiges Backup-Format.']);
         exit;
     }
 
-    $jsContent = "// Client-side user database\n";
-    $jsContent .= "// In a real application, this would be a server-side database\n";
-    $jsContent .= "window.usersDatabase = " . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
+    try {
+        $db = getDB();
+        $db->beginTransaction();
 
-    if (file_put_contents($usersFile, $jsContent)) {
-        @chmod($usersFile, 0777);
+        $stmt = $db->prepare("INSERT INTO users (username, password_hash, name, folder, image_count, is_protected)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                name = excluded.name,
+                folder = excluded.folder,
+                image_count = excluded.image_count,
+                is_protected = excluded.is_protected");
+
+        foreach ($data['users'] as $u) {
+            if (empty($u['username'])) continue;
+            $stmt->execute([
+                $u['username'],
+                $u['passwordHash'] ?? '',
+                $u['name'] ?? $u['username'],
+                $u['folder'] ?? ($u['username'] . '-gallery'),
+                (int)($u['imageCount'] ?? 0),
+                isset($u['isProtected']) ? ($u['isProtected'] ? 1 : 0) : 1
+            ]);
+        }
+
+        $db->commit();
+        syncUsersJs($db);
+
         echo json_encode(['success' => true, 'userCount' => count($data['users'])]);
-    } else {
+    } catch (Exception $e) {
+        if (isset($db) && $db->inTransaction()) $db->rollBack();
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Fehler beim Schreiben von users.js']);
+        echo json_encode(['success' => false, 'message' => 'DB Restore error: ' . $e->getMessage()]);
     }
     exit;
 }
@@ -163,7 +193,7 @@ if ($action === 'relink_folder') {
 
     if (!$folder || !$name || !$username || !$password) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Alle Felder (Ordner, Name, Username, Passwort) sind erforderlich.']);
+        echo json_encode(['success' => false, 'message' => 'Alle Felder sind erforderlich.']);
         exit;
     }
 
@@ -183,40 +213,38 @@ if ($action === 'relink_folder') {
         }
     }
 
-    $current = getCurrentUsers($usersFile);
-    // Check if username already exists
-    foreach ($current['users'] as $u) {
-        if ($u['username'] === $username) {
+    try {
+        $db = getDB();
+
+        // Check if username already exists
+        $chk = $db->prepare("SELECT id FROM users WHERE LOWER(username) = LOWER(?)");
+        $chk->execute([$username]);
+        if ($chk->fetch()) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Dieser Benutzername ist bereits vergeben.']);
             exit;
         }
-    }
 
-    $newUser = [
-        'id' => (string)time() . rand(100, 999),
-        'username' => $username,
-        'passwordHash' => sha1($password),
-        'name' => $name,
-        'folder' => $folder,
-        'imageCount' => $imageCount,
-        'isProtected' => true
-    ];
+        $stmt = $db->prepare("INSERT INTO users (username, password_hash, name, folder, image_count, is_protected) VALUES (?, ?, ?, ?, ?, 1)");
+        $stmt->execute([
+            $username,
+            sha1($password),
+            $name,
+            $folder,
+            $imageCount
+        ]);
 
-    $current['users'][] = $newUser;
+        syncUsersJs($db);
 
-    $jsContent = "// Client-side user database\n";
-    $jsContent .= "// In a real application, this would be a server-side database\n";
-    $jsContent .= "window.usersDatabase = " . json_encode($current, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ";\n";
-
-    if (file_put_contents($usersFile, $jsContent)) {
-        @chmod($usersFile, 0777);
-        // Also update backup
-        @file_put_contents($backupFile, json_encode($current, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        echo json_encode(['success' => true, 'user' => $newUser]);
-    } else {
+        echo json_encode(['success' => true, 'user' => [
+            'username' => $username,
+            'name' => $name,
+            'folder' => $folder,
+            'imageCount' => $imageCount
+        ]]);
+    } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Fehler beim Speichern in users.js']);
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $e->getMessage()]);
     }
     exit;
 }

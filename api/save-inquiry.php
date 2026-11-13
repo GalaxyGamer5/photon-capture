@@ -1,7 +1,10 @@
 <?php
+// api/save-inquiry.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
+
+require_once __DIR__ . '/../includes/db.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -10,50 +13,33 @@ if (!$data) {
     exit;
 }
 
-$file = __DIR__ . '/../data/inquiries.json';
+try {
+    $db = getDB();
+    $inquiryId = uniqid('inq_');
+    $name = htmlspecialchars($data['name'] ?? 'Unknown');
+    $email = htmlspecialchars($data['email'] ?? 'Unknown');
+    $service = htmlspecialchars($data['service'] ?? 'Unknown');
+    $message = htmlspecialchars($data['message'] ?? '');
+    $now = date('Y-m-d H:i:s');
 
-if (!file_exists($file)) {
-    $db = ['inquiries' => []];
-} else {
-    $db = json_decode(file_get_contents($file), true) ?: ['inquiries' => []];
-}
+    $stmt = $db->prepare("INSERT INTO inquiries (id, name, email, service, message, unread, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)");
+    $stmt->execute([$inquiryId, $name, $email, $service, $message, $now]);
 
-// Create new inquiry object
-$inquiry = [
-    'id' => uniqid('inq_'),
-    'date' => date('c'), // ISO 8601 date
-    'name' => htmlspecialchars($data['name'] ?? 'Unknown'),
-    'email' => htmlspecialchars($data['email'] ?? 'Unknown'),
-    'service' => htmlspecialchars($data['service'] ?? 'Unknown'),
-    'message' => htmlspecialchars($data['message'] ?? ''),
-    'unread' => true
-];
-
-// Prepend to top
-array_unshift($db['inquiries'], $inquiry);
-
-if (file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
-    // Automated Calendar Reservation
+    // Automated Calendar Reservation if requested
     if (!empty($data['bookingDate'])) {
-        $calendarFile = __DIR__ . '/../data/calendar.json';
-        $calendarData = [];
-        
-        if (file_exists($calendarFile)) {
-            $calendarData = json_decode(file_get_contents($calendarFile), true) ?: [];
-        }
-        
-        // Only mark as reserved if not already booked
-        $currentStatus = $calendarData[$data['bookingDate']]['status'] ?? '';
-        if ($currentStatus !== 'booked') {
-            $calendarData[$data['bookingDate']] = ['status' => 'reserved'];
-            file_put_contents($calendarFile, json_encode($calendarData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $bDate = trim($data['bookingDate']);
+        $calCheck = $db->prepare("SELECT status FROM calendar_events WHERE event_date = ?");
+        $calCheck->execute([$bDate]);
+        $curr = $calCheck->fetch();
+
+        if (!$curr || $curr['status'] !== 'booked') {
+            $calStmt = $db->prepare("INSERT INTO calendar_events (event_date, status, updated_at) VALUES (?, 'reserved', ?) ON CONFLICT(event_date) DO UPDATE SET status = 'reserved', updated_at = excluded.updated_at");
+            $calStmt->execute([$bDate, $now]);
         }
     }
 
-    // Optional: send alert email to admin
-    // @mail("admin@photoncapture.com", "Neue Nachricht im Dashboard", "Du hast eine neue ungelesene Nachricht.");
-    
-    echo json_encode(['success' => true, 'id' => $inquiry['id']]);
-} else {
-    echo json_encode(['success' => false, 'error' => 'Failed to save to database']);
+    echo json_encode(['success' => true]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

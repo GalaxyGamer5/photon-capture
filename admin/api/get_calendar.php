@@ -2,21 +2,20 @@
 // admin/api/get_calendar.php
 header('Content-Type: application/json');
 
-// Path to data file
-$file = __DIR__ . '/../../data/calendar.json';
+require_once __DIR__ . '/../../includes/db.php';
 
-if (!file_exists($file)) {
-    // Return empty object if file doesn't exist yet, or 404
-    // Returning empty object is safer for frontend init
-    echo "{}";
-    exit;
-}
+try {
+    $db = getDB();
+    $stmt = $db->query("SELECT event_date, status FROM calendar_events ORDER BY event_date ASC");
+    $rows = $stmt->fetchAll();
 
-if (!is_readable($file)) {
+    $events = [];
+    foreach ($rows as $r) {
+        $events[$r['event_date']] = ['status' => $r['status']];
+    }
+
+    echo json_encode($events ?: (object)[]);
+} catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Permission denied: calendar.json is not readable']);
-    exit;
+    echo json_encode(['error' => $e->getMessage()]);
 }
-
-readfile($file);
-?>

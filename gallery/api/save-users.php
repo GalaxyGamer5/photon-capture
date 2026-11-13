@@ -1,66 +1,80 @@
 <?php
-// payment/api/save-users.php
+// gallery/api/save-users.php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header('Content-Type: application/json');
 
-// Helper function for JSON response
 function jsonResponse($data, $status = 200) {
     http_response_code($status);
-    header('Content-Type: application/json');
     echo json_encode($data);
     exit;
 }
 
-// CORS Headers
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-// Handle Preflight Request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit(0);
 }
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    // If GET, return a status message to verify PHP execution
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         jsonResponse(['status' => 'ok', 'message' => 'PHP script is running']);
     }
     jsonResponse(['error' => 'Method not allowed'], 405);
 }
 
-// Get POST data
-// We use file_get_contents('php://input') which works for text/plain too
+require_once __DIR__ . '/../../includes/db.php';
+
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
 if (!$data && !empty($_POST['users'])) {
-    // Fallback for form-data if needed
     $data = ['users' => $_POST['users']];
 }
 
 if (!isset($data['users']) || !is_array($data['users'])) {
-    // Log the raw input for debugging
-    error_log("Invalid data received: " . substr($input, 0, 100));
     jsonResponse(['error' => 'Invalid data format'], 400);
 }
 
-// Path to users.js (Relative to payment/api/save-users.php -> ../../customers/data/users.js)
-$usersFile = __DIR__ . '/../../customers/data/users.js';
+try {
+    $db = getDB();
+    $db->beginTransaction();
 
-// Create data directory if it doesn't exist
-if (!file_exists(dirname($usersFile))) {
-    mkdir(dirname($usersFile), 0755, true);
-}
+    $stmt = $db->prepare("
+        INSERT INTO users (username, password_hash, name, folder, image_count, is_protected, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(username) DO UPDATE SET
+            password_hash = excluded.password_hash,
+            name          = excluded.name,
+            folder        = excluded.folder,
+            image_count   = excluded.image_count,
+            is_protected  = excluded.is_protected,
+            updated_at    = datetime('now')
+    ");
 
-// Format the content as a JS file
-$jsonStr = json_encode(['users' => $data['users']], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-$jsContent = "window.usersDatabase = " . $jsonStr . ";";
+    $keptUsers = [];
+    foreach ($data['users'] as $u) {
+        $username = trim($u['username'] ?? '');
+        if ($username === '') continue;
+        $keptUsers[] = $username;
 
-// Write to file
-if (file_put_contents($usersFile, $jsContent) !== false) {
+        $stmt->execute([
+            $username,
+            $u['passwordHash'] ?? '',
+            $u['name'] ?? $username,
+            $u['folder'] ?? ($username . '-gallery'),
+            (int)($u['imageCount'] ?? 0),
+            !empty($u['isProtected']) ? 1 : 0
+        ]);
+    }
+
+    $db->commit();
+    syncUsersJs($db);
+
     jsonResponse(['success' => true, 'message' => 'Configuration saved successfully']);
-} else {
-    jsonResponse(['error' => 'Failed to write configuration file'], 500);
+} catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    jsonResponse(['error' => 'Database error: ' . $e->getMessage()], 500);
 }
-?>

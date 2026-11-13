@@ -1,11 +1,10 @@
 <?php
-// Start session
+// gallery/api/login.php
 session_start();
-
-// Set JSON header
 header('Content-Type: application/json');
 
-// Get POST data
+require_once __DIR__ . '/../../includes/db.php';
+
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($input['username']) || !isset($input['password'])) {
@@ -13,60 +12,41 @@ if (!isset($input['username']) || !isset($input['password'])) {
     exit;
 }
 
-$username = $input['username'];
-$password = $input['password'];
-
-// Load users database
-$usersFile = __DIR__ . '/../data/users.js';
-if (!file_exists($usersFile)) {
-    echo json_encode(['success' => false, 'error' => 'User database not found']);
-    exit;
-}
-
-$usersContent = file_get_contents($usersFile);
-// Extract JSON from "window.usersDatabase = {...};"
-preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
-if (!isset($matches[1])) {
-    echo json_encode(['success' => false, 'error' => 'Invalid user database format']);
-    exit;
-}
-
-$usersData = json_decode($matches[1], true);
-if (!$usersData || !isset($usersData['users'])) {
-    echo json_encode(['success' => false, 'error' => 'Failed to parse user database']);
-    exit;
-}
-
-// Hash the provided password with SHA-1 (matching client-side implementation)
+$username = trim($input['username']);
+$password = trim($input['password']);
 $passwordHash = sha1($password);
 
-// Find user
-$authenticatedUser = null;
-foreach ($usersData['users'] as $user) {
-    if (strtolower($user['username']) === strtolower($username) && $user['passwordHash'] === $passwordHash) {
-        $authenticatedUser = $user;
-        break;
-    }
-}
+try {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, username, password_hash, name, folder, image_count, is_protected FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
 
-if ($authenticatedUser) {
-    // Store user info in session (excluding password hash)
-    $_SESSION['authenticated'] = true;
-    $_SESSION['user'] = [
-        'id' => $authenticatedUser['id'],
-        'username' => $authenticatedUser['username'],
-        'name' => $authenticatedUser['name'],
-        'folder' => $authenticatedUser['folder'],
-        'imageCount' => $authenticatedUser['imageCount']
-    ];
-    
-    echo json_encode([
-        'success' => true,
-        'user' => $_SESSION['user']
-    ]);
-} else {
+    if ($user && $user['password_hash'] === $passwordHash) {
+        $_SESSION['authenticated'] = true;
+        $_SESSION['user'] = [
+            'id' => (string)$user['id'],
+            'username' => $user['username'],
+            'name' => $user['name'],
+            'folder' => $user['folder'],
+            'imageCount' => (int)$user['image_count'],
+            'isProtected' => (bool)$user['is_protected']
+        ];
+
+        echo json_encode([
+            'success' => true,
+            'user' => $_SESSION['user']
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Ungültiger Benutzername oder Passwort'
+        ]);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid username or password'
+        'error' => 'Database error: ' . $e->getMessage()
     ]);
 }

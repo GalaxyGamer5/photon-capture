@@ -1,28 +1,25 @@
 <?php
-// Public API - no authentication required
+// api/get-testimonials.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-$file = __DIR__ . '/../data/testimonials.json';
+require_once __DIR__ . '/../includes/db.php';
 
-if (!file_exists($file)) {
-    echo json_encode(['success' => false, 'error' => 'Testimonials not found']);
-    exit;
+try {
+    $db = getDB();
+    $stmt = $db->query("SELECT id, name, rating, text, date, approved FROM testimonials WHERE approved = 1 ORDER BY date DESC");
+    $testimonials = $stmt->fetchAll();
+
+    foreach ($testimonials as &$t) {
+        $t['rating'] = (int)$t['rating'];
+        $t['approved'] = (bool)$t['approved'];
+    }
+
+    echo json_encode([
+        'success' => true,
+        'testimonials' => $testimonials ?: []
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
-
-$data = json_decode(file_get_contents($file), true);
-
-// Filter only approved testimonials
-$approved = array_filter($data['testimonials'] ?? [], function($t) {
-    return $t['approved'] === true;
-});
-
-// Sort by date (newest first)
-usort($approved, function($a, $b) {
-    return strtotime($b['date']) - strtotime($a['date']);
-});
-
-echo json_encode([
-    'success' => true,
-    'testimonials' => array_values($approved)
-]);

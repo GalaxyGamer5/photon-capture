@@ -1,33 +1,51 @@
 <?php
+// admin/api/manage-faq.php
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-if (!$data) {
+if (!$data || !isset($data['items']) || !is_array($data['items'])) {
     echo json_encode(['success' => false, 'error' => 'Invalid or empty JSON received']);
     exit;
 }
 
-$file = __DIR__ . '/../../data/faq.json';
-$jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+try {
+    $db = getDB();
+    $db->beginTransaction();
 
-if (!$jsonData) {
-    echo json_encode(['success' => false, 'error' => 'JSON Encoding failed']);
-    exit;
-}
+    $db->exec("DELETE FROM faq");
 
-// If file exists and is not writable, TRY deleting it (requires directory write permission)
-if (file_exists($file) && !is_writable($file)) {
-    @unlink($file);
-}
+    $stmt = $db->prepare("INSERT INTO faq (id, question_de, question_en, answer_de, answer_en, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
+    $order = 0;
+    foreach ($data['items'] as $item) {
+        $order++;
+        $stmt->execute([
+            $item['id'] ?? uniqid('faq_'),
+            $item['q']['de'] ?? '',
+            $item['q']['en'] ?? '',
+            $item['a']['de'] ?? '',
+            $item['a']['en'] ?? '',
+            $order
+        ]);
+    }
 
-if (file_put_contents($file, $jsonData)) {
-    @chmod($file, 0777); // Ensure it stays writable
+    $db->commit();
+
+    // Also sync to data/faq.json for file fallback
+    $file = __DIR__ . '/../../data/faq.json';
+    @file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    @chmod($file, 0777);
+
     echo json_encode(['success' => true]);
-} else {
-    $error = error_get_last();
-    echo json_encode(['success' => false, 'error' => 'Failed to write to file: ' . ($error['message'] ?? 'Unknown error')]);
+} catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }

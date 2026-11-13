@@ -1,8 +1,9 @@
 <?php
+// admin/api/mark-inquiry-read.php
 session_start();
 header('Content-Type: application/json');
 
-
+require_once __DIR__ . '/../../includes/db.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $id = $input['id'] ?? null;
@@ -12,26 +13,13 @@ if (!$id) {
     exit;
 }
 
-$file = __DIR__ . '/../../data/inquiries.json';
-if (!file_exists($file)) {
-    echo json_encode(['success' => false, 'error' => 'Database not found']);
-    exit;
-}
+try {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE inquiries SET unread = 0 WHERE id = ?");
+    $stmt->execute([$id]);
 
-$db = json_decode(file_get_contents($file), true) ?: ['inquiries' => []];
-
-$found = false;
-foreach ($db['inquiries'] as &$inq) {
-    if ($inq['id'] === $id) {
-        $inq['unread'] = false;
-        $found = true;
-        break;
-    }
-}
-unset($inq);
-
-if ($found && file_put_contents($file, json_encode($db, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
     echo json_encode(['success' => true]);
-} else {
-    echo json_encode(['success' => false, 'error' => 'Failed to update']);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

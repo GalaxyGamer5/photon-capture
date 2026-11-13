@@ -5,35 +5,48 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Get JSON input
+require_once __DIR__ . '/../../includes/db.php';
+
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-if (json_last_error() !== JSON_ERROR_NONE) {
+if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
     exit;
 }
 
-// Path to data file
-$file = __DIR__ . '/../../data/calendar.json';
+try {
+    $db = getDB();
+    $db->beginTransaction();
 
-// Check if file exists and is writable
-if (file_exists($file) && !is_writable($file)) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Permission denied: calendar.json is not writable']);
-    exit;
-}
+    $db->exec("DELETE FROM calendar_events");
 
-// Save to file
-if (file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+    $stmt = $db->prepare("INSERT INTO calendar_events (event_date, status, updated_at) VALUES (?, ?, ?)");
+    $now = date('Y-m-d H:i:s');
+
+    foreach ($data as $date => $val) {
+        $status = is_array($val) ? ($val['status'] ?? 'available') : (string)$val;
+        $stmt->execute([$date, $status, $now]);
+    }
+
+    $db->commit();
+
+    // Sync to data/calendar.json
+    $file = __DIR__ . '/../../data/calendar.json';
+    @file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    @chmod($file, 0777);
+
     echo json_encode(['success' => true]);
-} else {
+} catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to write to file']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

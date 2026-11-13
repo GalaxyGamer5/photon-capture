@@ -112,7 +112,13 @@
             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 3rem 0;">
 
             <h2>Bestehendes Portfolio</h2>
-            
+            <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+                <button onclick="syncPortfolio()" class="btn" style="background:var(--surface-dark); border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem 1.2rem; font-size:0.85rem;" title="Scannt assets/portfolio/ und fügt fehlende Bilder zur Datenbank hinzu">
+                    🔄 Mit Server synchronisieren
+                </button>
+                <span id="sync-status" style="color:var(--text-secondary); font-size:0.85rem;"></span>
+            </div>
+
             <div class="portfolio-grid" id="portfolio-grid">
                 <div style="text-align: center; padding: 3rem; color: var(--text-secondary); grid-column: 1/-1;">Lade Portfolio...</div>
             </div>
@@ -126,6 +132,23 @@
         const grid = document.getElementById('portfolio-grid');
         const statusDiv = document.getElementById('upload-status');
         const submitBtn = document.getElementById('submit-btn');
+
+        async function syncPortfolio() {
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.textContent = 'Synchronisiere...';
+            try {
+                const res = await fetch('api/sync-portfolio.php?t=' + Date.now());
+                const data = await res.json();
+                if (data.success) {
+                    syncStatus.textContent = data.message;
+                    if (data.added > 0) loadPortfolio();
+                } else {
+                    syncStatus.textContent = 'Fehler: ' + (data.error || 'Unbekannt');
+                }
+            } catch (e) {
+                syncStatus.textContent = 'Netzwerkfehler';
+            }
+        }
 
         async function loadPortfolio() {
             try {
@@ -159,7 +182,7 @@
                 const catText = catLabels[img.category] || img.category;
 
                 item.innerHTML = `
-                    <img src="api/download-media.php?path=assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy" onerror="if(this.dataset.tried!=='1'){this.dataset.tried='1';this.src='../assets/portfolio/${img.filename}';}">
+                    <img src="../assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy" onerror="if(this.dataset.tried!=='1'){this.dataset.tried='1';this.src='api/download-media.php?path=assets/portfolio/${img.filename}';}">
                     <div class="portfolio-info">
                         <span class="portfolio-category">${catText}</span>
                         <button class="delete-btn" onclick="deleteImage('${img.id}')" title="Löschen">

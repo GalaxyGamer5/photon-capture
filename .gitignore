@@ -7,3 +7,13 @@ assets/uploads/
 # Temporary files
 *.tmp
 *.log
+
+# Databases & Backups
+*.sqlite
+*.sqlite3
+*.db
+data/photon.db
+data/*.db
+data/*.sqlite
+gallery/data/backups/*
+!gallery/data/backups/.gitkeep

@@ -5,13 +5,16 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
+
+require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/pricing_utils.php';
 
 $file = __DIR__ . '/../../data/orders.json';
 
@@ -29,7 +32,6 @@ function saveOrders($path, $data) {
     $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     if (!$jsonData) return false;
 
-    // If file exists and is not writable, TRY deleting it (requires directory write permission)
     if (file_exists($path) && !is_writable($path)) {
         @unlink($path);
     }
@@ -42,9 +44,19 @@ function saveOrders($path, $data) {
     return false;
 }
 
-require_once __DIR__ . '/pricing_utils.php';
-$pricingFile = __DIR__ . '/../../data/pricing.json';
-$pricing = json_decode(file_get_contents($pricingFile), true);
+$pricing = null;
+try {
+    $db = getDB();
+    $pVal = $db->query("SELECT value FROM app_settings WHERE key_name = 'pricing'")->fetchColumn();
+    if ($pVal) $pricing = json_decode($pVal, true);
+} catch (Exception $e) {}
+
+if (!$pricing) {
+    $pricingFile = __DIR__ . '/../../data/pricing.json';
+    if (file_exists($pricingFile)) {
+        $pricing = json_decode(file_get_contents($pricingFile), true);
+    }
+}
 
 // ── GET Action ────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -84,10 +96,12 @@ switch ($action) {
             'discount' => $input['discount'] ?? ['value' => 0, 'type' => 'euro'],
             'hours' => $input['hours'] ?? null
         ];
-        $res = calculateOrderPrice($newOrder, $pricing);
-        $newOrder['price'] = $res['price'];
-        $newOrder['originalPrice'] = $res['originalPrice'];
-        $newOrder['discountText'] = $res['discountText'];
+        if ($pricing) {
+            $res = calculateOrderPrice($newOrder, $pricing);
+            $newOrder['price'] = $res['price'];
+            $newOrder['originalPrice'] = $res['originalPrice'];
+            $newOrder['discountText'] = $res['discountText'];
+        }
         array_unshift($db['orders'], $newOrder);
         $success = saveOrders($file, $db);
         break;
@@ -104,11 +118,12 @@ switch ($action) {
                 $o['discount'] = $input['discount'] ?? ($o['discount'] ?? ['value' => 0, 'type' => 'euro']);
                 $o['hours'] = $input['hours'] ?? ($o['hours'] ?? null);
                 
-                // Recalculate price on update
-                $res = calculateOrderPrice($o, $pricing);
-                $o['price'] = $res['price'];
-                $o['originalPrice'] = $res['originalPrice'];
-                $o['discountText'] = $res['discountText'];
+                if ($pricing) {
+                    $res = calculateOrderPrice($o, $pricing);
+                    $o['price'] = $res['price'];
+                    $o['originalPrice'] = $res['originalPrice'];
+                    $o['discountText'] = $res['discountText'];
+                }
                 
                 $success = true;
                 break;
@@ -124,7 +139,7 @@ switch ($action) {
         $db['orders'] = array_filter($db['orders'], function($o) use ($id) {
             return $o['id'] !== $id;
         });
-        $db['orders'] = array_values($db['orders']); // re-index
+        $db['orders'] = array_values($db['orders']);
         if (count($db['orders']) < $count) {
             $success = saveOrders($file, $db);
         } else {

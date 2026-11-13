@@ -1,5 +1,5 @@
-# Block direct HTTP access to calendar data
-<FilesMatch "\.json$">
+# Block direct HTTP access to data and database files
+<FilesMatch "\.(json|sqlite|sqlite3|db|sql|backup)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
