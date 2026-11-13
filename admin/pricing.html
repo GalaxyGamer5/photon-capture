@@ -87,7 +87,48 @@
         .perk-item.expanded .perk-header {
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
-            background: rgba(0, 242, 255, 0.1);
+            background: rgba(255, 122, 61, 0.12);
+        }
+
+        /* Drag & Drop Styling */
+        .drag-handle {
+            cursor: grab;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            opacity: 0.45;
+            transition: opacity 0.2s, color 0.2s, transform 0.1s;
+            user-select: none;
+            flex-shrink: 0;
+            padding: 4px;
+            border-radius: 4px;
+            margin-right: 0.25rem;
+        }
+        .drag-handle:hover {
+            opacity: 1;
+            color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.1);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .draggable-item {
+            position: relative;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .draggable-item.dragging {
+            opacity: 0.35;
+            transform: scale(0.99);
+        }
+        .draggable-item.drag-over-top {
+            border-top: 2px solid var(--accent) !important;
+            box-shadow: 0 -4px 12px rgba(255, 122, 61, 0.3);
+        }
+        .draggable-item.drag-over-bottom {
+            border-bottom: 2px solid var(--accent) !important;
+            box-shadow: 0 4px 12px rgba(255, 122, 61, 0.3);
         }
     </style>
 </head>
@@ -128,6 +169,18 @@
         let activeTab = localStorage.getItem('activePricingTab') || 'pkg_portrait';
         let expandedPerks = new Set(); // Stores "pkgIdx:eIdx" strings
 
+        const dragHandleSvg = `
+            <span class="drag-handle" title="Ziehen zum Sortieren" onclick="event.stopPropagation()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <circle cx="8" cy="6" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="6" r="1.5" fill="currentColor"/>
+                    <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="8" cy="18" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="18" r="1.5" fill="currentColor"/>
+                </svg>
+            </span>`;
+
         function render() {
             if (!pricingData) return;
             
@@ -165,7 +218,8 @@
                                 <h4>Inklusiv-Leistungen</h4>
                                 <div class="features-list">
                                     ${(pkg.features || []).map((f, fIdx) => `
-                                        <div class="feature-item">
+                                        <div class="feature-item draggable-item" draggable="true" data-drag-type="feature" data-pkg="${pkgIdx}" data-idx="${fIdx}">
+                                            ${dragHandleSvg}
                                             <input type="text" placeholder="DE" value="${f.de}" oninput="updateArr('packages', ${pkgIdx}, 'features', ${fIdx}, 'de', this.value)">
                                             <input type="text" placeholder="EN" value="${f.en}" oninput="updateArr('packages', ${pkgIdx}, 'features', ${fIdx}, 'en', this.value)">
                                             <button class="btn-small btn-delete" onclick="removeArrItem('packages', ${pkgIdx}, 'features', ${fIdx})">X</button>
@@ -179,11 +233,13 @@
                                 <div class="features-list">
                                     ${(pkg.extras || []).map((ext, eIdx) => {
                                         const isSelect = ext.type === 'select';
-                                        const isExpanded = expandedPerks.has(`${pkgIdx}:${eIdx}`);
+                                        const perkKey = `${pkgIdx}:${ext.id || eIdx}`;
+                                        const isExpanded = expandedPerks.has(perkKey);
                                         return `
-                                        <div class="perk-item ${isExpanded ? 'expanded' : ''}" style="margin-bottom: 0.5rem;">
-                                            <div class="perk-header" onclick="togglePerk(${pkgIdx}, ${eIdx})">
-                                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                        <div class="perk-item draggable-item ${isExpanded ? 'expanded' : ''}" draggable="true" data-drag-type="extra" data-pkg="${pkgIdx}" data-idx="${eIdx}" style="margin-bottom: 0.5rem;">
+                                            <div class="perk-header" onclick="togglePerk(${pkgIdx}, '${ext.id || eIdx}')">
+                                                <div style="display:flex; align-items:center; gap:0.5rem;">
+                                                    ${dragHandleSvg}
                                                     <span style="font-weight:600; font-size:0.9rem; color: ${isExpanded ? 'var(--text-primary)' : 'var(--text-secondary)'};">
                                                         ${ext.label.de || 'Neuer Perk'} 
                                                         <small style="opacity:0.6; font-weight:400; margin-left:0.5rem;">(${ext.type === 'select' ? 'Dropdown' : 'Checkbox'})</small>
@@ -219,7 +275,8 @@
                                                         <label style="font-weight: bold; font-size: 0.8rem; margin-bottom: 0.75rem; display: block; color: var(--accent);">Dropdown-Optionen</label>
                                                         <div class="features-list">
                                                             ${(ext.options || []).map((opt, oIdx) => `
-                                                                <div class="feature-item" style="background: rgba(0,242,255,0.03); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(0,242,255,0.05);">
+                                                                <div class="feature-item draggable-item" draggable="true" data-drag-type="option" data-pkg="${pkgIdx}" data-ext="${eIdx}" data-idx="${oIdx}" style="background: rgba(255, 122, 61, 0.04); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255, 122, 61, 0.1);">
+                                                                    ${dragHandleSvg}
                                                                     <div style="display:flex; flex-direction:column; gap:0.5rem; flex:1;">
                                                                         <input type="text" placeholder="ID" value="${opt.id}" oninput="updateExtraOption(${pkgIdx}, ${eIdx}, ${oIdx}, 'id', null, this.value)" style="font-size:0.75rem; opacity:0.7; padding:0.3rem;">
                                                                         <div style="display:flex; gap:0.4rem;">
@@ -319,8 +376,9 @@
             render();
         }
 
-        window.togglePerk = (pkgIdx, eIdx) => {
-            const key = `${pkgIdx}:${eIdx}`;
+        window.togglePerk = (pkgIdx, perkId) => {
+            if (isDragging) return;
+            const key = `${pkgIdx}:${perkId}`;
             if (expandedPerks.has(key)) expandedPerks.delete(key);
             else expandedPerks.add(key);
             render();
@@ -438,6 +496,132 @@
             setTimeout(() => { status.textContent = ''; }, 3000);
         }
 
+        // --- DRAG & DROP REORDERING ---
+        let dragSource = null;
+        let isDragging = false;
+
+        function initDragEvents() {
+            const editor = document.getElementById('editor-container');
+            if (!editor) return;
+
+            editor.addEventListener('dragstart', (e) => {
+                const item = e.target.closest('.draggable-item');
+                if (!item) return;
+
+                // Don't drag if interacting with inputs, buttons or dropdowns
+                if (['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(e.target.tagName)) {
+                    e.preventDefault();
+                    return;
+                }
+
+                isDragging = true;
+                dragSource = {
+                    type: item.dataset.dragType,
+                    pkg: parseInt(item.dataset.pkg, 10),
+                    ext: item.dataset.ext !== undefined ? parseInt(item.dataset.ext, 10) : null,
+                    idx: parseInt(item.dataset.idx, 10),
+                    el: item
+                };
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.dataset.idx);
+
+                setTimeout(() => {
+                    if (item) item.classList.add('dragging');
+                }, 0);
+            });
+
+            editor.addEventListener('dragover', (e) => {
+                if (!dragSource) return;
+                const target = e.target.closest('.draggable-item');
+                if (!target) return;
+
+                // Only allow dropping within the exact same group
+                const sameType = target.dataset.dragType === dragSource.type;
+                const samePkg = parseInt(target.dataset.pkg, 10) === dragSource.pkg;
+                const sameExt = (target.dataset.ext === undefined && dragSource.ext === null) ||
+                                (parseInt(target.dataset.ext, 10) === dragSource.ext);
+
+                if (!sameType || !samePkg || !sameExt) return;
+
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (target === dragSource.el) {
+                    target.classList.remove('drag-over-top', 'drag-over-bottom');
+                    return;
+                }
+
+                const rect = target.getBoundingClientRect();
+                const isBottom = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+                target.classList.toggle('drag-over-top', !isBottom);
+                target.classList.toggle('drag-over-bottom', isBottom);
+            });
+
+            editor.addEventListener('dragleave', (e) => {
+                const target = e.target.closest('.draggable-item');
+                if (target && !target.contains(e.relatedTarget)) {
+                    target.classList.remove('drag-over-top', 'drag-over-bottom');
+                }
+            });
+
+            editor.addEventListener('dragend', () => {
+                document.querySelectorAll('.draggable-item').forEach(el => {
+                    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+                });
+                dragSource = null;
+                setTimeout(() => { isDragging = false; }, 50);
+            });
+
+            editor.addEventListener('drop', (e) => {
+                if (!dragSource) return;
+                const target = e.target.closest('.draggable-item');
+                if (!target) return;
+
+                const sameType = target.dataset.dragType === dragSource.type;
+                const samePkg = parseInt(target.dataset.pkg, 10) === dragSource.pkg;
+                const sameExt = (target.dataset.ext === undefined && dragSource.ext === null) ||
+                                (parseInt(target.dataset.ext, 10) === dragSource.ext);
+
+                if (!sameType || !samePkg || !sameExt) return;
+
+                e.preventDefault();
+
+                const rect = target.getBoundingClientRect();
+                const insertAfter = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                const fromIdx = dragSource.idx;
+                const toIdx = parseInt(target.dataset.idx, 10);
+
+                document.querySelectorAll('.draggable-item').forEach(el => {
+                    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+                });
+
+                if (fromIdx === toIdx) return;
+
+                let targetArray = null;
+                if (dragSource.type === 'extra') {
+                    targetArray = pricingData.packages[dragSource.pkg].extras;
+                } else if (dragSource.type === 'feature') {
+                    targetArray = pricingData.packages[dragSource.pkg].features;
+                } else if (dragSource.type === 'option') {
+                    targetArray = pricingData.packages[dragSource.pkg].extras[dragSource.ext].options;
+                }
+
+                if (targetArray) {
+                    const [movedItem] = targetArray.splice(fromIdx, 1);
+                    let targetPos = toIdx;
+                    if (fromIdx < toIdx) {
+                        targetPos = insertAfter ? toIdx : toIdx - 1;
+                    } else {
+                        targetPos = insertAfter ? toIdx + 1 : toIdx;
+                    }
+                    targetArray.splice(targetPos, 0, movedItem);
+                    render();
+                }
+            });
+        }
+
+        initDragEvents();
         loadPricing();
     </script>
 </body>
