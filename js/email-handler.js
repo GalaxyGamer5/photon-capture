@@ -50,18 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalAmount = parseFloat(totalPriceStr.replace('€', '').replace(',', '.')) || 0;
 
             let duration = 0;
+            let durationText = '';
             const durationSelect = document.querySelector('select[name="event_duration"]');
-            if (durationSelect && durationSelect.value) {
+            if (service === 'event' && durationSelect && durationSelect.value) {
                 const dv = durationSelect.value;
-                if (dv.endsWith('h')) duration = parseInt(dv);
+                if (dv.endsWith('h')) duration = parseInt(dv, 10);
                 else if (dv === 'open') duration = 8;
+                durationText = durationSelect.options[durationSelect.selectedIndex]?.text || `${duration} Stunden`;
             }
 
             const currentLang = localStorage.getItem('preferredLang') || 'de';
 
             // Combine all booking details into the message payload
-            const fullMessage = `Gewünschtes Paket: ${serviceName}
-Datum: ${date}
+            const fullMessage = `Gewünschtes Paket: ${serviceName}${durationText ? ` (${durationText})` : ''}
+${durationText ? `Dauer: ${durationText}\n` : ''}Datum: ${date}
 Uhrzeit: ${time}
 Preis: ${totalPriceStr}
 Extras: ${extrasString}
@@ -76,7 +78,8 @@ ${message}`;
                     body: JSON.stringify({ 
                         name, 
                         email, 
-                        service: serviceName, 
+                        service: serviceName + (durationText ? ` (${durationText})` : ''),
+                        duration: duration,
                         message: fullMessage,
                         bookingDate: date // Added for automated calendar reservation
                     })

@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
         daysGrid: document.getElementById('daysGrid'),
         packageName: document.getElementById('packageName'),
         serviceSelect: document.getElementById('service'),
+        durationField: document.getElementById('durationField'),
+        durationSelect: document.getElementById('event_duration'),
         slotDateKicker: document.getElementById('slotDateKicker'),
         slotsPillGroup: document.getElementById('slotsPillGroup'),
         displaySelectedDate: document.getElementById('displaySelectedDate'),
@@ -72,6 +74,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekdayNamesDe = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
     const weekdayNamesEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+    // Helper: Determine if package is hourly-based (event or unit containing hour/stunde)
+    function isHourlyPackage(pkg) {
+        if (!pkg) return selectedPackageId === 'event';
+        if (pkg.id === 'event') return true;
+        if (pkg.priceUnit) {
+            const uDe = (pkg.priceUnit.de || '').toLowerCase();
+            const uEn = (pkg.priceUnit.en || '').toLowerCase();
+            if (uDe.includes('stunde') || uDe.includes('std') || uEn.includes('hour')) return true;
+        }
+        return false;
+    }
+
+    // Helper: Parse hours from duration dropdown
+    function getSelectedDurationHours() {
+        if (!elements.durationSelect) return 2;
+        const val = elements.durationSelect.value || '2h';
+        if (val.endsWith('h')) return parseInt(val, 10);
+        if (val === 'open') return 8; // Open End calculates base as 8 hours
+        return parseFloat(val) || 2;
+    }
+
     // Find the first available date on or after minBookingDate
     function getFirstAvailableDate() {
         let checkDate = new Date(minBookingDate);
@@ -95,6 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedExtras.clear();
                 updatePackageDisplay();
                 renderExtras();
+                updatePricing();
+            });
+        }
+
+        if (elements.durationSelect) {
+            elements.durationSelect.addEventListener('change', () => {
+                updatePackageDisplay();
                 updatePricing();
             });
         }
@@ -138,9 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Using fallback pricing', e);
             pricingData = {
                 packages: [
-                    { id: "event", title: { de: "Event-Begleitung", en: "Event Coverage" }, price: 100 },
-                    { id: "portrait", title: { de: "Porträt-Session", en: "Portrait Session" }, price: 125 },
-                    { id: "pet", title: { de: "Tierfotografie", en: "Pet Photography" }, price: 125 }
+                    { id: "event", title: { de: "Event-Begleitung", en: "Event Coverage" }, price: 100, priceUnit: { de: "/Stunde", en: "/hour" } },
+                    { id: "portrait", title: { de: "Porträt-Session", en: "Portrait Session" }, price: 125, priceUnit: { de: "", en: "" } },
+                    { id: "pet", title: { de: "Tierfotografie", en: "Pet Photography" }, price: 125, priceUnit: { de: "", en: "" } }
                 ]
             };
         }
@@ -293,21 +323,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.timeInput) elements.timeInput.value = selectedTime;
     }
 
-    // Update Package Name
+    // Update Package Name & Duration visibility
     function updatePackageDisplay() {
         let title = "Event-Begleitung";
+        let pkg = null;
         if (pricingData && pricingData.packages) {
-            const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
+            pkg = pricingData.packages.find(p => p.id === selectedPackageId);
             if (pkg && pkg.title) {
                 title = pkg.title[currentLanguage] || pkg.title.de || pkg.title;
             }
         } else {
             if (selectedPackageId === 'portrait') title = "Porträt-Session";
             if (selectedPackageId === 'pet') title = "Tierfotografie";
+            if (selectedPackageId === 'other') title = "Sonstiges / Individuell";
+        }
+
+        // Show duration field for hourly packages (event)
+        const isHourly = isHourlyPackage(pkg);
+        if (elements.durationField) {
+            elements.durationField.style.display = isHourly ? 'block' : 'none';
         }
 
         if (elements.packageName) elements.packageName.textContent = title;
-        if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = title;
         if (elements.serviceSelect) elements.serviceSelect.value = selectedPackageId;
     }
 
@@ -359,13 +396,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Calculate & Update Price Summary Card
+    // Calculate & Update Price Summary Card with Hourly Scaling
     function updatePricing() {
         if (!pricingData || !pricingData.packages) return;
         const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
-        if (!pkg) return;
+        if (!pkg) {
+            if (selectedPackageId === 'other') {
+                if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = "Individuelles Angebot";
+                if (elements.summaryPackagePrice) elements.summaryPackagePrice.textContent = "Auf Anfrage";
+                if (elements.summaryExtrasPrice) elements.summaryExtrasPrice.textContent = "0 €";
+                if (elements.summaryTotalPrice) elements.summaryTotalPrice.textContent = "Auf Anfrage";
+                if (elements.totalPriceInput) elements.totalPriceInput.value = "Auf Anfrage";
+                if (elements.basePriceInput) elements.basePriceInput.value = "0€";
+            }
+            return;
+        }
 
-        let basePrice = pkg.price || 100;
+        const isHourly = isHourlyPackage(pkg);
+        const unitRate = pkg.price || (isHourly ? 50 : 100);
+        let hours = 1;
+        let basePrice = unitRate;
+
+        if (isHourly) {
+            hours = getSelectedDurationHours();
+            basePrice = unitRate * hours;
+        }
+
         let extrasTotal = 0;
         let breakdown = [];
 
@@ -385,6 +441,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const total = basePrice + extrasTotal;
+        const title = pkg.title[currentLanguage] || pkg.title.de || pkg.title;
+
+        if (elements.summaryPackageLabel) {
+            if (isHourly) {
+                const durText = elements.durationSelect
+                    ? elements.durationSelect.options[elements.durationSelect.selectedIndex]?.text
+                    : `${hours} Std.`;
+                elements.summaryPackageLabel.textContent = `${title} (${durText || `${hours} Std.`})`;
+            } else {
+                elements.summaryPackageLabel.textContent = title;
+            }
+        }
 
         if (elements.summaryPackagePrice) {
             elements.summaryPackagePrice.textContent = `${basePrice} €`;
@@ -400,7 +468,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.totalPriceInput) elements.totalPriceInput.value = `${total}€`;
         if (elements.basePriceInput) elements.basePriceInput.value = `${basePrice}€`;
         if (elements.extrasBreakdownInput) elements.extrasBreakdownInput.value = breakdown.join(', ');
-        if (elements.priceDetailsInput) elements.priceDetailsInput.value = `Basis: ${basePrice}€, Extras: ${extrasTotal}€`;
+        if (elements.priceDetailsInput) {
+            elements.priceDetailsInput.value = isHourly
+                ? `Basis: ${basePrice}€ (${hours} Std. à ${unitRate}€), Extras: ${extrasTotal}€`
+                : `Basis: ${basePrice}€, Extras: ${extrasTotal}€`;
+        }
     }
 
     init();
