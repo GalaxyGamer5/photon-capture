@@ -68,7 +68,7 @@ if ($galleryProtection !== null) {
 // --- Fast Path Cached Thumbnail ---
 if ($thumbnail_mode) {
     $thumbsDir = dirname($image_path) . '/_thumbs';
-    $cachePrefix = $isProtected ? 'prot_v2_' : 'clean_';
+    $cachePrefix = $isProtected ? 'prot_v3_' : 'clean_';
     $thumbPath = $thumbsDir . '/' . $cachePrefix . $requested_image;
 
     if (file_exists($thumbPath) && filemtime($thumbPath) >= filemtime($image_path)) {
@@ -128,6 +128,16 @@ if ($thumbnail_mode) {
 // --- End Resizing Logic ---
 
 if ($isProtected) {
+    // 1. Subtle, gentle anti-AI blur applied to the photo FIRST
+    // Softens micro-textures (hair, skin pores, fabric grain) so AI inpainting/watermark-removal
+    // cannot hallucinate a sharp printable image, while faces, expressions, and colors remain clear.
+    if (function_exists('imagefilter')) {
+        $blurPasses = $thumbnail_mode ? 1 : 2;
+        for ($b = 0; $b < $blurPasses; $b++) {
+            imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
+        }
+    }
+
     // Ensure alpha blending is on for TrueColor images
     imagealphablending($image, true);
     imagesavealpha($image, true);
