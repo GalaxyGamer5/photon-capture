@@ -44,7 +44,7 @@ async function getOrder(orderId) {
 // Update order (via API)
 async function updateOrder(orderId, updates) {
     try {
-        const response = await fetch('/payment/api/update-order.php', {
+        const response = await fetch('api/update-order.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

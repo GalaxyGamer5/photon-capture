@@ -1,440 +1,295 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photon Capture | Authentische Fotografie für Porträts, Events & Haustiere</title>
+    <title>PHOTON CAPTURE | Authentische Fotografie aus Dresden</title>
     <meta name="description"
-        content="Professionelle Fotografie in [Deine Stadt]. Authentische Porträts, lebendige Eventreportagen und charakterstarke Tierfotografie. Jetzt Termin sichern!">
+        content="Professionelle Fotografie in Dresden. Authentische Porträts, lebendige Eventreportagen und charakterstarke Tierfotografie.">
     <meta name="keywords"
-        content="Fotograf, Porträtfotografie, Eventfotografie, Tierfotografie, Hochzeitsfotograf, [Deine Stadt], Fotoshooting">
+        content="Fotograf, Dresden, Porträtfotografie, Eventfotografie, Tierfotografie, Fotoshooting">
     <meta name="author" content="Jonathan Weidner">
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://photon-capture.de/">
-    <meta property="og:title" content="Photon Capture | Authentische Fotografie">
+    <meta property="og:title" content="PHOTON CAPTURE | Fotografie aus Dresden">
     <meta property="og:description" content="Eure schönsten Momente für die Ewigkeit. Porträts, Events & Haustiere.">
     <meta property="og:image"
         content="https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://photon-capture.de/">
-    <meta property="twitter:title" content="Photon Capture | Authentische Fotografie">
-    <meta property="twitter:description"
-        content="Eure schönsten Momente für die Ewigkeit. Porträts, Events & Haustiere.">
-    <meta property="twitter:image"
-        content="https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1">
-
-    <!-- Schema Markup (JSON-LD) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "Photon Capture",
-      "image": "https://lh3.googleusercontent.com/pw/AP1GczMg8dCbICmYoQg0AlDyi94yWWzve2ADbZ1CBpChw50UvbdRXWfdterwjKMf1R-eohQZibtIiQzB-2_D-Xk10eX_uPqdoboNFgQgZFR-ANhxRBzsAkRecjDscUecVvdEG7Loo4afmrOIRceiLcgmjCgl=w1122-h1684-s-no-gm?authuser=1",
-      "description": "Authentische Fotografie für Porträts, Events und Haustiere.",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "[Musterstraße 1]",
-        "addressLocality": "[Musterstadt]",
-        "postalCode": "[12345]",
-        "addressCountry": "DE"
-      },
-      "priceRange": "€€",
-      "telephone": "[Telefonnummer]",
-      "email": "Photon.Capture.Fotografie@gmail.com",
-      "url": "https://photon-capture.de/"
-    }
-    </script>
-
+    <!-- Favicon & Stylesheet -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <!-- Scroll Progress Indicator -->
-    <div class="scroll-progress">
-        <div class="scroll-progress-bar"></div>
-    </div>
-
-    <!-- Navigation -->
-    <header>
+    <!-- Site Navigation -->
+    <header class="site-header">
         <div class="container">
-            <a href="#hero" class="logo">Photon<span>-Capture</span></a>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="#hero" class="active" data-i18n="nav.home">Startseite</a></li>
-                    <li><a href="#about" data-i18n="nav.about">Über mich</a></li>
-                    <li><a href="#services" data-i18n="nav.services">Leistungen</a></li>
-                    <li><a href="#gallery" data-i18n="nav.gallery">Galerie</a></li>
-                    <li><a href="#pricing" data-i18n="nav.pricing">Preise</a></li>
-                    <li><a href="#contact" data-i18n="nav.contact">Kontakt</a></li>
+            <a href="index.html" class="brand-logo">PHOTON CAPTURE</a>
+            <nav class="main-nav">
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="#about">Über mich</a></li>
+                    <li><a href="#services">Leistungen</a></li>
+                    <li><a href="#gallery">Galerie</a></li>
+                    <li><a href="#pricing">Preise</a></li>
+                    <li><a href="#contact">Kontakt</a></li>
                 </ul>
                 <div class="nav-actions">
-                    <button class="lang-toggle" aria-label="Switch Language">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path>
-                        </svg>
-                    </button>
-                    <a href="gallery/index.html" class="portal-link" aria-label="Client Portal" title="Client Login">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <button class="lang-toggle" id="langToggle" aria-label="Switch Language">DE</button>
+                    <a href="gallery/index.html" class="portal-link" aria-label="Client Portal" title="Client Portal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </a>
-                    <button class="dark-mode-toggle" aria-label="Toggle Dark Mode">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path class="sun"
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
-                            </path>
-                            <path class="moon" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" style="display: none;">
-                            </path>
-                        </svg>
-                    </button>
                 </div>
-                <div class="hamburger">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
+                <button class="hamburger" id="hamburgerBtn" aria-label="Menü öffnen">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </nav>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section id="hero" class="hero">
-        <div class="hero-bg"></div>
-        <div class="container hero-content">
-            <h1 data-i18n="hero.title">Eure schönsten Momente<br>für die Ewigkeit</h1>
-            <p data-i18n="hero.subtitle">Authentische Fotografie für Porträts, Events & Haustiere</p>
-            <a href="#gallery" class="cta-button" data-i18n="hero.btn">Zur Galerie</a>
-        </div>
-        <div class="scroll-indicator">
-            <span>Scroll</span>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="about-section">
-        <div class="container">
-            <div class="section-title" data-i18n="about.title">Über mich</div>
-            <div class="about-content">
-                <div class="about-image">
-                    <!-- Placeholder for photographer image -->
-                    <img src="https://lh3.googleusercontent.com/pw/AP1GczOUTZYg7KUOj6ei5JFQgOY4USQk3SZ8KvRKzq_yaNSBCx3Zz7UPO4GGEIG8Hb7vn90uAqSO7IkUnYnVQ_XE4eNl7LcoIuxfr-isB5xVH0YZCKRIq1U8-ixPfo0V449cQCJwcTK7cY4CE2QhuW2tOza1=w1006-h670-s-no-gm?authuser=0"
-                        alt="Photon-Capture">
-                </div>
-                <div class="about-text">
-                    <h2 data-i18n="about.intro">Schön, dass du da bist!</h2>
-                    <p data-i18n="about.p1">Ich bin Jonathan, und ich liebe es, echte Emotionen und einzigartige
-                        Augenblicke einzufangen. Seit vielen Jahren begleite ich Menschen mit meiner Kamera –
-                        angefangen hat alles mit einem alten Handy und der Faszination für visuelles
-                        Geschichtenerzählen.</p>
-                    <p data-i18n="about.p2">Mein Ziel ist es, Bilder zu schaffen, die berühren und bleiben. Egal ob es
-                        um einen Moment mit dem geliebten Vierbeiner geht, ein ehrliches Porträt oder die lebendige
-                        Stimmung eines Events – ich möchte den Moment so festhalten, wie er sich angefühlt hat.</p>
-                    <p data-i18n="about.p3">Wenn ich nicht fotografiere, bin ich am liebsten draußen in der Natur
-                        unterwegs, immer auf der Suche nach neuem Licht und Inspiration, um meine Arbeit für euch stetig
-                        weiterzuentwickeln.</p>
-                    <a href="#contact" class="cta-button" data-i18n="about.btn">Lass uns sprechen</a>
+    <main>
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="hero-bg-media">
+                <span class="hero-placeholder-tag">VOLLBILD-FOTO · QUERFORMAT</span>
+            </div>
+            <div class="container hero-container">
+                <div class="hero-text-content">
+                    <span class="section-kicker">FOTOGRAFIE AUS DRESDEN</span>
+                    <h1 class="hero-headline">Eure schönsten<br>Momente für die<br>Ewigkeit.</h1>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services-section">
-        <div class="container">
-            <div class="section-title" data-i18n="services.title">Meine Leistungen</div>
-            <div class="services-grid">
-                <div class="service-card" data-category="portrait">
-                    <div class="service-icon">👤</div>
-                    <h3 data-i18n="services.portrait.title">Porträt-Sitzungen</h3>
-                    <p data-i18n="services.portrait.desc">Ob für dich selbst, als Paar oder mit der Familie – wir
-                        kreieren entspannte Bilder, auf denen du dich wohlfühlst.</p>
-                </div>
-                <div class="service-card" data-category="event">
-                    <div class="service-icon">🎉</div>
-                    <h3 data-i18n="services.event.title">Event-Begleitung</h3>
-                    <p data-i18n="services.event.desc">Firmenfeiern, Geburtstage oder Jubiläen. Ich sorge dafür, dass
-                        die Stimmung und die besonderen Momente unvergessen bleiben.</p>
-                </div>
-                <div class="service-card" data-category="pet">
-                    <div class="service-icon">🐾</div>
-                    <h3 data-i18n="services.pet.title">Tierfotografie</h3>
-                    <p data-i18n="services.pet.desc">Charakterstarke Porträts deiner Vierbeiner. Mit viel Geduld und
-                        Ruhe fange ich das Wesen deines Tieres ein.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Gallery Section -->
-    <section id="gallery" class="gallery-section">
-        <div class="container">
-            <div class="section-title" data-i18n="gallery.title">Portfolio</div>
-
-            <!-- Filter Menu -->
-            <div class="gallery-filters">
-                <button class="filter-btn active" data-filter="all" data-i18n="gallery.filter.all">Alle</button>
-                <button class="filter-btn" data-filter="portrait" data-i18n="gallery.filter.portrait">Porträt</button>
-                <button class="filter-btn" data-filter="event" data-i18n="gallery.filter.event">Event</button>
-                <button class="filter-btn" data-filter="pet" data-i18n="gallery.filter.pet">Tier</button>
-            </div>
-
-            <!-- Auto-Scrolling Carousel Wrapper -->
-            <div class="gallery-carousel-wrapper">
-                <div class="gallery-row gallery-row-right" id="gallery-row-1">
-                    <!-- Top row placeholders -->
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                </div>
-                <div class="gallery-row gallery-row-left" id="gallery-row-2">
-                    <!-- Bottom row placeholders -->
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                    <div class="gallery-item skeleton" style="min-width: 300px; height: 300px;"></div>
-                </div>
-            </div>
-
-            <!-- Gallery Grid (hidden - source for carousel) -->
-            <div class="gallery-grid" style="display: none;">
-                <!-- Dynamically loaded from api/get-portfolio.php -->
-            </div>
-
-
-            <!-- Carousel Navigation (hidden for auto-scroll) -->
-            <div class="gallery-nav" style="display: none;">
-                <button class="gallery-nav-btn gallery-prev" aria-label="Previous">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <span class="gallery-page-indicator"></span>
-                <button class="gallery-nav-btn gallery-next" aria-label="Next">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="pricing-section">
-        <div class="container">
-            <div class="section-title" data-i18n="pricing.title">Pakete & Preise</div>
-            <div class="pricing-grid" id="pricing-grid-container">
-                <!-- Dynamically loaded from api/get-pricing.php via JS -->
-            </div>
-
-            <!-- Custom Request Option -->
-            <div id="custom-request-container" class="custom-request-card"
-                style="margin-top: 2rem; text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
-                <!-- Dynamically loaded from api/get-pricing.php via JS -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Customization Info Modal -->
-    <div id="customization-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <h3 data-i18n="pricing.extras.title">Verfügbare Extras</h3>
-            <div id="modal-text" class="modal-text"></div>
-        </div>
-    </div>
-
-    <!-- Lightbox Modal -->
-    <div id="lightbox" class="lightbox">
-        <span class="lightbox-close">&times;</span>
-        <span class="lightbox-prev">&#10094;</span>
-        <span class="lightbox-next">&#10095;</span>
-        <img class="lightbox-content" id="lightbox-img" alt="">
-        <div class="lightbox-caption"></div>
-    </div>
-
-    <!-- Testimonials Section -->
-    <section id="testimonials" class="testimonials-section">
-        <div class="container">
-            <div class="section-title" data-i18n="testimonials.title">Kundenstimmen</div>
-            <div class="testimonials-grid" id="testimonials-grid">
-                <!-- Testimonials will be loaded here -->
-                <div class="loading-spinner">Lade Bewertungen...</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="faq-section">
-        <div class="container">
-            <div class="section-title" data-i18n="faq.title">Häufig gestellte Fragen</div>
-
-            <div class="faq-container" id="faq-container">
-                <!-- Dynamically loaded from api/get-faq.php via JS -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="contact-section">
-        <div class="container contact-container">
-            <div class="contact-info">
-                <h3 data-i18n="contact.title">Kontakt</h3>
-                <div class="info-item">
-                    <div class="info-icon">📍</div>
-                    <div class="info-content">
-                        <h4 data-i18n="contact.info.location">Standort</h4>
-                        <p>Dresden, Germany</p>
+        <!-- Über mich Section -->
+        <section id="about" class="about-section">
+            <div class="container about-grid">
+                <div class="about-image-col">
+                    <div class="photographer-frame">
+                        <img src="https://lh3.googleusercontent.com/pw/AP1GczOUTZYg7KUOj6ei5JFQgOY4USQk3SZ8KvRKzq_yaNSBCx3Zz7UPO4GGEIG8Hb7vn90uAqSO7IkUnYnVQ_XE4eNl7LcoIuxfr-isB5xVH0YZCKRIq1U8-ixPfo0V449cQCJwcTK7cY4CE2QhuW2tOza1=w1006-h670-s-no-gm?authuser=0"
+                            alt="Jonathan - Photon Capture">
+                        <span class="frame-placeholder-label">PORTRÄT VON JONATHAN</span>
                     </div>
                 </div>
-                <div class="info-item">
-                    <div class="info-icon">📧</div>
-                    <div class="info-content">
-                        <h4 data-i18n="contact.info.email">E-Mail</h4>
-                        <p>Photon.Capture.Fotografie@gmail.com</p>
-                    </div>
+                <div class="about-text-col">
+                    <span class="section-kicker">ÜBER MICH</span>
+                    <h2 class="about-headline">Ich bin Jonathan. Ich fange echte Momente ein.</h2>
+                    <p class="about-body">
+                        Angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen. Heute begleite ich Menschen mit meiner Kamera, ob mit dem geliebten Vierbeiner, bei einem ehrlichen Porträt oder auf einem Event.
+                    </p>
+                    <p class="about-highlight">
+                        Mein Ziel: Bilder, die berühren und bleiben.
+                    </p>
                 </div>
-                <div class="info-item">
-                    <div class="info-icon">📞</div>
-                    <div class="info-content">
-                        <h4 data-i18n="contact.info.phone">Telefon</h4>
-                        <p>+49 1590 6786 209</p>
+            </div>
+        </section>
+
+        <!-- Leistungen Section -->
+        <section id="services" class="services-section">
+            <div class="container">
+                <span class="section-kicker">LEISTUNGEN</span>
+                <div class="services-list">
+                    <div class="service-row">
+                        <span class="service-num">01</span>
+                        <h3 class="service-name">Porträt-Sitzungen</h3>
+                        <p class="service-desc">Für dich, als Paar oder mit der Familie: entspannte Bilder, auf denen du dich wohlfühlst.</p>
+                    </div>
+                    <div class="service-row">
+                        <span class="service-num">02</span>
+                        <h3 class="service-name">Event-Begleitung</h3>
+                        <p class="service-desc">Firmenfeiern, Geburtstage, Jubiläen: Stimmung und besondere Momente bleiben unvergessen.</p>
+                    </div>
+                    <div class="service-row">
+                        <span class="service-num">03</span>
+                        <h3 class="service-name">Tierfotografie</h3>
+                        <p class="service-desc">Charakterstarke Porträts deiner Vierbeiner, mit Geduld und Ruhe aufgenommen.</p>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="contact-form">
-                <form id="contact-form">
-                    <div class="form-group">
-                        <label for="name" data-i18n="contact.form.name">Dein Name</label>
-                        <input type="text" id="name" class="form-control" placeholder="Wie heißt du?"
-                            data-i18n="contact.form.name.placeholder">
+        <!-- Portfolio / Galerie Section -->
+        <section id="gallery" class="gallery-section">
+            <div class="container">
+                <div class="gallery-header">
+                    <div class="gallery-title-group">
+                        <span class="section-kicker">PORTFOLIO</span>
+                        <h2 class="section-headline">Galerie</h2>
                     </div>
-                    <div class="form-group">
-                        <label for="email" data-i18n="contact.form.email">Deine E-Mail</label>
-                        <input type="email" id="email" class="form-control" placeholder="Wie kann ich dich erreichen?"
-                            data-i18n="contact.form.email.placeholder">
+                    <div class="gallery-filters" id="galleryFilters">
+                        <button class="filter-tab active" data-filter="all">Alle</button>
+                        <button class="filter-tab" data-filter="portrait">Porträt</button>
+                        <button class="filter-tab" data-filter="event">Event</button>
+                        <button class="filter-tab" data-filter="pet">Tier</button>
                     </div>
-                    <div class="form-group">
-                        <label for="service" data-i18n="contact.form.service">Worum geht es?</label>
-                        <select id="service" class="form-control">
-                            <option value="portrait" data-i18n="contact.form.service.portrait">Porträt-Session</option>
-                            <option value="event" data-i18n="contact.form.service.event">Event-Begleitung</option>
-                            <option value="pet" data-i18n="contact.form.service.pet">Tierfotografie</option>
-                            <option value="other" data-i18n="contact.form.service.other">Sonstiges / Allgemeine Frage
-                            </option>
-                        </select>
-                    </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="message" data-i18n="contact.form.message">Deine Nachricht</label>
-                        <textarea id="message" class="form-control"
-                            placeholder="Erzähl mir ein bisschen von deinen Plänen..."
-                            data-i18n="contact.form.message.placeholder"></textarea>
+                <!-- Asymmetrical 4-Column Layout (Matching Figma Mockup) -->
+                <div class="editorial-gallery-grid" id="editorialGallery">
+                    <!-- Column 1: Tall -->
+                    <div class="gallery-col" data-col="1">
+                        <div class="gallery-card tall" data-category="portrait">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO · HOCH</span>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="cta-button" style="border: none; cursor: pointer; width: 100%;"
-                        data-i18n="contact.btn">Nachricht abschicken</button>
-                </form>
+                    <!-- Column 2: Stack of 2 -->
+                    <div class="gallery-col" data-col="2">
+                        <div class="gallery-card square" data-category="event">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO</span>
+                            </div>
+                        </div>
+                        <div class="gallery-card square" data-category="portrait">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column 3: Stack of 2 -->
+                    <div class="gallery-col" data-col="3">
+                        <div class="gallery-card square" data-category="pet">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO</span>
+                            </div>
+                        </div>
+                        <div class="gallery-card square" data-category="event">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column 4: Tall -->
+                    <div class="gallery-col" data-col="4">
+                        <div class="gallery-card tall" data-category="pet">
+                            <div class="gallery-card-inner">
+                                <span class="card-placeholder-label">FOTO · HOCH</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- Pakete & Preise Section -->
+        <section id="pricing" class="pricing-section">
+            <div class="container">
+                <span class="section-kicker">PAKETE & PREISE</span>
+                <div class="pricing-list" id="pricing-list-container">
+                    <a href="calendar.html?package=portrait" class="pricing-row" data-package="portrait">
+                        <span class="pkg-letter">A</span>
+                        <span class="pkg-title">Porträt-Session</span>
+                        <span class="pkg-features">60 Min. Shooting, alle guten Fotos inkl., Online Galerie</span>
+                        <span class="pkg-price">ab 125 €</span>
+                    </a>
+                    <a href="calendar.html?package=event" class="pricing-row" data-package="event">
+                        <span class="pkg-letter">B</span>
+                        <span class="pkg-title">Event-Begleitung</span>
+                        <span class="pkg-features">Events & Feiern, Reportage-Stil, High-Res Downloads</span>
+                        <span class="pkg-price">ab 100 €/Std.</span>
+                    </a>
+                    <a href="calendar.html?package=pet" class="pricing-row" data-package="pet">
+                        <span class="pkg-letter">C</span>
+                        <span class="pkg-title">Tierfotografie</span>
+                        <span class="pkg-features">Hunde, Katzen & mehr, mit Geduld & Ruhe aufgenommen</span>
+                        <span class="pkg-price">ab 125 €</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kontakt Section (Warm Cream Background) -->
+        <section id="contact" class="contact-section">
+            <div class="container contact-grid">
+                <div class="contact-left-col">
+                    <span class="section-kicker">KONTAKT</span>
+                    <h2 class="contact-headline">Lass uns etwas<br>Schönes<br>festhalten.</h2>
+                    <div class="contact-details">
+                        <a href="mailto:Photon.Capture.Fotografie@gmail.com" class="contact-email">Photon.Capture.Fotografie@gmail.com</a>
+                        <p class="contact-phone-loc">+49 1590 6786 209 · Dresden</p>
+                    </div>
+                </div>
+                <div class="contact-right-col">
+                    <div class="contact-card-box">
+                        <form id="contact-form" class="clean-form">
+                            <div class="form-field">
+                                <label for="name">DEIN NAME</label>
+                                <input type="text" id="name" name="name" required class="underline-input">
+                            </div>
+                            <div class="form-field">
+                                <label for="email">DEINE E-MAIL</label>
+                                <input type="email" id="email" name="email" required class="underline-input">
+                            </div>
+                            <div class="form-field">
+                                <label for="service">WORUM GEHT ES?</label>
+                                <div class="select-wrapper">
+                                    <select id="service" name="service" class="underline-input">
+                                        <option value="portrait">Porträt-Session</option>
+                                        <option value="event">Event-Begleitung</option>
+                                        <option value="pet">Tierfotografie</option>
+                                        <option value="other">Sonstiges / Allgemeine Frage</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="message">DEINE NACHRICHT</label>
+                                <textarea id="message" name="message" rows="3" class="underline-input"></textarea>
+                            </div>
+                            <button type="submit" class="pill-btn pill-btn-light">Nachricht abschicken</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
+    <footer class="site-footer">
+        <div class="container footer-container">
+            <span class="footer-copy">© 2026 Photon Capture</span>
             <div class="footer-links">
-                <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank"
-                    rel="noopener noreferrer">Instagram</a>
-                <span class="separator">•</span>
-                <a href="agb.html" data-i18n="footer.agb">AGB</a>
-                <span class="separator">•</span>
-                <a href="impressum.html" data-i18n="footer.impressum">Impressum</a>
+                <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <span class="dot">·</span>
+                <a href="agb.html">AGB</a>
+                <span class="dot">·</span>
+                <a href="impressum.html">Impressum</a>
             </div>
-            <p class="copyright" data-i18n="footer.copyright">&copy; 2025 Photon-Capture. Alle Rechte vorbehalten.</p>
         </div>
     </footer>
 
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close" id="lightboxClose">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" alt="Gallery Preview">
+    </div>
+
     <!-- Cookie Banner -->
     <div id="cookie-banner" class="cookie-banner">
-        <img src="assets/cookie-aperture.svg" alt="Cookie Icon" class="cookie-icon">
         <div class="cookie-content">
-            <h4 data-i18n="cookie.title">Cookies & Datenschutz</h4>
-            <p data-i18n="cookie.text">Wir nutzen Cookies, um dir das beste Erlebnis auf unserer Website zu bieten. Dazu
-                gehören essenzielle Cookies (erforderlich) und optionale Analytics-Cookies (helfen uns zu verstehen, wie
-                Besucher unsere Seite nutzen).</p>
+            <h4>Cookies &amp; Datenschutz</h4>
+            <p>Wir nutzen Cookies, um das beste Erlebnis auf unserer Website zu gewährleisten.</p>
             <div class="cookie-actions">
-                <button id="accept-cookies" class="cookie-btn accept" data-i18n="cookie.accept">Alle
-                    akzeptieren</button>
-                <button id="decline-cookies" class="cookie-btn decline" data-i18n="cookie.decline">Nur
-                    essenzielle</button>
-                <button id="cookie-settings" class="cookie-btn settings">Einstellungen</button>
+                <button id="accept-cookies" class="cookie-btn accept">Alle akzeptieren</button>
+                <button id="decline-cookies" class="cookie-btn decline">Nur essenzielle</button>
             </div>
         </div>
     </div>
 
-
-
-    <!-- Testimonials Loader -->
-    <script>
-        async function loadTestimonials() {
-            const grid = document.getElementById('testimonials-grid');
-            try {
-                const response = await fetch('api/get-testimonials.php');
-                const data = await response.json();
-
-                if (data.success && data.testimonials.length > 0) {
-                    grid.innerHTML = '';
-                    data.testimonials.forEach(t => {
-                        const card = document.createElement('div');
-                        card.className = 'testimonial-card';
-
-                        let stars = '';
-                        for (let i = 0; i < 5; i++) {
-                            stars += `<span class="star ${i < t.rating ? 'filled' : ''}">★</span>`;
-                        }
-
-                        card.innerHTML = `
-                            <div class="testimonial-stars">${stars}</div>
-                            <p class="testimonial-text">"${t.text}"</p>
-                            <div class="testimonial-author">
-                                <span class="author-name">${t.name}</span>
-                                <span class="testimonial-date">${new Date(t.date).toLocaleDateString('de-DE')}</span>
-                            </div>
-                        `;
-                        grid.appendChild(card);
-                    });
-                } else {
-                    grid.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1/-1;">Noch keine Bewertungen vorhanden.</p>';
-                }
-            } catch (error) {
-                console.error('Error loading testimonials:', error);
-                grid.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1/-1;">Fehler beim Laden der Bewertungen.</p>';
-            }
-        }
-        document.addEventListener('DOMContentLoaded', loadTestimonials);
-    </script>
-
-    <!-- Cookie Manager & Analytics -->
-    <script src=" js/cookie-manager.js" defer></script>
-    <script src="js/analytics.js" defer></script>
-
-    <script src="js/translations.js" defer></script>
-    <script src="js/main.js" defer></script>
-    <script src="js/email-handler.js" defer></script>
+    <!-- Scripts -->
+    <script src="js/translations.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/email-handler.js"></script>
+    <script src="js/cookie-manager.js" defer></script>
 </body>
 
 </html>

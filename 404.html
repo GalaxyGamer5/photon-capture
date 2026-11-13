@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seite nicht gefunden | Photon Capture</title>
-    <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
     <style>
         .error-page {
             min-height: 100vh;
@@ -22,46 +22,32 @@
         }
 
         .error-code {
-            font-size: 8rem;
+            font-size: clamp(6rem, 15vw, 10rem);
             font-family: var(--font-heading);
-            font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            color: #ffffff;
             margin: 0;
             line-height: 1;
-            filter: drop-shadow(0 0 30px rgba(255, 51, 102, 0.3));
+            letter-spacing: -0.04em;
         }
 
         .error-message {
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             color: var(--text-secondary);
-            margin: 1.5rem 0 3rem;
-            max-width: 500px;
+            margin: 1.5rem 0 2.5rem;
+            max-width: 480px;
+            line-height: 1.6;
         }
 
         .shine {
             position: absolute;
-            width: 300px;
-            height: 300px;
-            background: var(--accent-glow);
-            filter: blur(100px);
+            width: 350px;
+            height: 350px;
+            background: rgba(255, 122, 61, 0.15);
+            filter: blur(120px);
             border-radius: 50%;
-            z-index: -1;
-            animation: pulse 4s infinite alternate;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.3;
-            }
-
-            100% {
-                transform: scale(1.2);
-                opacity: 0.5;
-            }
+            z-index: 1;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -69,13 +55,14 @@
 <body>
     <div class="error-page">
         <div class="shine"></div>
-        <h1 class="error-code">404</h1>
-        <p class="error-message">Hoppla! Die Seite, die du suchst, scheint in einem anderen Licht zu stehen – oder
-            existiert nicht mehr.</p>
-        <a href="index.html" class="cta-button">Zurück zur Startseite</a>
+        <div style="position: relative; z-index: 2;">
+            <a href="index.html" class="brand-logo" style="margin-bottom: 2rem; display: inline-flex;">PHOTON CAPTURE</a>
+            <h1 class="error-code">404</h1>
+            <p class="error-message">Die angeforderte Seite existiert nicht oder wurde verschoben.</p>
+            <a href="index.html" class="pill-btn pill-btn-accent">Zurück zur Startseite</a>
+        </div>
     </div>
 
-    <!-- Global Scripts for Theme consistency -->
     <script src="js/main.js"></script>
 </body>
 

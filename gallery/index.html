@@ -8,7 +8,7 @@
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#00f2ff">
+    <meta name="theme-color" content="#0b0b0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Photon Gallery">
@@ -21,22 +21,25 @@
 <body>
     <div class="auth-container">
         <div class="auth-box">
-            <a href="../index.html" class="logo">Photon<span>-Capture</span></a>
+            <span class="auth-kicker">Kundenportal</span>
+            <div style="margin-bottom: 2rem;">
+                <a href="../index.html" class="brand-logo" style="justify-content: center; font-size: 14px;">PHOTON CAPTURE</a>
+            </div>
 
             <div id="error-msg" class="error-message">Benutzername oder Passwort falsch</div>
 
             <form id="login-form">
                 <div class="form-group">
                     <label for="username">Benutzername</label>
-                    <input type="text" id="username" class="form-control" required autofocus>
+                    <input type="text" id="username" class="form-control" placeholder="Benutzername eingeben" required autofocus>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Passwort</label>
-                    <input type="password" id="password" class="form-control" required>
+                    <input type="password" id="password" class="form-control" placeholder="Passwort eingeben" required>
                 </div>
 
-                <button type="submit" class="btn">Anmelden</button>
+                <button type="submit" class="btn" style="margin-top: 0.5rem;">Anmelden</button>
             </form>
         </div>
     </div>

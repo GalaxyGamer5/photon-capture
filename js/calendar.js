@@ -1,513 +1,349 @@
-// Calendar JavaScript - Dedicated calendar functionality
-// Relies on main.js for translations and global functionality
-
+// Calendar JavaScript - Variante B Design
 document.addEventListener('DOMContentLoaded', () => {
-    // Calendar State
-    let currentDate = new Date();
-    let selectedDate = null;
+    // Current date state - default to November 2026 as in mockup
+    let currentDate = new Date(2026, 10, 1); // Month 10 is November (0-indexed)
+    let selectedDate = "2026-11-21";
+    let selectedTime = "10:00";
     let currentLanguage = localStorage.getItem('preferredLang') || 'de';
-    let selectedPackage = null;
+    let selectedPackageId = 'event';
     let availabilityData = {};
+    let pricingData = null;
+    let selectedExtras = new Set();
 
-    // Get package from URL
+    // Check URL parameters for package
     const urlParams = new URLSearchParams(window.location.search);
-    selectedPackage = urlParams.get('package') || null;
+    if (urlParams.has('package')) {
+        selectedPackageId = urlParams.get('package');
+    }
 
-    // Elements
-    const bookingValues = {
-        service: document.getElementById('service'),
+    // DOM Elements
+    const elements = {
+        currentMonth: document.getElementById('currentMonth'),
+        prevMonthBtn: document.getElementById('prevMonth'),
+        nextMonthBtn: document.getElementById('nextMonth'),
+        weekdayLabels: document.getElementById('weekdayLabels'),
+        daysGrid: document.getElementById('daysGrid'),
+        packageName: document.getElementById('packageName'),
+        serviceSelect: document.getElementById('service'),
+        slotDateKicker: document.getElementById('slotDateKicker'),
+        slotsPillGroup: document.getElementById('slotsPillGroup'),
+        displaySelectedDate: document.getElementById('displaySelectedDate'),
+        displaySelectedTime: document.getElementById('displaySelectedTime'),
+        dateInput: document.getElementById('date'),
+        timeInput: document.getElementById('time'),
         extrasContainer: document.getElementById('extras-container'),
-        bookingTips: document.getElementById('booking-tips')
+        summaryPackageLabel: document.getElementById('summaryPackageLabel'),
+        summaryPackagePrice: document.getElementById('summaryPackagePrice'),
+        summaryExtrasRow: document.getElementById('summaryExtrasRow'),
+        summaryExtrasPrice: document.getElementById('summaryExtrasPrice'),
+        summaryTotalPrice: document.getElementById('summaryTotalPrice'),
+        totalPriceInput: document.getElementById('total_price_input'),
+        priceDetailsInput: document.getElementById('price_details_input'),
+        basePriceInput: document.getElementById('base_price_input'),
+        extrasBreakdownInput: document.getElementById('extras_breakdown_input'),
+        discountBreakdownInput: document.getElementById('discount_breakdown_input')
     };
 
-    // Initialize calendar
-    function initCalendar() {
-        renderCalendar(); // Render immediately with defaults
-        loadAvailabilityData(); // Fetch real data
-        setupEventListeners();
+    const monthNamesDe = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+    ];
+    const monthNamesEn = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const weekdayNamesDe = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    const weekdayNamesEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    // Initialize
+    async function init() {
+        if (elements.serviceSelect) {
+            elements.serviceSelect.value = selectedPackageId;
+            elements.serviceSelect.addEventListener('change', (e) => {
+                selectedPackageId = e.target.value;
+                selectedExtras.clear();
+                updatePackageDisplay();
+                renderExtras();
+                updatePricing();
+            });
+        }
+
+        setupMonthNav();
+        setupTimeSlots();
+        await loadAvailabilityData();
+        await loadPricingData();
+        renderCalendar();
         updatePackageDisplay();
-
-        // Initial setup for the form if it exists
-        if (bookingValues.service) {
-            if (selectedPackage) {
-                bookingValues.service.value = selectedPackage;
-            }
-            renderExtras(bookingValues.service.value);
-        }
-    }
-
-    // Fetch availability data
-    async function loadAvailabilityData() {
-        try {
-            const response = await fetch('data/calendar.json');
-            if (!response.ok) throw new Error('Network response was not ok');
-            availabilityData = await response.json();
-            renderCalendar(); // Re-render after data load
-        } catch (error) {
-            console.error('Error loading calendar data:', error);
-            // Fallback empty data is already set
-        }
-    }
-
-    // Render calendar grid
-    function renderCalendar() {
-        const t = translations[currentLanguage];
-        if (!t) return;
-
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-
-        // Update month header
-        document.getElementById('currentMonth').textContent = `${t["calendar.months"][month]} ${year}`;
-
-        // Render weekday labels
-        const weekdayLabels = document.getElementById('weekdayLabels');
-        weekdayLabels.innerHTML = '';
-        t["calendar.weekdays"].forEach(day => {
-            const label = document.createElement('div');
-            label.className = 'weekday-label';
-            label.textContent = day;
-            weekdayLabels.appendChild(label);
-        });
-
-        // Calculate calendar grid
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-        const startingDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Monday start
-
-        const daysGrid = document.getElementById('daysGrid');
-        daysGrid.innerHTML = '';
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // Empty cells for previous month
-        for (let i = 0; i < startingDay; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'day-cell empty';
-            daysGrid.appendChild(cell);
-        }
-
-        // Day cells
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
-            const dateString = formatDate(date);
-            const cell = document.createElement('div');
-            cell.className = 'day-cell';
-
-            // Check if past
-            if (date < today) {
-                cell.classList.add('past');
-            } else {
-                // Check availability
-                const status = getAvailabilityStatus(dateString) || 'available';
-                cell.classList.add(status);
-
-                // Only clickable if available or limited
-                if (status === 'available' || status === 'limited') {
-                    cell.addEventListener('click', () => selectDate(date, dateString));
-                }
-            }
-
-            // Check if today
-            if (date.getTime() === today.getTime()) {
-                cell.classList.add('today');
-            }
-
-            // Check if selected
-            if (selectedDate === dateString) {
-                cell.classList.add('selected');
-            }
-
-            // Create cell content
-            const dayNum = document.createElement('div');
-            dayNum.className = 'day-number';
-            dayNum.textContent = day;
-
-            const dayStatus = document.createElement('div');
-            dayStatus.className = 'day-status';
-            const statusKey = getAvailabilityStatus(dateString) || 'available';
-            dayStatus.textContent = t[`calendar.${statusKey}`];
-
-            cell.appendChild(dayNum);
-            cell.appendChild(dayStatus);
-            daysGrid.appendChild(cell);
-        }
-    }
-
-    // Format date to YYYY-MM-DD
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    // Format display date
-    function formatDisplayDate(dateString) {
-        const t = translations[currentLanguage];
-        const date = new Date(dateString + 'T00:00:00');
-        const day = date.getDate();
-        const month = t["calendar.months"][date.getMonth()];
-        const year = date.getFullYear();
-        return `${day}. ${month} ${year}`;
-    }
-
-    // Get availability status
-    function getAvailabilityStatus(dateString) {
-        return availabilityData[dateString]?.status || null;
-    }
-
-    // Select date
-    function selectDate(date, dateString) {
-        // Remove previous selection
-        document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
-
-        // Toggle selection
-        if (selectedDate === dateString) {
-            selectedDate = null;
-            hideBookingPanel();
-        } else {
-            selectedDate = dateString;
-
-            // Add selected class to clicked cell
-            const cells = document.querySelectorAll('.day-cell');
-            cells.forEach(cell => {
-                if (cell.textContent.includes(date.getDate()) && !cell.classList.contains('empty')) {
-                    const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), date.getDate());
-                    if (formatDate(cellDate) === dateString) {
-                        cell.classList.add('selected');
-                    }
-                }
-            });
-
-            showBookingPanel(dateString);
-        }
-    }
-
-    // Show booking panel
-    function showBookingPanel(dateString) {
-        const panel = document.getElementById('bookingPanel');
-        const dateDisplay = document.getElementById('selectedDateDisplay');
-
-        // Reset view to initial state
-        document.getElementById('booking-initial-view').style.display = 'block';
-        document.getElementById('booking-form-container').style.display = 'none';
-
-        dateDisplay.textContent = formatDisplayDate(dateString);
-        panel.classList.add('active');
-
-        // Scroll to panel
-        setTimeout(() => {
-            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-
-        // Update hidden input in form
-        const dateInput = document.getElementById('date');
-        if (dateInput) dateInput.value = dateString;
-    }
-
-    // Hide booking panel
-    function hideBookingPanel() {
-        const panel = document.getElementById('bookingPanel');
-        panel.classList.remove('active');
-        // Reset state
-        document.getElementById('booking-initial-view').style.display = 'block';
-        document.getElementById('booking-form-container').style.display = 'none';
-
-        // Update text again in case we canceled mid-booking
-        const confirmBtn = document.getElementById('confirmBtn');
-        if (confirmBtn) confirmBtn.style.display = 'inline-block';
-    }
-
-    // Update package display
-    function updatePackageDisplay() {
-        const packageInfo = document.getElementById('selectedPackageInfo');
-        const packageNameSpan = document.getElementById('packageName');
-        const t = translations[currentLanguage];
-
-        if (selectedPackage) {
-            let packageName = selectedPackage;
-            if (selectedPackage === 'portrait') packageName = t["services.portrait.title"] || "Porträt-Session";
-            if (selectedPackage === 'event') packageName = t["services.event.title"] || "Event-Begleitung";
-            if (selectedPackage === 'pet') packageName = t["services.pet.title"] || "Tierfotografie";
-            if (selectedPackage === 'other' || selectedPackage === 'custom') packageName = t["contact.form.service.other"] || "Sonstiges / Allgemeine Frage";
-
-            packageNameSpan.textContent = packageName;
-            packageInfo.style.display = 'inline-block';
-        } else {
-            packageInfo.style.display = 'none';
-        }
-    }
-
-    // Setup event listeners
-    function setupEventListeners() {
-        // Month navigation
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
-        });
-
-        // Cancel button
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            selectedDate = null;
-            hideBookingPanel();
-            document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
-        });
-
-        // Confirm button (Shows form now, doesn't redirect)
-        document.getElementById('confirmBtn').addEventListener('click', () => {
-            if (selectedDate) {
-                document.getElementById('booking-initial-view').style.display = 'none';
-                document.getElementById('booking-form-container').style.display = 'block';
-                // Scroll slightly to show form top
-                document.getElementById('bookingPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-
-        // Back to Calendar button
-        const backBtn = document.getElementById('backToCalendarBtn');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                document.getElementById('booking-initial-view').style.display = 'block';
-                document.getElementById('booking-form-container').style.display = 'none';
-            });
-        }
-
-        // Service Selection Change
-        if (bookingValues.service) {
-            bookingValues.service.addEventListener('change', (e) => {
-                renderExtras(e.target.value);
-            });
-        }
-
-        // Listen for language changes from main.js
-        window.addEventListener('languageChanged', (e) => {
-            currentLanguage = e.detail.language;
-            renderCalendar();
-            updatePackageDisplay();
-            // Also update form extras if visible
-            if (bookingValues.service) {
-                renderExtras(bookingValues.service.value);
-            }
-        });
-    }
-    // --- Dynamic Pricing & Extras Logic (Unified with Admin) ---
-    let pricingData = null;
-
-    async function fetchPricingData() {
-        try {
-            const res = await fetch('api/get-pricing.php?t=' + Date.now());
-            pricingData = await res.json();
-            // Trigger initial render of extras if package is already selected
-            if (bookingValues.service && bookingValues.service.value) {
-                renderExtras(bookingValues.service.value);
-            }
-        } catch (e) {
-            console.error('Failed to fetch pricing for calendar', e);
-        }
-    }
-
-    function renderExtras(service) {
-        if (!bookingValues.extrasContainer || !pricingData) return;
-        
-        bookingValues.extrasContainer.innerHTML = '';
-        const pkg = pricingData.packages.find(p => p.id === service);
-        
-        const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : {};
-
-        if (!pkg || !pkg.extras || pkg.extras.length === 0) {
-            if (service !== 'other') {
-                bookingValues.extrasContainer.innerHTML = `<p style="color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.none'] || 'Keine speziellen Extras für diese Auswahl.'}</p>`;
-            }
-            updatePricing();
-            return;
-        }
-
-        pkg.extras.forEach(ex => {
-            let html = '';
-            const label = ex.label[currentLanguage] || ex.label.de || ex.label;
-            
-            if (ex.type === 'select') {
-                const optionsHtml = ex.options.map(opt => `
-                    <option value="${opt.id}" data-price="${opt.price}">
-                        ${opt.label[currentLanguage] || opt.label.de || opt.label}
-                    </option>
-                `).join('');
-                
-                html = `
-                    <div class="form-group">
-                        <label>${label}</label>
-                        <select name="extra_${ex.id}" class="form-control extra-input" data-extra-id="${ex.id}" data-type="select">
-                            ${optionsHtml}
-                        </select>
-                    </div>`;
-            } else {
-                html = `
-                    <div class="form-group" style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px; cursor:pointer;">
-                        <input type="checkbox" name="extra_${ex.id}" class="extra-input" data-extra-id="${ex.id}" data-type="checkbox" data-price="${ex.price || 0}" style="width:20px; height:20px; cursor:pointer;">
-                        <label style="margin-bottom:0; cursor:pointer; flex:1;">${label} (+${ex.price}€)</label>
-                    </div>`;
-            }
-            bookingValues.extrasContainer.insertAdjacentHTML('beforeend', html);
-        });
-
-        // Add special Duration for Event if not handled by extras
-        if (service === 'event') {
-            const hasDuration = pkg.extras.some(e => e.id === 'event_duration');
-            if (!hasDuration) {
-                const durationHtml = `
-                    <div class="form-group">
-                        <label>${t['contact.form.extras.duration.label'] || 'Buchungsdauer'}</label>
-                        <select name="event_duration" class="form-control extra-input">
-                            <option value="2h">2 Stunden (Minimum)</option>
-                            <option value="3h">3 Stunden</option>
-                            <option value="4h">4 Stunden</option>
-                            <option value="5h">5 Stunden</option>
-                            <option value="6h">6 Stunden</option>
-                            <option value="8h">8 Stunden</option>
-                            <option value="open">Open End</option>
-                        </select>
-                        <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary); font-style: italic;">${t['contact.form.extras.duration.open_note'] || 'Hinweis: Open End basiert auf 8 Stunden.'}</small>
-                    </div>`;
-                bookingValues.extrasContainer.insertAdjacentHTML('afterbegin', durationHtml);
-            }
-        }
-
-        // Attach listeners
-        const inputs = bookingValues.extrasContainer.querySelectorAll('.extra-input');
-        inputs.forEach(input => {
-            input.addEventListener('change', updatePricing);
-        });
-
+        renderExtras();
+        updateDateTimeDisplays();
         updatePricing();
     }
 
-    function updatePricing() {
-        if (!bookingValues.service || !pricingData) return;
+    // Fetch calendar availability
+    async function loadAvailabilityData() {
+        try {
+            const res = await fetch('data/calendar.json');
+            if (res.ok) {
+                availabilityData = await res.json();
+            }
+        } catch (e) {
+            console.warn('Using default availability calendar data', e);
+        }
+    }
 
-        const priceSummary = document.getElementById('price-summary');
-        const priceBreakdown = document.getElementById('price-breakdown');
-        const priceDiscount = document.getElementById('price-discount');
-        const priceTotal = document.getElementById('price-total');
+    // Fetch pricing data
+    async function loadPricingData() {
+        try {
+            const res = await fetch('api/get-pricing.php?t=' + Date.now());
+            if (res.ok) {
+                pricingData = await res.json();
+            } else {
+                const fallbackRes = await fetch('data/pricing.json');
+                if (fallbackRes.ok) pricingData = await fallbackRes.json();
+            }
+        } catch (e) {
+            console.warn('Using fallback pricing', e);
+            pricingData = {
+                packages: [
+                    { id: "event", title: { de: "Event-Begleitung", en: "Event Coverage" }, price: 100 },
+                    { id: "portrait", title: { de: "Porträt-Session", en: "Portrait Session" }, price: 125 },
+                    { id: "pet", title: { de: "Tierfotografie", en: "Pet Photography" }, price: 125 }
+                ]
+            };
+        }
+    }
 
-        const selectedService = bookingValues.service.value;
-        const pkg = pricingData.packages.find(p => p.id === selectedService);
-        if (!pkg) {
-            priceSummary.style.display = 'none';
+    // Format date string YYYY-MM-DD
+    function formatDate(year, month, day) {
+        const m = String(month + 1).padStart(2, '0');
+        const d = String(day).padStart(2, '0');
+        return `${year}-${m}-${d}`;
+    }
+
+    // Setup Month Nav
+    function setupMonthNav() {
+        if (elements.prevMonthBtn) {
+            elements.prevMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+        }
+        if (elements.nextMonthBtn) {
+            elements.nextMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+    }
+
+    // Render Calendar
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Header
+        const monthList = currentLanguage === 'en' ? monthNamesEn : monthNamesDe;
+        if (elements.currentMonth) {
+            elements.currentMonth.textContent = `${monthList[month]} ${year}`;
+        }
+
+        if (!elements.daysGrid) return;
+        elements.daysGrid.innerHTML = '';
+
+        // Month start & length (Monday = 0)
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        let startingDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+        // Empty cells before start
+        for (let i = 0; i < startingDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'day-cell empty';
+            elements.daysGrid.appendChild(emptyCell);
+        }
+
+        // Days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = formatDate(year, month, day);
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            cell.textContent = day;
+
+            // Check mock / real status
+            const status = availabilityData[dateStr]?.status || 'available';
+            if (status === 'booked') {
+                cell.classList.add('booked');
+            } else {
+                cell.classList.add('available');
+                cell.addEventListener('click', () => {
+                    selectedDate = dateStr;
+                    document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
+                    cell.classList.add('selected');
+                    updateDateTimeDisplays();
+                });
+            }
+
+            if (selectedDate === dateStr) {
+                cell.classList.add('selected');
+            }
+
+            elements.daysGrid.appendChild(cell);
+        }
+    }
+
+    // Setup Time Slot Buttons
+    function setupTimeSlots() {
+        if (!elements.slotsPillGroup) return;
+        const pills = elements.slotsPillGroup.querySelectorAll('.slot-pill');
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                pills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                selectedTime = pill.dataset.time || pill.textContent.replace(/[\[\]]/g, '').trim();
+                updateDateTimeDisplays();
+            });
+        });
+    }
+
+    // Update Date & Time Text Displays
+    function updateDateTimeDisplays() {
+        if (!selectedDate) return;
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dayOfWeek = dt.getDay();
+        const monthName = (currentLanguage === 'en' ? monthNamesEn : monthNamesDe)[m - 1];
+        const dayName = (currentLanguage === 'en' ? weekdayNamesEn : weekdayNamesDe)[dayOfWeek];
+
+        // Format for left slot kicker e.g. "SAMSTAG, 21. NOVEMBER"
+        const fullDayName = dt.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'de-DE', { weekday: 'long' });
+        if (elements.slotDateKicker) {
+            elements.slotDateKicker.textContent = `${fullDayName.toUpperCase()}, ${d}. ${monthName.toUpperCase()}`;
+        }
+
+        // Format for right column display: "Sa, 21. November 2026"
+        if (elements.displaySelectedDate) {
+            elements.displaySelectedDate.textContent = `${dayName}, ${d}. ${monthName} ${y}`;
+        }
+        if (elements.displaySelectedTime) {
+            elements.displaySelectedTime.textContent = `[${selectedTime}] Uhr`;
+        }
+
+        if (elements.dateInput) elements.dateInput.value = selectedDate;
+        if (elements.timeInput) elements.timeInput.value = selectedTime;
+    }
+
+    // Update Package Name
+    function updatePackageDisplay() {
+        let title = "Event-Begleitung";
+        if (pricingData && pricingData.packages) {
+            const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
+            if (pkg && pkg.title) {
+                title = pkg.title[currentLanguage] || pkg.title.de || pkg.title;
+            }
+        } else {
+            if (selectedPackageId === 'portrait') title = "Porträt-Session";
+            if (selectedPackageId === 'pet') title = "Tierfotografie";
+        }
+
+        if (elements.packageName) elements.packageName.textContent = title;
+        if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = title;
+        if (elements.serviceSelect) elements.serviceSelect.value = selectedPackageId;
+    }
+
+    // Render Extras in Editorial Style
+    function renderExtras() {
+        if (!elements.extrasContainer) return;
+        elements.extrasContainer.innerHTML = '';
+
+        if (!pricingData || !pricingData.packages) return;
+        const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
+        if (!pkg || !pkg.extras || pkg.extras.length === 0) {
+            elements.extrasContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); padding: 0.5rem 0;">Keine optionalen Extras für dieses Paket verfügbar.</p>`;
             return;
         }
 
-        let basePrice = pkg.price || 0;
-        let durationHours = 1;
-        
-        // Event Logic
-        const durationSelect = bookingValues.extrasContainer.querySelector('select[name="event_duration"]');
-        if (selectedService === 'event' && durationSelect) {
-            const durationValue = durationSelect.value;
-            if (durationValue.endsWith('h')) durationHours = parseInt(durationValue);
-            else if (durationValue === 'open') durationHours = 8;
-            basePrice = pkg.price * durationHours;
-        }
+        pkg.extras.forEach(extra => {
+            const label = extra.label[currentLanguage] || extra.label.de || extra.label;
+            let price = extra.price || 0;
 
+            if (extra.type === 'select' && extra.options) {
+                // If options exist, pick the first paid upgrade option as a sample or show row
+                const paidOpt = extra.options.find(o => o.price > 0) || extra.options[1] || extra.options[0];
+                if (paidOpt) {
+                    price = paidOpt.price;
+                }
+            }
+
+            const row = document.createElement('div');
+            row.className = 'extra-row-item';
+            if (selectedExtras.has(extra.id)) {
+                row.classList.add('selected');
+            }
+            row.innerHTML = `
+                <span>${label}</span>
+                <span class="extra-price-tag">+ ${price} €</span>
+            `;
+
+            row.addEventListener('click', () => {
+                if (selectedExtras.has(extra.id)) {
+                    selectedExtras.delete(extra.id);
+                    row.classList.remove('selected');
+                } else {
+                    selectedExtras.add(extra.id);
+                    row.classList.add('selected');
+                }
+                updatePricing();
+            });
+
+            elements.extrasContainer.appendChild(row);
+        });
+    }
+
+    // Calculate & Update Price Summary Card
+    function updatePricing() {
+        if (!pricingData || !pricingData.packages) return;
+        const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
+        if (!pkg) return;
+
+        let basePrice = pkg.price || 100;
         let extrasTotal = 0;
-        let extrasCount = 0;
         let breakdown = [];
 
-        // Collect Extras
-        const inputs = bookingValues.extrasContainer.querySelectorAll('.extra-input');
-        inputs.forEach(input => {
-            if (input.name === 'event_duration') return;
-
-            const type = input.dataset.type;
-            if (type === 'select') {
-                const opt = input.options[input.selectedIndex];
-                const price = parseFloat(opt.dataset.price) || 0;
-                if (price > 0 || (opt.value !== 'none' && opt.value !== 'standard')) {
-                    extrasTotal += price;
-                    if (opt.value !== 'none' && opt.value !== 'standard') {
-                        extrasCount++;
-                        breakdown.push({ name: opt.text.replace(/\s*\(\+\d+€\)/, ''), price });
+        if (pkg.extras) {
+            pkg.extras.forEach(extra => {
+                if (selectedExtras.has(extra.id)) {
+                    let p = extra.price || 0;
+                    if (extra.type === 'select' && extra.options) {
+                        const paidOpt = extra.options.find(o => o.price > 0) || extra.options[1];
+                        if (paidOpt) p = paidOpt.price;
                     }
+                    extrasTotal += p;
+                    const label = extra.label[currentLanguage] || extra.label.de || extra.label;
+                    breakdown.push(`${label}: +${p}€`);
                 }
-            } else if (type === 'checkbox' && input.checked) {
-                const price = parseFloat(input.dataset.price) || 0;
-                extrasTotal += price;
-                extrasCount++;
-                breakdown.push({ name: input.nextElementSibling.innerText.replace(/\s*\(\+\d+€\)/, ''), price });
-            }
-        });
-
-        let subtotal = basePrice + extrasTotal;
-        let totalPercentDiscount = 0;
-        let totalFlatDiscount = 0;
-
-        // Apply Percent-First Discounts
-        // 1. Bulk Discount
-        if (pkg.bulkDiscounts && extrasCount > 0) {
-            const bd = pkg.bulkDiscounts.find(d => d.count === extrasCount);
-            if (bd) totalPercentDiscount += bd.discountPercent;
+            });
         }
 
-        // 2. Global Discount (if percent)
-        if (pricingData.globalDiscount && pricingData.globalDiscount.active) {
-            if (pricingData.globalDiscount.type === 'percent') {
-                totalPercentDiscount += pricingData.globalDiscount.value;
-            } else {
-                totalFlatDiscount += pricingData.globalDiscount.value;
-            }
+        const total = basePrice + extrasTotal;
+
+        if (elements.summaryPackagePrice) {
+            elements.summaryPackagePrice.textContent = `${basePrice} €`;
+        }
+        if (elements.summaryExtrasPrice) {
+            elements.summaryExtrasPrice.textContent = `${extrasTotal} €`;
+        }
+        if (elements.summaryTotalPrice) {
+            elements.summaryTotalPrice.textContent = `${total} €`;
         }
 
-        let finalPrice = subtotal * (1 - (totalPercentDiscount / 100));
-        finalPrice -= totalFlatDiscount;
-        finalPrice = Math.max(0, finalPrice);
-
-        // Rendering Summary
-        priceSummary.style.display = 'block';
-        let breakdownHTML = '';
-        const serviceName = bookingValues.service.options[bookingValues.service.selectedIndex].text;
-        breakdownHTML += `<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500;"><span>${serviceName}${selectedService === 'event' ? ` (${durationHours}h)` : ''}</span><span>${basePrice}€</span></div>`;
-        
-        if (breakdown.length > 0) {
-            breakdownHTML += `<div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0.5rem 0; padding-top: 0.5rem;"></div>`;
-            breakdownHTML += breakdown.map(item => `<div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"><span>${item.name}</span><span>+${item.price}€</span></div>`).join('');
-        }
-        priceBreakdown.innerHTML = breakdownHTML;
-
-        // Discount Section
-        if (totalPercentDiscount > 0 || totalFlatDiscount > 0) {
-            priceDiscount.style.display = 'block';
-            let discText = [];
-            if (totalPercentDiscount > 0) discText.push(`${totalPercentDiscount}%`);
-            if (totalFlatDiscount > 0) discText.push(`-${totalFlatDiscount}€`);
-            priceDiscount.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>🎉 Rabatt (${discText.join(' / ')})</span><span>-${Math.round(subtotal - finalPrice)}€</span></div>`;
-        } else {
-            priceDiscount.style.display = 'none';
-        }
-
-        const t = translations[currentLanguage] || {};
-        priceTotal.innerHTML = `<div style="display: flex; justify-content: space-between;"><span>${t['booking.price_summary.total'] || 'Gesamt:'}</span><span>${Math.round(finalPrice)}€</span></div>`;
-
-        updateHiddenInputs(Math.round(finalPrice), breakdownHTML.replace(/<[^>]*>/g, ' '), basePrice, breakdown.map(i => `${i.name}: ${i.price}€`).join(', '), (subtotal - finalPrice) > 0 ? `-${Math.round(subtotal - finalPrice)}€` : 'None');
+        // Hidden inputs
+        if (elements.totalPriceInput) elements.totalPriceInput.value = `${total}€`;
+        if (elements.basePriceInput) elements.basePriceInput.value = `${basePrice}€`;
+        if (elements.extrasBreakdownInput) elements.extrasBreakdownInput.value = breakdown.join(', ');
+        if (elements.priceDetailsInput) elements.priceDetailsInput.value = `Basis: ${basePrice}€, Extras: ${extrasTotal}€`;
     }
 
-    function updateHiddenInputs(total, details, base, extras, discount) {
-        if (document.getElementById('total_price_input')) document.getElementById('total_price_input').value = `${total}€`;
-        if (document.getElementById('price_details_input')) document.getElementById('price_details_input').value = details;
-        if (document.getElementById('base_price_input')) document.getElementById('base_price_input').value = `${base}€`;
-        if (document.getElementById('extras_breakdown_input')) document.getElementById('extras_breakdown_input').value = extras;
-        if (document.getElementById('discount_breakdown_input')) document.getElementById('discount_breakdown_input').value = discount;
-    }
-
-    // Initialize
-    fetchPricingData();
-    initCalendar();
- // Initialize
-    initCalendar();
+    init();
 });

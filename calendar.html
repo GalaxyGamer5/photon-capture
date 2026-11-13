@@ -4,215 +4,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Calendar | Photon Capture</title>
-    <meta name="description" content="View available dates and book your photo session with Photon Capture.">
+    <title>Termin buchen | PHOTON CAPTURE</title>
+    <meta name="description" content="Wähle deinen freien Termin und sichere dir deine Fotosession bei Photon Capture.">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Booking Calendar | Photon Capture">
-    <meta property="og:description" content="Check availability and schedule your photography session.">
+    <meta property="og:title" content="Termin buchen | PHOTON CAPTURE">
+    <meta property="og:description" content="Verfügbare Termine in Echtzeit ansehen und anfragen.">
 
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <!-- Scroll Progress Indicator -->
-    <div class="scroll-progress">
-        <div class="scroll-progress-bar"></div>
-    </div>
-
-    <!-- Navigation -->
-    <header>
+    <!-- Site Navigation -->
+    <header class="site-header">
         <div class="container">
-            <a href="index.html" class="logo">Photon<span>-Capture</span></a>
-            <nav>
+            <a href="index.html" class="brand-logo">PHOTON CAPTURE</a>
+            <nav class="main-nav">
                 <ul class="nav-links">
-                    <li><a href="index.html#hero" data-i18n="nav.home">Startseite</a></li>
-                    <li><a href="index.html#about" data-i18n="nav.about">Über mich</a></li>
-                    <li><a href="index.html#services" data-i18n="nav.services">Leistungen</a></li>
-                    <li><a href="index.html#gallery" data-i18n="nav.gallery">Galerie</a></li>
-                    <li><a href="index.html#pricing" data-i18n="nav.pricing">Preise</a></li>
-                    <li><a href="index.html#contact" data-i18n="nav.contact">Kontakt</a></li>
+                    <li><a href="index.html#about">Über mich</a></li>
+                    <li><a href="index.html#services">Leistungen</a></li>
+                    <li><a href="index.html#gallery">Galerie</a></li>
+                    <li><a href="index.html#pricing">Preise</a></li>
+                    <li><a href="index.html#contact">Kontakt</a></li>
                 </ul>
                 <div class="nav-actions">
-                    <button class="lang-toggle" aria-label="Switch Language">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path>
-                        </svg>
-                    </button>
-                    <button class="dark-mode-toggle" aria-label="Toggle Dark Mode">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path class="sun"
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
-                            </path>
-                            <path class="moon" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" style="display: none;">
-                            </path>
-                        </svg>
-                    </button>
+                    <button class="lang-toggle" id="langToggle" aria-label="Switch Language">DE</button>
                 </div>
-                <div class="hamburger">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
+                <button class="hamburger" id="hamburgerBtn" aria-label="Menü">
+                    <span></span><span></span><span></span>
+                </button>
             </nav>
         </div>
     </header>
 
-    <!-- Main Calendar Content -->
-    <main class="calendar-page">
+    <main class="booking-page">
         <div class="container">
-            <!-- Calendar Header -->
-            <div class="calendar-header">
-                <h1 data-i18n="calendar.headerTitle">Buchungskalender</h1>
-                <p data-i18n="calendar.headerSubtitle">Wähle einen verfügbaren Termin und sichere dir deine Session.
-                    Verfügbarkeit wird in Echtzeit angezeigt.</p>
-
-                <!-- Selected Package Info (if coming from pricing) -->
-                <div id="selectedPackageInfo" class="package-info">
-                    <span data-i18n="calendar.packageLabel">Gewähltes Paket:</span>
-                    <span id="packageName" class="package-name">-</span>
-                </div>
+            <!-- Header Section -->
+            <div class="booking-header">
+                <span class="section-kicker">BUCHUNG</span>
+                <h1 class="booking-title">Wähle deinen Termin.</h1>
+                <p class="booking-subtitle">Such dir einen freien Tag aus und sichere dir deine Session. Die Verfügbarkeit wird in Echtzeit angezeigt.</p>
             </div>
 
-            <!-- Calendar Controls -->
-            <div class="calendar-controls">
-                <button id="prevMonth" class="month-nav-btn" aria-label="Previous Month">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <h2 id="currentMonth">November 2025</h2>
-                <button id="nextMonth" class="month-nav-btn" aria-label="Next Month">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
+            <!-- Stepper Indicator -->
+            <div class="booking-stepper">
+                <span class="step-item active">01 TERMIN</span>
+                <span class="step-item">02 DETAILS &amp; EXTRAS</span>
+                <span class="step-item">03 KONTAKT</span>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="calendar-grid">
-                <div class="weekday-labels" id="weekdayLabels">
-                    <!-- Generated by JS -->
-                </div>
-                <div class="days-grid" id="daysGrid">
-                    <!-- Generated by JS -->
-                </div>
-            </div>
+            <!-- 2-Column Booking Layout (Matching Figma Mockup) -->
+            <div class="booking-grid">
+                <!-- LEFT COLUMN: Calendar & Time Slots -->
+                <div class="booking-left-col">
+                    <!-- Selected Package Bar -->
+                    <div class="selected-package-bar">
+                        <div class="pkg-info-group">
+                            <span class="pkg-kicker">GEWÄHLTES PAKET</span>
+                            <span class="selected-pkg-name" id="packageName">Event-Begleitung</span>
+                        </div>
+                        <a href="index.html#pricing" class="change-pkg-link" id="changePackageBtn">Ändern</a>
+                    </div>
 
-            <!-- Booking Panel -->
-            <div class="booking-panel" id="bookingPanel">
-                <h3><span data-i18n="calendar.selectedDatePrefix">Verfügbare Zeitfenster - </span><span
-                        id="selectedDateDisplay"></span></h3>
+                    <!-- Month Navigation -->
+                    <div class="calendar-month-bar">
+                        <button id="prevMonth" class="month-arrow-btn" aria-label="Vorheriger Monat">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <h2 id="currentMonth" class="current-month-heading">November 2026</h2>
+                        <button id="nextMonth" class="month-arrow-btn" aria-label="Nächster Monat">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
 
-                <!-- Initial Confirmation View -->
-                <div id="booking-initial-view">
-                    <p class="booking-message" data-i18n="calendar.availableMessage">Dieser Tag ist verfügbar! Klicke
-                        auf
-                        "Weiter zur Buchung", um ihn zu reservieren.</p>
-                    <div class="booking-actions">
-                        <button class="cta-button secondary" id="cancelBtn"
-                            data-i18n="calendar.cancelBtn">Abbrechen</button>
-                        <button class="cta-button" id="confirmBtn" data-i18n="calendar.confirmBtn">Weiter zur
-                            Buchung</button>
+                    <!-- Calendar Grid -->
+                    <div class="calendar-widget">
+                        <div class="weekday-labels" id="weekdayLabels">
+                            <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+                        </div>
+                        <div class="days-grid" id="daysGrid">
+                            <!-- Populated by calendar.js -->
+                        </div>
+                    </div>
+
+                    <!-- Calendar Legend -->
+                    <div class="calendar-legend">
+                        <span class="legend-item"><span class="legend-dot dot-available"></span> Verfügbar</span>
+                        <span class="legend-item"><span class="legend-dot dot-unavailable"></span> Nicht verfügbar</span>
+                        <span class="legend-item"><span class="legend-dot dot-selected"></span> Ausgewählt</span>
+                    </div>
+
+                    <!-- Time Slots Section -->
+                    <div class="time-slots-section" id="timeSlotsSection">
+                        <span class="slot-date-kicker" id="slotDateKicker">SAMSTAG, 21. NOVEMBER</span>
+                        <h3 class="slot-heading">Verfügbare Zeitfenster</h3>
+                        <div class="slots-pill-group" id="slotsPillGroup">
+                            <button type="button" class="slot-pill active" data-time="10:00">[10:00]</button>
+                            <button type="button" class="slot-pill" data-time="12:00">[12:00]</button>
+                            <button type="button" class="slot-pill" data-time="14:00">[14:00]</button>
+                            <button type="button" class="slot-pill" data-time="16:00">[16:00]</button>
+                        </div>
+                        <p class="slot-helper-note" id="slotHelperNote">Dieser Tag ist verfügbar. Rechts kannst du deine Buchung abschließen.</p>
                     </div>
                 </div>
 
-                <!-- Embedded Booking Form (Hidden by default) -->
-                <div id="booking-form-container" style="display: none; margin-top: 2rem;">
+                <!-- RIGHT COLUMN: Details & Extras + Summary + Contact Form -->
+                <div class="booking-right-col">
+                    <form id="booking-form" class="clean-form">
+                        <!-- Step 02: Details & Extras -->
+                        <div class="form-step-group">
+                            <span class="group-kicker">02 · DETAILS &amp; EXTRAS</span>
 
-                    <form id="booking-form" style="text-align: left;">
-                        <!-- Step 1: Details -->
-                        <div class="booking-step" style="margin-bottom: 2rem;">
-                            <h4 style="margin-bottom: 1rem; color: var(--accent-color);">1. Details</h4>
-                            <!-- Hidden inputs to store date/time passed from calendar -->
-                            <div class="form-group">
-                                <label for="service" data-i18n="contact.form.service">Worum geht es?</label>
-                                <select id="service" class="form-control">
-                                    <option value="portrait" data-i18n="contact.form.service.portrait">Porträt-Session
-                                    </option>
-                                    <option value="event" data-i18n="contact.form.service.event">Event-Begleitung
-                                    </option>
-                                    <option value="pet" data-i18n="contact.form.service.pet">Tierfotografie</option>
-                                    <option value="other" data-i18n="contact.form.service.other">Sonstiges / Allgemeine
-                                        Frage</option>
-                                </select>
+                            <div class="form-field">
+                                <label for="service">WORUM GEHT ES?</label>
+                                <div class="select-wrapper">
+                                    <select id="service" name="service" class="underline-input">
+                                        <option value="event" selected>Event-Begleitung</option>
+                                        <option value="portrait">Porträt-Session</option>
+                                        <option value="pet">Tierfotografie</option>
+                                        <option value="other">Sonstiges / Individuell</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div class="form-group" style="display: flex; gap: 1rem;">
-                                <div style="flex: 1;">
-                                    <label for="date" data-i18n="booking.date">Datum</label>
-                                    <input type="date" id="date" class="form-control" readonly
-                                        style="background: rgba(255, 255, 255, 0.05); border-color: var(--accent-color);">
+                            <div class="date-time-row">
+                                <div class="form-field">
+                                    <label>DATUM</label>
+                                    <div class="display-value" id="displaySelectedDate">Sa, 21. November 2026</div>
+                                    <input type="hidden" id="date" name="date" value="2026-11-21">
                                 </div>
-                                <div style="flex: 1;">
-                                    <label for="time" data-i18n="booking.time">Uhrzeit</label>
-                                    <input type="time" id="time" class="form-control" required>
+                                <div class="form-field">
+                                    <label>UHRZEIT</label>
+                                    <div class="display-value" id="displaySelectedTime">[10:00] Uhr</div>
+                                    <input type="hidden" id="time" name="time" value="10:00">
+                                </div>
+                            </div>
+
+                            <!-- Extras (Optional) -->
+                            <div class="extras-section">
+                                <span class="extras-kicker">EXTRAS (OPTIONAL)</span>
+                                <div id="extras-container" class="extras-list">
+                                    <!-- Injected by calendar.js or fallback -->
+                                </div>
+                            </div>
+
+                            <!-- Cream Price Summary Card -->
+                            <div class="price-summary-card" id="price-summary">
+                                <span class="summary-kicker">PREISÜBERSICHT</span>
+                                <div class="summary-row">
+                                    <span id="summaryPackageLabel">Event-Begleitung</span>
+                                    <span id="summaryPackagePrice">[Preis]</span>
+                                </div>
+                                <div class="summary-row" id="summaryExtrasRow">
+                                    <span>Extras</span>
+                                    <span id="summaryExtrasPrice">[Preis]</span>
+                                </div>
+                                <div class="summary-divider"></div>
+                                <div class="summary-row total-row">
+                                    <span>Gesamt</span>
+                                    <span id="summaryTotalPrice">[Preis]</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Step 2: Extras -->
-                        <div id="extras-step" class="booking-step" style="margin-bottom: 2rem;">
-                            <h4 style="margin-bottom: 1rem; color: var(--accent-color);">2. Extras</h4>
-                            <div id="extras-container">
-                                <!-- Extras injected by JS -->
-                            </div>
-                            <div id="booking-tips" style="margin-top: 1rem;"></div>
+                        <!-- Step 03: Contact -->
+                        <div class="form-step-group contact-step-group">
+                            <span class="group-kicker">03 · KONTAKT</span>
 
-                            <!-- Price Summary -->
-                            <div id="price-summary"
-                                style="margin-top: 1.5rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); display: none;">
-                                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;"
-                                    data-i18n="booking.price_summary.title">
-                                    Preisübersicht</h4>
-                                <div id="price-breakdown"
-                                    style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
-                                </div>
-                                <div id="price-discount"
-                                    style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--accent-color); display: none;">
-                                </div>
-                                <div id="price-total"
-                                    style="font-size: 1.2rem; font-weight: 600; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                                </div>
+                            <div class="form-field">
+                                <label for="name">DEIN NAME</label>
+                                <input type="text" id="name" name="name" required class="underline-input">
+                            </div>
+
+                            <div class="form-field">
+                                <label for="email">DEINE E-MAIL</label>
+                                <input type="email" id="email" name="email" required class="underline-input">
+                            </div>
+
+                            <div class="form-field">
+                                <label for="message">DEINE NACHRICHT</label>
+                                <textarea id="message" name="message" rows="2" class="underline-input"></textarea>
+                            </div>
+
+                            <p class="booking-legal-disclaimer">
+                                Mit dem Absenden akzeptierst du die <a href="agb.html" target="_blank">AGB</a>. Deine Anfrage ist unverbindlich, ich melde mich zur Bestätigung bei dir.
+                            </p>
+
+                            <div class="booking-btn-row">
+                                <a href="index.html#pricing" class="pill-btn pill-btn-dark">Zurück</a>
+                                <button type="submit" class="pill-btn pill-btn-light">Buchung anfragen</button>
                             </div>
                         </div>
 
-                        <!-- Step 3: Contact -->
-                        <div class="booking-step" style="margin-bottom: 2rem;">
-                            <h4 style="margin-bottom: 1rem; color: var(--accent-color);">3. Kontakt</h4>
-                            <div class="form-group">
-                                <label for="name" data-i18n="contact.form.name">Dein Name</label>
-                                <input type="text" id="name" class="form-control" placeholder="Wie heißt du?" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email" data-i18n="contact.form.email">Deine E-Mail</label>
-                                <input type="email" id="email" class="form-control"
-                                    placeholder="Wie kann ich dich erreichen?" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="message" data-i18n="contact.form.message">Deine Nachricht</label>
-                                <textarea id="message" class="form-control"
-                                    placeholder="Erzähl mir ein bisschen von deinen Plänen..."></textarea>
-                            </div>
-                        </div>
-
+                        <!-- Hidden Inputs for Calculations & Backend Handling -->
                         <input type="hidden" id="total_price_input" name="total_price">
                         <input type="hidden" id="price_details_input" name="price_details">
                         <input type="hidden" id="base_price_input" name="base_price">
                         <input type="hidden" id="extras_breakdown_input" name="extras_breakdown">
                         <input type="hidden" id="discount_breakdown_input" name="discount_breakdown">
-
-                        <div class="booking-actions">
-                            <button type="button" class="cta-button secondary" id="backToCalendarBtn">Zurück</button>
-                            <button type="submit" class="cta-button" data-i18n="booking.btn">Buchung anfragen</button>
-                        </div>
                     </form>
                 </div>
             </div>
@@ -220,28 +214,24 @@
     </main>
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
+    <footer class="site-footer">
+        <div class="container footer-container">
+            <span class="footer-copy">© 2026 Photon Capture</span>
             <div class="footer-links">
-                <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank"
-                    rel="noopener noreferrer">Instagram</a>
-                <span class="separator">•</span>
-                <a href="agb.html" data-i18n="footer.agb">AGB</a>
-                <span class="separator">•</span>
-                <a href="impressum.html" data-i18n="footer.impressum">Impressum</a>
+                <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <span class="dot">·</span>
+                <a href="agb.html">AGB</a>
+                <span class="dot">·</span>
+                <a href="impressum.html">Impressum</a>
             </div>
-            <p class="copyright" data-i18n="footer.copyright">&copy; 2025 Photon-Capture. Alle Rechte vorbehalten.</p>
         </div>
     </footer>
 
     <!-- Scripts -->
     <script src="js/translations.js"></script>
     <script src="js/main.js"></script>
-    <!-- EmailJS & Handler -->
-
     <script src="js/email-handler.js"></script>
-    <!-- Calendar Logic (Must be loaded last to use handler functions if needed) -->
-    <script src="js/calendar.js?v=2"></script>
+    <script src="js/calendar.js?v=3"></script>
 </body>
 
 </html>

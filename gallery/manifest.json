@@ -4,8 +4,8 @@
   "description": "Ihre persönliche Fotogalerie von Photon Capture",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0a0a1a",
-  "theme_color": "#00f2ff",
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b",
   "orientation": "portrait",
   "icons": [
     {

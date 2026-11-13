@@ -478,8 +478,25 @@
             try {
                 const res = await fetch('api/get-pricing.php');
                 pricing = await res.json();
-                // Initial render will be done when modal opens or package changes
+                populatePackageSelects();
             } catch(e) { console.error('Pricing fetch failed', e); }
+        }
+
+        function populatePackageSelects() {
+            if (!pricing || !pricing.packages) return;
+            ['c', 'e'].forEach(prefix => {
+                const sel = document.getElementById(`${prefix}-package`);
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">– Paket wählen –</option>' +
+                    pricing.packages.map(p => {
+                        const title = (p.title && p.title.de) || p.title || '';
+                        const unit = (p.priceUnit && p.priceUnit.de) ? ` ${p.priceUnit.de}` : '';
+                        return `<option value="${p.id}" data-label="${title}" data-price="${p.price}">${title} (${p.price}€${unit})</option>`;
+                    }).join('') +
+                    '<option value="custom" data-label="Individuell" data-price="">Individuell / Sonstiges</option>';
+                if (currentVal) sel.value = currentVal;
+            });
         }
 
         function renderExtras(prefix, selectedPkgId, checkedExtraIds = []) {

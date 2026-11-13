@@ -5,25 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Photon Admin</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div class="dashboard-container">
         <header class="header">
             <div class="welcome-text">
+                <span class="section-kicker">ADMINISTRATIONSBEREICH</span>
                 <h1>Dashboard</h1>
-                <p>Willkommen im Admin-Bereich</p>
+                <p>Willkommen im Verwaltungsbereich von Photon Capture</p>
             </div>
-            <button onclick="logout()" class="logout-btn">Abmelden</button>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <a href="../index.html" class="logout-btn" target="_blank">Zur Website ↗</a>
+                <button onclick="logout()" class="logout-btn">Abmelden</button>
+            </div>
         </header>
+
+        <div class="dashboard-stats" id="dashboard-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+            <!-- Fetched via JS -->
+            <div style="background: var(--surface-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center; color: var(--text-secondary); font-size: 13.5px;">Lade Statistiken...</div>
+        </div>
 
         <div class="module-grid">
             <!-- Calendar Module -->
             <a href="calendar.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -38,7 +47,7 @@
             <!-- Payment Module -->
             <a href="orders.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                         <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -51,7 +60,7 @@
             <!-- Gallery Module -->
             <a href="users.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -66,7 +75,7 @@
             <!-- Testimonials Module -->
             <a href="testimonials.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
@@ -75,19 +84,10 @@
                 <p>Verwalte Kundenbewertungen und entscheide, welche auf der Homepage angezeigt werden.</p>
             </a>
 
-
-        </div>
-
-        <div class="dashboard-stats" id="dashboard-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
-            <!-- Fetched via JS -->
-            <div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">Lade Statistiken...</div>
-        </div>
-
-        <div class="module-grid" style="margin-top: 2rem;">
             <!-- Portfolio Module -->
             <a href="portfolio.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -101,7 +101,7 @@
             <!-- Inquiries Module -->
             <a href="inquiries.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
@@ -113,7 +113,7 @@
             <!-- Pricing Module -->
             <a href="pricing.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="1" x2="12" y2="23"></line>
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                     </svg>
@@ -125,7 +125,7 @@
             <!-- FAQ Module -->
             <a href="faq.html" class="module-card">
                 <div class="module-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -149,21 +149,21 @@
                 const stats = await res.json();
                 
                 document.getElementById('dashboard-stats').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.inquiries}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Anfragen</div>
+                    <div style="background: var(--surface-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                        <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent); line-height: 1;">${stats.inquiries}</div>
+                        <div style="color: var(--text-secondary); font-size: 11px; margin-top: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;">Anfragen</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.galleries}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Kunden</div>
+                    <div style="background: var(--surface-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                        <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent); line-height: 1;">${stats.galleries}</div>
+                        <div style="color: var(--text-secondary); font-size: 11px; margin-top: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;">Kunden</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent); line-height: 1;">${stats.portfolio}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Portfolio</div>
+                    <div style="background: var(--surface-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                        <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent); line-height: 1;">${stats.portfolio}</div>
+                        <div style="color: var(--text-secondary); font-size: 11px; margin-top: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;">Portfolio</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                        <div style="font-size: 2.5rem; font-weight: bold; color: #ff4d4d; line-height: 1;">${stats.favorites}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase;">Favoriten ❤️</div>
+                    <div style="background: var(--surface-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                        <div style="font-size: 2.25rem; font-weight: 800; color: var(--accent); line-height: 1;">${stats.favorites}</div>
+                        <div style="color: var(--text-secondary); font-size: 11px; margin-top: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;">Favoriten ❤️</div>
                     </div>
                 `;
             } catch(e) {

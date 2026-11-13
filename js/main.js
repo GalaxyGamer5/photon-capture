@@ -25,12 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Load Dynamic Pricing ---
+    const pricingListContainer = document.getElementById('pricing-list-container');
     const pricingGrid = document.getElementById('pricing-grid-container');
     const customReq = document.getElementById('custom-request-container');
     let loadedPricingData = null;
 
     async function fetchPricing() {
-        if (!pricingGrid || !customReq) return;
+        if (!pricingListContainer && !pricingGrid) return;
         try {
             const res = await fetch('api/get-pricing.php?t=' + Date.now());
             if (res.ok) {
@@ -41,12 +42,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderPricing() {
-        if (!loadedPricingData || !pricingGrid || !customReq) return;
+        if (!loadedPricingData || !loadedPricingData.packages) return;
         const lang = localStorage.getItem('preferredLang') || 'de';
+
+        // Render Editorial List (Variante B on index.html)
+        if (pricingListContainer) {
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            pricingListContainer.innerHTML = loadedPricingData.packages.map((pkg, idx) => {
+                const letter = letters[idx] || String.fromCharCode(65 + idx);
+                const title = (pkg.title && pkg.title[lang]) || (pkg.title && pkg.title.de) || pkg.title || '';
+                
+                let featuresText = '';
+                if (pkg.features && Array.isArray(pkg.features)) {
+                    featuresText = pkg.features
+                        .map(f => (typeof f === 'object' ? (f[lang] || f.de) : f))
+                        .filter(Boolean)
+                        .join(', ');
+                }
+
+                let displayPrice = pkg.price;
+                if (loadedPricingData.globalDiscount && loadedPricingData.globalDiscount.active) {
+                    const gd = loadedPricingData.globalDiscount;
+                    if (gd.type === 'percent') {
+                        displayPrice = Math.round(pkg.price * (1 - (gd.value / 100)));
+                    } else {
+                        displayPrice = pkg.price - gd.value;
+                    }
+                }
+
+                const unit = (pkg.priceUnit && pkg.priceUnit[lang]) ? pkg.priceUnit[lang] : ((pkg.priceUnit && pkg.priceUnit.de) ? pkg.priceUnit.de : '');
+                const prefix = lang === 'en' ? 'from ' : 'ab ';
+                const priceFormatted = `${prefix}${displayPrice} €${unit}`;
+
+                return `
+                    <a href="calendar.html?package=${pkg.id}" class="pricing-row" data-package="${pkg.id}">
+                        <span class="pkg-letter">${letter}</span>
+                        <span class="pkg-title">${title}</span>
+                        <span class="pkg-features">${featuresText}</span>
+                        <span class="pkg-price">${priceFormatted}</span>
+                    </a>
+                `;
+            }).join('');
+        }
         
-        // Render Packages
-        pricingGrid.innerHTML = '';
-        if (loadedPricingData.packages) {
+        // Render Legacy Grid (if present)
+        if (pricingGrid && loadedPricingData.packages) {
+            pricingGrid.innerHTML = '';
             loadedPricingData.packages.forEach(pkg => {
                 const card = document.createElement('div');
                 card.className = 'pricing-card';
@@ -58,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
 
-                // Calculate display price with global discount
                 let displayPrice = pkg.price;
                 let originalPriceHtml = '';
                 
@@ -73,12 +113,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                const unitHtml = pkg.priceUnit[lang] ? `<span>${pkg.priceUnit[lang]}</span>` : '';
+                const unitHtml = pkg.priceUnit && pkg.priceUnit[lang] ? `<span>${pkg.priceUnit[lang]}</span>` : '';
                 const customizeText = lang === 'en' ? 'Customize Package (Extras)' : 'Paket anpassen (Extras)';
                 const btnText = lang === 'en' ? 'Send Request' : 'Anfrage senden';
 
                 card.innerHTML = `
-                    <h3>${pkg.title[lang]}</h3>
+                    <h3>${pkg.title[lang] || pkg.title.de || pkg.title}</h3>
                     <div class="price">${originalPriceHtml}${displayPrice}€${unitHtml}</div>
                     <ul class="pricing-features">
                         ${featuresHtml}
@@ -91,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Render Custom Request
-        if (loadedPricingData.custom) {
+        if (customReq && loadedPricingData.custom) {
             const cust = loadedPricingData.custom;
             customReq.innerHTML = `
                 <h3 style="margin-bottom: 0.5rem;">${cust.title[lang]}</h3>
@@ -355,13 +395,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Gallery Filtering ---
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const galleryItems = document.querySelectorAll('.gallery-item');
+    const filterBtns = document.querySelectorAll('.filter-btn, .filter-tab');
+    const galleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
 
     const activateFilter = (filterValue) => {
         filterBtns.forEach(b => b.classList.remove('active'));
-        const activeBtn = document.querySelector(`.filter-btn[data-filter="${filterValue}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
+        const activeBtns = document.querySelectorAll(`.filter-btn[data-filter="${filterValue}"], .filter-tab[data-filter="${filterValue}"]`);
+        activeBtns.forEach(b => b.classList.add('active'));
 
         galleryItems.forEach(item => {
             const category = item.getAttribute('data-category');
@@ -369,9 +409,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (filterValue === 'all' || category === filterValue) {
                 item.classList.remove('hide');
                 item.classList.add('show');
+                item.style.opacity = '1';
+                item.style.filter = 'none';
+                item.style.pointerEvents = 'auto';
             } else {
                 item.classList.remove('show');
                 item.classList.add('hide');
+                item.style.opacity = '0.25';
+                item.style.filter = 'grayscale(100%)';
+                item.style.pointerEvents = 'none';
             }
         });
     };
@@ -380,7 +426,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => {
             const filterValue = btn.getAttribute('data-filter');
             activateFilter(filterValue);
-            initializeCarousel(filterValue); // Rebuild carousel with filtered items
+            if (typeof initializeCarousel === 'function') {
+                initializeCarousel(filterValue); // Rebuild carousel with filtered items if exists
+            }
         });
     });
 
