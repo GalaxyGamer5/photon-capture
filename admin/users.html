@@ -41,7 +41,7 @@
         }
 
         /* Modal overlays */
-        #changePwOverlay, #restoreOverlay, #addGalleryOverlay, #chatOverlay {
+        #changePwOverlay, #restoreOverlay, #addGalleryOverlay, #chatOverlay, #dbImportOverlay {
             display: none;
             position: fixed;
             inset: 0;
@@ -51,7 +51,7 @@
             justify-content: center;
             padding: 1.5rem;
         }
-        #changePwOverlay.open, #restoreOverlay.open, #addGalleryOverlay.open, #chatOverlay.open {
+        #changePwOverlay.open, #restoreOverlay.open, #addGalleryOverlay.open, #chatOverlay.open, #dbImportOverlay.open {
             display: flex;
         }
         .modal-box {
@@ -106,8 +106,9 @@
                         Dashboard</a></p>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button onclick="downloadBackup()" class="btn" style="width: auto; background: transparent; border: 1px solid var(--border); font-size: 0.85rem;" title="Aktuelle Benutzer als JSON herunterladen">💾 Backup exportieren</button>
-                <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 0.85rem;">🔄 Wiederherstellen & Ordner-Scan</button>
+                <button onclick="exportDB()" class="btn" style="width: auto; background: rgba(100,200,100,0.15); color: #7dda7d; border: 1px solid rgba(100,200,100,0.3); font-size: 0.85rem;" title="Komplette SQLite-Datenbank (.db) herunterladen">⬇ Backup exportieren (.db)</button>
+                <button onclick="openDBImportModal()" class="btn" style="width: auto; background: rgba(100,160,255,0.15); color: #7db8ff; border: 1px solid rgba(100,160,255,0.3); font-size: 0.85rem;" title="Datenbank aus einer .db-Datei wiederherstellen">⬆ Backup importieren (.db)</button>
+                <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 0.85rem;">🔄 Server-Scan & JSON</button>
                 <button onclick="showAddUser()" class="btn" style="width: auto; font-size: 0.85rem;">+ Neuer Benutzer</button>
             </div>
         </header>
@@ -263,6 +264,35 @@
                     <textarea id="importTextInput" class="form-control" rows="6" placeholder='{"users": [ ... ]}' style="font-family: monospace; font-size: 0.8rem;"></textarea>
                 </div>
                 <button onclick="importDirectJSON()" class="btn" style="margin-top: 1rem;">Importieren & Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DB Import Modal -->
+    <div id="dbImportOverlay">
+        <div class="modal-box" style="max-width: 480px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">⬆ Datenbank-Backup importieren</h3>
+                <button onclick="closeDBImportModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+                Wähle eine <strong>.db</strong>-Datei (SQLite), die du zuvor mit „Backup exportieren“ heruntergeladen hast. Die bestehende Datenbank wird vor dem Überschreiben automatisch auf dem Server gesichert.
+            </p>
+            <div id="dbImportDropZone" onclick="document.getElementById('dbFileInput').click()"
+                 ondragover="event.preventDefault();this.style.borderColor='var(--accent)';"
+                 ondragleave="this.style.borderColor='var(--border)';"
+                 ondrop="handleDBDrop(event)"
+                 style="border: 2px dashed var(--border); border-radius: 8px; padding: 2.2rem 1.5rem; text-align: center; cursor: pointer; margin-bottom: 1rem; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📂</div>
+                <p style="margin: 0; color: #fff; font-weight: 500;">Klicken oder .db-Datei hierher ziehen</p>
+                <p style="margin: 0.35rem 0 0; color: var(--text-secondary); font-size: 0.8rem;">Nur gültige SQLite .db-Dateien</p>
+            </div>
+            <input type="file" id="dbFileInput" accept=".db" style="display: none;" onchange="handleDBFileSelect(this.files)">
+            <div id="dbSelectedFileName" style="font-size: 0.85rem; color: #7db8ff; margin-bottom: 0.75rem; min-height: 1.2em;"></div>
+            <div id="dbImportStatus" style="font-size: 0.85rem; margin-bottom: 1rem; min-height: 1.2em;"></div>
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button onclick="closeDBImportModal()" class="btn" style="background: transparent; border: 1px solid var(--border); width: auto;">Abbrechen</button>
+                <button id="doDBImportBtn" onclick="doDBImport()" class="btn" style="background: #7db8ff; color: #000; width: auto; font-weight: 600;" disabled>Importieren</button>
             </div>
         </div>
     </div>
@@ -743,6 +773,9 @@
         document.getElementById('restoreOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeRestoreModal();
         });
+        document.getElementById('dbImportOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeDBImportModal();
+        });
 
         async function saveUsers() {
             try {
@@ -772,6 +805,91 @@
         }
 
         // --- Backup & Restore Functions ---
+
+        function exportDB() {
+            const a = document.createElement('a');
+            a.href = 'api/db-export.php';
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        let dbImportFile = null;
+
+        function openDBImportModal() {
+            document.getElementById('dbImportOverlay').classList.add('open');
+            document.getElementById('dbSelectedFileName').textContent = '';
+            document.getElementById('dbImportStatus').textContent = '';
+            const btn = document.getElementById('doDBImportBtn');
+            btn.disabled = true;
+            btn.textContent = 'Importieren';
+            dbImportFile = null;
+        }
+
+        function closeDBImportModal() {
+            document.getElementById('dbImportOverlay').classList.remove('open');
+        }
+
+        function handleDBDrop(e) {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = 'var(--border)';
+            if (e.dataTransfer && e.dataTransfer.files) {
+                handleDBFileSelect(e.dataTransfer.files);
+            }
+        }
+
+        function handleDBFileSelect(files) {
+            if (!files || !files.length) return;
+            const f = files[0];
+            if (!f.name.endsWith('.db')) {
+                document.getElementById('dbSelectedFileName').textContent = '❌ Nur .db-Dateien erlaubt';
+                document.getElementById('doDBImportBtn').disabled = true;
+                return;
+            }
+            dbImportFile = f;
+            document.getElementById('dbSelectedFileName').textContent = '✅ ' + f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+            document.getElementById('doDBImportBtn').disabled = false;
+            document.getElementById('dbImportStatus').textContent = '';
+        }
+
+        async function doDBImport() {
+            if (!dbImportFile) return;
+            const btn = document.getElementById('doDBImportBtn');
+            const statusEl = document.getElementById('dbImportStatus');
+            if (!confirm('⚠️ Die aktuelle Datenbank wird vollständig ersetzt. Alle Benutzer, Galerien und Chats werden auf den Stand dieses Backups zurückgesetzt.\n\nFortfahren?')) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Importiere...';
+            statusEl.style.color = 'var(--text-secondary)';
+            statusEl.textContent = 'Lade hoch und stelle wieder her...';
+
+            const form = new FormData();
+            form.append('dbfile', dbImportFile);
+
+            try {
+                const res = await fetch('api/db-import.php', { method: 'POST', body: form });
+                const data = await res.json();
+                if (data.success) {
+                    statusEl.style.color = '#7dda7d';
+                    statusEl.textContent = '✅ ' + data.message;
+                    setTimeout(() => {
+                        closeDBImportModal();
+                        location.reload();
+                    }, 1200);
+                } else {
+                    statusEl.style.color = '#ff6b6b';
+                    statusEl.textContent = '❌ ' + (data.error || 'Fehler beim Importieren');
+                    btn.disabled = false;
+                    btn.textContent = 'Importieren';
+                }
+            } catch(e) {
+                statusEl.style.color = '#ff6b6b';
+                statusEl.textContent = '❌ Netzwerkfehler: ' + e.message;
+                btn.disabled = false;
+                btn.textContent = 'Importieren';
+            }
+        }
 
         function downloadBackup() {
             const dataStr = JSON.stringify(usersData, null, 2);
