@@ -59,12 +59,10 @@
     <main>
         <!-- Hero Section -->
         <section id="hero" class="hero-section">
-            <div class="hero-bg-media">
-                <span class="hero-placeholder-tag">VOLLBILD-FOTO · QUERFORMAT</span>
-            </div>
+            <div class="hero-bg-media"></div>
             <div class="container hero-container">
                 <div class="hero-text-content">
-                    <span class="section-kicker">FOTOGRAFIE AUS DRESDEN</span>
+                    <span class="section-kicker" data-i18n="hero.kicker">FOTOGRAFIE AUS DRESDEN</span>
                     <h1 class="hero-headline" data-i18n="hero.title">Eure schönsten<br>Momente für die<br>Ewigkeit.</h1>
                 </div>
             </div>
@@ -77,11 +75,10 @@
                     <div class="photographer-frame">
                         <img src="https://lh3.googleusercontent.com/pw/AP1GczOUTZYg7KUOj6ei5JFQgOY4USQk3SZ8KvRKzq_yaNSBCx3Zz7UPO4GGEIG8Hb7vn90uAqSO7IkUnYnVQ_XE4eNl7LcoIuxfr-isB5xVH0YZCKRIq1U8-ixPfo0V449cQCJwcTK7cY4CE2QhuW2tOza1=w1006-h670-s-no-gm?authuser=0"
                             alt="Jonathan - Photon Capture">
-                        <span class="frame-placeholder-label">PORTRÄT VON JONATHAN</span>
                     </div>
                 </div>
                 <div class="about-text-col">
-                    <span class="section-kicker">ÜBER MICH</span>
+                    <span class="section-kicker" data-i18n="about.kicker">ÜBER MICH</span>
                     <h2 class="about-headline" data-i18n="about.headline">Ich bin Jonathan. Ich fange echte Momente ein.</h2>
                     <p class="about-body" data-i18n="about.body">Angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen. Heute begleite ich Menschen mit meiner Kamera, ob mit dem geliebten Vierbeiner, bei einem ehrlichen Porträt oder auf einem Event.</p>
                     <p class="about-highlight" data-i18n="about.highlight">Mein Ziel: Bilder, die berühren und bleiben.</p>
@@ -92,7 +89,7 @@
         <!-- Leistungen Section -->
         <section id="services" class="services-section">
             <div class="container">
-                <span class="section-kicker">LEISTUNGEN</span>
+                <span class="section-kicker" data-i18n="services.kicker">LEISTUNGEN</span>
                 <div class="services-list">
                     <div class="service-row">
                         <span class="service-num">01</span>
@@ -118,8 +115,8 @@
             <div class="container">
                 <div class="gallery-header">
                     <div class="gallery-title-group">
-                        <span class="section-kicker">PORTFOLIO</span>
-                        <h2 class="section-headline">Galerie</h2>
+                        <span class="section-kicker" data-i18n="gallery.kicker">PORTFOLIO</span>
+                        <h2 class="section-headline" data-i18n="gallery.title">Galerie</h2>
                     </div>
                     <div class="gallery-filters" id="galleryFilters">
                         <button class="filter-tab active" data-filter="all" data-i18n="gallery.filter.all">Alle</button>
@@ -180,25 +177,25 @@
         <!-- Pakete & Preise Section -->
         <section id="pricing" class="pricing-section">
             <div class="container">
-                <span class="section-kicker">PAKETE & PREISE</span>
+                <span class="section-kicker" data-i18n="pricing.kicker">PAKETE & PREISE</span>
                 <div class="pricing-list" id="pricing-list-container">
                     <a href="calendar.html" class="pricing-row" data-package="portrait" onclick="sessionStorage.setItem('selectedPackage', 'portrait')">
                         <span class="pkg-letter">A</span>
-                        <span class="pkg-title">Porträt-Session</span>
-                        <span class="pkg-features">60 Min. Shooting, alle guten Fotos inkl., Online Galerie</span>
-                        <span class="pkg-price">ab 125 €</span>
+                        <span class="pkg-title" data-i18n="pricing.portrait.title">Porträt-Session</span>
+                        <span class="pkg-features" data-i18n="pricing.row.portrait.features">60 Min. Shooting, alle guten Fotos inkl., Online Galerie</span>
+                        <span class="pkg-price" data-i18n="pricing.row.portrait.price">ab 125 €</span>
                     </a>
                     <a href="calendar.html" class="pricing-row" data-package="event" onclick="sessionStorage.setItem('selectedPackage', 'event')">
                         <span class="pkg-letter">B</span>
-                        <span class="pkg-title">Event-Begleitung</span>
-                        <span class="pkg-features">Events & Feiern, Reportage-Stil, High-Res Downloads</span>
-                        <span class="pkg-price">ab 100 €/Std.</span>
+                        <span class="pkg-title" data-i18n="pricing.event.title">Event-Begleitung</span>
+                        <span class="pkg-features" data-i18n="pricing.row.event.features">Events & Feiern, Reportage-Stil, High-Res Downloads</span>
+                        <span class="pkg-price" data-i18n="pricing.row.event.price">ab 100 €/Std.</span>
                     </a>
                     <a href="calendar.html" class="pricing-row" data-package="pet" onclick="sessionStorage.setItem('selectedPackage', 'pet')">
                         <span class="pkg-letter">C</span>
-                        <span class="pkg-title">Tierfotografie</span>
-                        <span class="pkg-features">Hunde, Katzen & mehr, mit Geduld & Ruhe aufgenommen</span>
-                        <span class="pkg-price">ab 125 €</span>
+                        <span class="pkg-title" data-i18n="pricing.pet.title">Tierfotografie</span>
+                        <span class="pkg-features" data-i18n="pricing.row.pet.features">Hunde, Katzen & mehr, mit Geduld & Ruhe aufgenommen</span>
+                        <span class="pkg-price" data-i18n="pricing.row.pet.price">ab 125 €</span>
                     </a>
                 </div>
             </div>
@@ -208,8 +205,8 @@
         <section id="contact" class="contact-section">
             <div class="container contact-grid">
                 <div class="contact-left-col">
-                    <span class="section-kicker">KONTAKT</span>
-                    <h2 class="contact-headline">Lass uns etwas<br>Schönes<br>festhalten.</h2>
+                    <span class="section-kicker" data-i18n="contact.kicker">KONTAKT</span>
+                    <h2 class="contact-headline" data-i18n="contact.headline">Lass uns etwas<br>Schönes<br>festhalten.</h2>
                     <div class="contact-details">
                         <a href="mailto:Photon.Capture.Fotografie@gmail.com" class="contact-email">Photon.Capture.Fotografie@gmail.com</a>
                         <p class="contact-phone-loc">+49 1590 6786 209 · Dresden</p>
@@ -230,10 +227,10 @@
                                 <label for="service" data-i18n="contact.form.service">WORUM GEHT ES?</label>
                                 <div class="select-wrapper">
                                     <select id="service" name="service" class="underline-input">
-                                        <option value="portrait">Porträt-Session</option>
-                                        <option value="event">Event-Begleitung</option>
-                                        <option value="pet">Tierfotografie</option>
-                                        <option value="other">Sonstiges / Allgemeine Frage</option>
+                                        <option value="portrait" data-i18n="contact.form.service.portrait">Porträt-Session</option>
+                                        <option value="event" data-i18n="contact.form.service.event">Event-Begleitung</option>
+                                        <option value="pet" data-i18n="contact.form.service.pet">Tierfotografie</option>
+                                        <option value="other" data-i18n="contact.form.service.other">Sonstiges / Allgemeine Frage</option>
                                     </select>
                                 </div>
                             </div>

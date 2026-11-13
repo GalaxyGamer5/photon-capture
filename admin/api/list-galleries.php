@@ -7,17 +7,36 @@ require_once __DIR__ . '/../../includes/db.php';
 
 try {
     $db = getDB();
-    $stmt = $db->query("SELECT id, name, folder, image_count FROM users ORDER BY name ASC");
-    $rows = $stmt->fetchAll();
+
+    $stmt = $db->query("
+        SELECT g.id, g.folder, g.title, u.name as user_name, g.image_count 
+        FROM galleries g 
+        JOIN users u ON g.user_id = u.id 
+        ORDER BY u.name ASC, g.title ASC
+    ");
+    $gRows = $stmt->fetchAll();
 
     $galleries = [];
-    foreach ($rows as $user) {
-        $galleries[] = [
-            'id' => (string)$user['id'],
-            'name' => $user['name'],
-            'folder' => $user['folder'],
-            'imageCount' => (int)$user['image_count']
-        ];
+    if (!empty($gRows)) {
+        foreach ($gRows as $r) {
+            $galleries[] = [
+                'id' => (string)$r['id'],
+                'name' => $r['user_name'] . ' — ' . $r['title'],
+                'folder' => $r['folder'],
+                'imageCount' => (int)$r['image_count']
+            ];
+        }
+    } else {
+        $stmt2 = $db->query("SELECT id, name, folder, image_count FROM users ORDER BY name ASC");
+        $rows = $stmt2->fetchAll();
+        foreach ($rows as $user) {
+            $galleries[] = [
+                'id' => (string)$user['id'],
+                'name' => $user['name'],
+                'folder' => $user['folder'],
+                'imageCount' => (int)$user['image_count']
+            ];
+        }
     }
 
     echo json_encode([

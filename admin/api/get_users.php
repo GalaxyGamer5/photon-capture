@@ -11,6 +11,10 @@ try {
 
     $galStmt = $db->prepare("SELECT id, user_id, title, folder, image_count, is_protected FROM galleries WHERE user_id = ? ORDER BY id ASC");
     $chatStmt = $db->prepare("SELECT COUNT(*) FROM chat_messages WHERE user_id = ? AND sender = 'customer' AND is_read = 0");
+    $updGal = $db->prepare("UPDATE galleries SET image_count = ? WHERE id = ?");
+    $updUsr = $db->prepare("UPDATE users SET image_count = ? WHERE id = ?");
+
+    $baseAssetsDir = realpath(__DIR__ . '/../../') . '/gallery/assets/';
 
     $users = [];
     foreach ($rows as $r) {
@@ -28,6 +32,36 @@ try {
             ]];
         }
 
+        $processedGalleries = [];
+        foreach ($userGalleries as $g) {
+            $diskCount = 0;
+            $folderPath = $baseAssetsDir . $g['folder'];
+            if (is_dir($folderPath)) {
+                foreach (scandir($folderPath) as $f) {
+                    if ($f !== '.' && $f !== '..' && $f !== '_thumbs' && preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $f)) {
+                        $diskCount++;
+                    }
+                }
+            }
+            $finalCount = ($diskCount > 0) ? $diskCount : (int)$g['image_count'];
+            if ($diskCount > 0 && $diskCount !== (int)$g['image_count'] && !empty($g['id'])) {
+                try { $updGal->execute([$diskCount, $g['id']]); } catch(Exception $e){}
+            }
+
+            $processedGalleries[] = [
+                'id' => (int)$g['id'],
+                'title' => $g['title'],
+                'folder' => $g['folder'],
+                'imageCount' => $finalCount,
+                'isProtected' => (bool)$g['is_protected']
+            ];
+        }
+
+        $totalUserCount = array_sum(array_column($processedGalleries, 'imageCount'));
+        if ($totalUserCount > 0 && $totalUserCount !== (int)$r['image_count']) {
+            try { $updUsr->execute([$totalUserCount, $r['id']]); } catch(Exception $e){}
+        }
+
         $chatStmt->execute([$r['id']]);
         $unreadChat = (int)$chatStmt->fetchColumn();
 
@@ -37,18 +71,10 @@ try {
             'passwordHash' => $r['password_hash'],
             'name' => $r['name'],
             'folder' => $r['folder'],
-            'imageCount' => (int)$r['image_count'],
+            'imageCount' => $totalUserCount ?: (int)$r['image_count'],
             'isProtected' => (bool)$r['is_protected'],
             'unreadChatCount' => $unreadChat,
-            'galleries' => array_map(function($g) {
-                return [
-                    'id' => (int)$g['id'],
-                    'title' => $g['title'],
-                    'folder' => $g['folder'],
-                    'imageCount' => (int)$g['image_count'],
-                    'isProtected' => (bool)$g['is_protected']
-                ];
-            }, $userGalleries)
+            'galleries' => $processedGalleries
         ];
     }
 

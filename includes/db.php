@@ -414,6 +414,10 @@ function syncUsersJs(PDO $pdo) {
 
     $galStmt = $pdo->prepare("SELECT id, title, folder, image_count, is_protected, created_at FROM galleries WHERE user_id = ? ORDER BY id ASC");
 
+    $baseAssetsDir = dirname(__DIR__) . '/gallery/assets/';
+    $updG = $pdo->prepare("UPDATE galleries SET image_count = ? WHERE id = ?");
+    $updU = $pdo->prepare("UPDATE users SET image_count = ? WHERE id = ?");
+
     $users = [];
     foreach ($rows as $r) {
         $galStmt->execute([$r['id']]);
@@ -431,23 +435,45 @@ function syncUsersJs(PDO $pdo) {
             ]];
         }
 
+        $processedGals = [];
+        foreach ($userGalleries as $g) {
+            $folderPath = $baseAssetsDir . $g['folder'];
+            $diskCount = 0;
+            if (is_dir($folderPath)) {
+                foreach (scandir($folderPath) as $f) {
+                    if ($f !== '.' && $f !== '..' && $f !== '_thumbs' && preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $f)) {
+                        $diskCount++;
+                    }
+                }
+            }
+            $finalCount = ($diskCount > 0) ? $diskCount : (int)$g['image_count'];
+            if ($diskCount > 0 && $diskCount !== (int)$g['image_count'] && !empty($g['id'])) {
+                try { $updG->execute([$diskCount, $g['id']]); } catch(Exception $e){}
+            }
+
+            $processedGals[] = [
+                'id' => (int)$g['id'],
+                'title' => $g['title'],
+                'folder' => $g['folder'],
+                'imageCount' => $finalCount,
+                'isProtected' => (bool)$g['is_protected']
+            ];
+        }
+
+        $totalUserCount = array_sum(array_column($processedGals, 'imageCount'));
+        if ($totalUserCount > 0 && $totalUserCount !== (int)$r['image_count']) {
+            try { $updU->execute([$totalUserCount, $r['id']]); } catch(Exception $e){}
+        }
+
         $users[] = [
             'id' => (string)$r['id'],
             'username' => $r['username'],
             'passwordHash' => $r['password_hash'],
             'name' => $r['name'],
             'folder' => $r['folder'],
-            'imageCount' => (int)$r['image_count'],
+            'imageCount' => $totalUserCount ?: (int)$r['image_count'],
             'isProtected' => (bool)$r['is_protected'],
-            'galleries' => array_map(function($g) {
-                return [
-                    'id' => (int)$g['id'],
-                    'title' => $g['title'],
-                    'folder' => $g['folder'],
-                    'imageCount' => (int)$g['image_count'],
-                    'isProtected' => (bool)$g['is_protected']
-                ];
-            }, $userGalleries)
+            'galleries' => $processedGals
         ];
     }
 
