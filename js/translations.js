@@ -24,6 +24,9 @@ const translations = {
         "impressum.liability.title": "Verbraucherstreitbeilegung/Universalschlichtungsstelle",
 
         "about.title": "Über mich",
+        "about.headline": "Ich bin Jonathan. Ich fange echte Momente ein.",
+        "about.body": "Angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen. Heute begleite ich Menschen mit meiner Kamera, ob mit dem geliebten Vierbeiner, bei einem ehrlichen Porträt oder auf einem Event.",
+        "about.highlight": "Mein Ziel: Bilder, die berühren und bleiben.",
         "about.intro": "Schön, dass du da bist!",
         "about.p1": "Ich bin Jonathan, und ich liebe es, echte Emotionen und einzigartige Augenblicke einzufangen. Seit vielen Jahren begleite ich Menschen mit meiner Kamera – angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen.",
         "about.p2": "Mein Ziel ist es, Bilder zu schaffen, die berühren und bleiben. Egal ob es um einen Moment mit dem geliebten Vierbeiner geht, ein ehrliches Porträt oder die lebendige Stimmung eines Events – ich möchte den Moment so festhalten, wie er sich angefühlt hat.",
@@ -227,6 +230,9 @@ const translations = {
         "impressum.liability.title": "Consumer Dispute Resolution",
 
         "about.title": "About Me",
+        "about.headline": "I'm Jonathan. I capture real moments.",
+        "about.body": "It all started with an old phone and a fascination for visual storytelling. Today I accompany people with my camera — whether with a beloved pet, an honest portrait, or at an event.",
+        "about.highlight": "My goal: images that move you and stay with you.",
         "about.intro": "So glad you're here!",
         "about.p1": "I'm Jonathan, and I love capturing real emotions and unique moments. I've been accompanying people with my camera for many years – it all started with an old phone and a fascination for visual storytelling.",
         "about.p2": "My goal is to create images that touch you and stay with you. Whether it's a moment with your beloved furry friend, an honest portrait, or the lively atmosphere of an event – I want to capture the moment exactly as it felt.",

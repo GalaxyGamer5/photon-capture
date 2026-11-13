@@ -31,11 +31,11 @@
             <a href="index.html" class="brand-logo">PHOTON CAPTURE</a>
             <nav class="main-nav">
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="#about">Über mich</a></li>
-                    <li><a href="#services">Leistungen</a></li>
-                    <li><a href="#gallery">Galerie</a></li>
-                    <li><a href="#pricing">Preise</a></li>
-                    <li><a href="#contact">Kontakt</a></li>
+                    <li><a href="#about" data-i18n="nav.about">Über mich</a></li>
+                    <li><a href="#services" data-i18n="nav.services">Leistungen</a></li>
+                    <li><a href="#gallery" data-i18n="nav.gallery">Galerie</a></li>
+                    <li><a href="#pricing" data-i18n="nav.pricing">Preise</a></li>
+                    <li><a href="#contact" data-i18n="nav.contact">Kontakt</a></li>
                 </ul>
                 <div class="nav-actions">
                     <button class="lang-toggle" id="langToggle" aria-label="Switch Language">DE</button>
@@ -65,7 +65,7 @@
             <div class="container hero-container">
                 <div class="hero-text-content">
                     <span class="section-kicker">FOTOGRAFIE AUS DRESDEN</span>
-                    <h1 class="hero-headline">Eure schönsten<br>Momente für die<br>Ewigkeit.</h1>
+                    <h1 class="hero-headline" data-i18n="hero.title">Eure schönsten<br>Momente für die<br>Ewigkeit.</h1>
                 </div>
             </div>
         </section>
@@ -82,13 +82,9 @@
                 </div>
                 <div class="about-text-col">
                     <span class="section-kicker">ÜBER MICH</span>
-                    <h2 class="about-headline">Ich bin Jonathan. Ich fange echte Momente ein.</h2>
-                    <p class="about-body">
-                        Angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen. Heute begleite ich Menschen mit meiner Kamera, ob mit dem geliebten Vierbeiner, bei einem ehrlichen Porträt oder auf einem Event.
-                    </p>
-                    <p class="about-highlight">
-                        Mein Ziel: Bilder, die berühren und bleiben.
-                    </p>
+                    <h2 class="about-headline" data-i18n="about.headline">Ich bin Jonathan. Ich fange echte Momente ein.</h2>
+                    <p class="about-body" data-i18n="about.body">Angefangen hat alles mit einem alten Handy und der Faszination für visuelles Geschichtenerzählen. Heute begleite ich Menschen mit meiner Kamera, ob mit dem geliebten Vierbeiner, bei einem ehrlichen Porträt oder auf einem Event.</p>
+                    <p class="about-highlight" data-i18n="about.highlight">Mein Ziel: Bilder, die berühren und bleiben.</p>
                 </div>
             </div>
         </section>
@@ -100,18 +96,18 @@
                 <div class="services-list">
                     <div class="service-row">
                         <span class="service-num">01</span>
-                        <h3 class="service-name">Porträt-Sitzungen</h3>
-                        <p class="service-desc">Für dich, als Paar oder mit der Familie: entspannte Bilder, auf denen du dich wohlfühlst.</p>
+                        <h3 class="service-name" data-i18n="services.portrait.title">Porträt-Sitzungen</h3>
+                        <p class="service-desc" data-i18n="services.portrait.desc">Für dich, als Paar oder mit der Familie: entspannte Bilder, auf denen du dich wohlfühlst.</p>
                     </div>
                     <div class="service-row">
                         <span class="service-num">02</span>
-                        <h3 class="service-name">Event-Begleitung</h3>
-                        <p class="service-desc">Firmenfeiern, Geburtstage, Jubiläen: Stimmung und besondere Momente bleiben unvergessen.</p>
+                        <h3 class="service-name" data-i18n="services.event.title">Event-Begleitung</h3>
+                        <p class="service-desc" data-i18n="services.event.desc">Firmenfeiern, Geburtstage, Jubiläen: Stimmung und besondere Momente bleiben unvergessen.</p>
                     </div>
                     <div class="service-row">
                         <span class="service-num">03</span>
-                        <h3 class="service-name">Tierfotografie</h3>
-                        <p class="service-desc">Charakterstarke Porträts deiner Vierbeiner, mit Geduld und Ruhe aufgenommen.</p>
+                        <h3 class="service-name" data-i18n="services.pet.title">Tierfotografie</h3>
+                        <p class="service-desc" data-i18n="services.pet.desc">Charakterstarke Porträts deiner Vierbeiner, mit Geduld und Ruhe aufgenommen.</p>
                     </div>
                 </div>
             </div>
@@ -126,10 +122,10 @@
                         <h2 class="section-headline">Galerie</h2>
                     </div>
                     <div class="gallery-filters" id="galleryFilters">
-                        <button class="filter-tab active" data-filter="all">Alle</button>
-                        <button class="filter-tab" data-filter="portrait">Porträt</button>
-                        <button class="filter-tab" data-filter="event">Event</button>
-                        <button class="filter-tab" data-filter="pet">Tier</button>
+                        <button class="filter-tab active" data-filter="all" data-i18n="gallery.filter.all">Alle</button>
+                        <button class="filter-tab" data-filter="portrait" data-i18n="gallery.filter.portrait">Porträt</button>
+                        <button class="filter-tab" data-filter="event" data-i18n="gallery.filter.event">Event</button>
+                        <button class="filter-tab" data-filter="pet" data-i18n="gallery.filter.pet">Tier</button>
                     </div>
                 </div>
 
@@ -223,15 +219,15 @@
                     <div class="contact-card-box">
                         <form id="contact-form" class="clean-form">
                             <div class="form-field">
-                                <label for="name">DEIN NAME</label>
+                                <label for="name" data-i18n="contact.form.name">DEIN NAME</label>
                                 <input type="text" id="name" name="name" required class="underline-input">
                             </div>
                             <div class="form-field">
-                                <label for="email">DEINE E-MAIL</label>
+                                <label for="email" data-i18n="contact.form.email">DEINE E-MAIL</label>
                                 <input type="email" id="email" name="email" required class="underline-input">
                             </div>
                             <div class="form-field">
-                                <label for="service">WORUM GEHT ES?</label>
+                                <label for="service" data-i18n="contact.form.service">WORUM GEHT ES?</label>
                                 <div class="select-wrapper">
                                     <select id="service" name="service" class="underline-input">
                                         <option value="portrait">Porträt-Session</option>
@@ -242,10 +238,10 @@
                                 </div>
                             </div>
                             <div class="form-field">
-                                <label for="message">DEINE NACHRICHT</label>
+                                <label for="message" data-i18n="contact.form.message">DEINE NACHRICHT</label>
                                 <textarea id="message" name="message" rows="3" class="underline-input"></textarea>
                             </div>
-                            <button type="submit" class="pill-btn pill-btn-light">Nachricht abschicken</button>
+                            <button type="submit" class="pill-btn pill-btn-light" data-i18n="contact.btn">Nachricht abschicken</button>
                         </form>
                     </div>
                 </div>
@@ -260,9 +256,9 @@
             <div class="footer-links">
                 <a href="https://www.instagram.com/photon.capture.fotografie/" target="_blank" rel="noopener noreferrer">Instagram</a>
                 <span class="dot">·</span>
-                <a href="agb.html">AGB</a>
+                <a href="agb.html" data-i18n="footer.agb">AGB</a>
                 <span class="dot">·</span>
-                <a href="impressum.html">Impressum</a>
+                <a href="impressum.html" data-i18n="footer.impressum">Impressum</a>
             </div>
         </div>
     </footer>

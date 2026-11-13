@@ -344,9 +344,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof translations !== 'undefined') {
         updateContent(currentLang);
         if (langToggle) {
+            // Show the other language on the button (e.g. show "EN" when you're on DE)
+            langToggle.textContent = currentLang === 'de' ? 'EN' : 'DE';
             langToggle.addEventListener('click', () => {
                 const newLang = currentLang === 'de' ? 'en' : 'de';
                 updateContent(newLang);
+                langToggle.textContent = newLang === 'de' ? 'EN' : 'DE';
             });
         }
     }
@@ -363,9 +366,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
-                // Close mobile menu
-                navLinks.classList.remove('active');
-                hamburger.classList.remove('active');
+                // Close mobile menu (if it exists on this page)
+                if (navLinks) navLinks.classList.remove('active');
+                if (hamburger) hamburger.classList.remove('active');
 
                 // Scroll to element
                 targetElement.scrollIntoView({
