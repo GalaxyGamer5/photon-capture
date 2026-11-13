@@ -113,3 +113,4 @@ echo json_encode([
     'errors'  => $errors,
     'message' => "Backfill complete: {$updated} updated, {$skipped} skipped (no EXIF available)."
 ]);
+
