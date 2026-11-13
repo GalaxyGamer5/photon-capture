@@ -167,46 +167,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Scroll Progress Indicator ---
     const scrollProgressBar = document.querySelector('.scroll-progress-bar');
 
-    window.addEventListener('scroll', () => {
-        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = (window.scrollY / windowHeight) * 100;
-        scrollProgressBar.style.width = scrolled + '%';
-    });
+    if (scrollProgressBar) {
+        window.addEventListener('scroll', () => {
+            const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (window.scrollY / windowHeight) * 100;
+            scrollProgressBar.style.width = scrolled + '%';
+        });
+    }
 
     // --- Dark Mode Toggle ---
     const darkModeToggle = document.querySelector('.dark-mode-toggle');
     const sunIcon = document.querySelector('.sun');
     const moonIcon = document.querySelector('.moon');
 
-    // Check for saved theme preference or default to dark mode
-    // Check for saved theme preference or default to dark mode
-    // Changed key to 'theme_pref' to reset users to default dark mode
-    const currentTheme = localStorage.getItem('theme_pref') || 'dark';
+    if (darkModeToggle) {
+        // Check for saved theme preference or default to dark mode
+        // Changed key to 'theme_pref' to reset users to default dark mode
+        const currentTheme = localStorage.getItem('theme_pref') || 'dark';
 
-    if (currentTheme === 'light') {
-        document.body.classList.add('light-mode');
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
-    } else {
-        // Default is dark mode
-        document.body.classList.remove('light-mode');
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
-    }
-
-    darkModeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-
-        if (document.body.classList.contains('light-mode')) {
-            localStorage.setItem('theme_pref', 'light');
-            sunIcon.style.display = 'block';
-            moonIcon.style.display = 'none';
+        if (currentTheme === 'light') {
+            document.body.classList.add('light-mode');
+            if (sunIcon) sunIcon.style.display = 'block';
+            if (moonIcon) moonIcon.style.display = 'none';
         } else {
-            localStorage.setItem('theme_pref', 'dark');
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
+            document.body.classList.remove('light-mode');
+            if (sunIcon) sunIcon.style.display = 'none';
+            if (moonIcon) moonIcon.style.display = 'block';
         }
-    });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+
+            if (document.body.classList.contains('light-mode')) {
+                localStorage.setItem('theme_pref', 'light');
+                if (sunIcon) sunIcon.style.display = 'block';
+                if (moonIcon) moonIcon.style.display = 'none';
+            } else {
+                localStorage.setItem('theme_pref', 'dark');
+                if (sunIcon) sunIcon.style.display = 'none';
+                if (moonIcon) moonIcon.style.display = 'block';
+            }
+        });
+    }
 
     // --- Parallax Scrolling ---
     // --- Parallax Scrolling ---
@@ -308,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hamburger) {
         hamburger.addEventListener('click', () => {
             hamburger.classList.toggle('active');
-            navLinks.classList.toggle('active');
+            if (navLinks) navLinks.classList.toggle('active');
         });
     }
 
@@ -942,7 +944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 2000);
         }
 
-        acceptCookiesBtn.addEventListener('click', () => {
+        if (acceptCookiesBtn) acceptCookiesBtn.addEventListener('click', () => {
             if (typeof CookieManager !== 'undefined') {
                 CookieManager.acceptAll();
             } else {
@@ -951,7 +953,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cookieBanner.classList.remove('show');
         });
 
-        declineCookiesBtn.addEventListener('click', () => {
+        if (declineCookiesBtn) declineCookiesBtn.addEventListener('click', () => {
             if (typeof CookieManager !== 'undefined') {
                 CookieManager.declineAll();
             } else {
@@ -960,7 +962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cookieBanner.classList.remove('show');
         });
 
-        cookieSettingsBtn.addEventListener('click', () => {
+        if (cookieSettingsBtn) cookieSettingsBtn.addEventListener('click', () => {
             if (typeof CookieManager !== 'undefined') {
                 CookieManager.showSettings();
                 cookieBanner.classList.remove('show');
