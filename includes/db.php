@@ -191,7 +191,24 @@ function initSchema(PDO $pdo) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 
-    // 11. Chat messages table (Client <-> Photographer communication)
+    // 11. Gallery photos table (per-image metadata with EXIF)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS gallery_photos (
+        id $autoInc,
+        gallery_id INT NOT NULL,
+        user_id INT NOT NULL,
+        filename VARCHAR(255) NOT NULL,
+        image_number INT NOT NULL,
+        focal_length VARCHAR(50) DEFAULT NULL,
+        aperture VARCHAR(50) DEFAULT NULL,
+        iso VARCHAR(50) DEFAULT NULL,
+        shutter_speed VARCHAR(50) DEFAULT NULL,
+        camera_model VARCHAR(100) DEFAULT NULL,
+        taken_at DATETIME DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(gallery_id, image_number)
+    )");
+
+    // 12. Chat messages table (Client <-> Photographer communication)
     $pdo->exec("CREATE TABLE IF NOT EXISTS chat_messages (
         id $autoInc,
         user_id INT NOT NULL,

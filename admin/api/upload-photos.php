@@ -59,6 +59,62 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
     }
 }
 
+// Extract useful EXIF metadata from an image file (before it is moved)
+function extract_exif_meta($filePath, $mimeType) {
+    $meta = [
+        'focal_length'  => null,
+        'aperture'      => null,
+        'iso'           => null,
+        'shutter_speed' => null,
+        'camera_model'  => null,
+        'taken_at'      => null,
+    ];
+    if ($mimeType !== 'image/jpeg' && $mimeType !== 'image/jpg') return $meta;
+    if (!function_exists('exif_read_data')) return $meta;
+
+    $exif = @exif_read_data($filePath, 'EXIF,IFD0', true);
+    if (!$exif) return $meta;
+
+    if (!empty($exif['IFD0']['Model']))
+        $meta['camera_model'] = trim($exif['IFD0']['Model']);
+
+    if (!empty($exif['EXIF']['ISOSpeedRatings'])) {
+        $iso = $exif['EXIF']['ISOSpeedRatings'];
+        $meta['iso'] = 'ISO ' . (is_array($iso) ? $iso[0] : $iso);
+    }
+
+    if (!empty($exif['EXIF']['FocalLength'])) {
+        $fl = $exif['EXIF']['FocalLength'];
+        if (strpos($fl, '/') !== false) { [$n, $d] = explode('/', $fl); $fl = $d ? round($n/$d) : $n; }
+        $meta['focal_length'] = $fl . 'mm';
+    }
+
+    if (!empty($exif['EXIF']['FNumber'])) {
+        $fn = $exif['EXIF']['FNumber'];
+        if (strpos($fn, '/') !== false) { [$n, $d] = explode('/', $fn); $fn = $d ? round($n/$d, 1) : $n; }
+        $meta['aperture'] = 'f/' . $fn;
+    }
+
+    if (!empty($exif['EXIF']['ExposureTime'])) {
+        $et = $exif['EXIF']['ExposureTime'];
+        if (strpos($et, '/') !== false) {
+            [$n, $d] = explode('/', $et);
+            $meta['shutter_speed'] = ($d && ($n/$d) < 1) ? '1/' . round($d/$n) . 's' : round($n/$d, 2) . 's';
+        } else {
+            $meta['shutter_speed'] = $et . 's';
+        }
+    }
+
+    // Original date/time the shot was taken
+    $dateStr = $exif['EXIF']['DateTimeOriginal'] ?? $exif['IFD0']['DateTime'] ?? null;
+    if ($dateStr) {
+        // EXIF format: "YYYY:MM:DD HH:MM:SS" → SQL datetime
+        $meta['taken_at'] = preg_replace('/^(\d{4}):(\d{2}):(\d{2})/', '$1-$2-$3', $dateStr);
+    }
+
+    return $meta;
+}
+
 // Move image and fix EXIF orientation for JPEGs
 function moveImage($sourcePath, $destinationPath, $mimeType) {
     $log = __DIR__ . '/upload-debug.log';
@@ -254,10 +310,32 @@ for ($i = 0; $i < $fileCount; $i++) {
     $currentCount++;
     $newFilename = $currentCount . '.' . $ext;
     $targetPath = $targetDir . $newFilename;
-    
+
+    // Extract EXIF from temp file before moving
+    $exifMeta = extract_exif_meta($tmpName, $mimeType);
+
     // Move uploaded file
     if (moveImage($tmpName, $targetPath, $mimeType)) {
         $uploadedCount++;
+
+        // Store per-photo metadata in gallery_photos table
+        if ($db && !empty($gallery['id'])) {
+            try {
+                $ins = $db->prepare("INSERT OR IGNORE INTO gallery_photos
+                    (gallery_id, user_id, filename, image_number, focal_length, aperture, iso, shutter_speed, camera_model, taken_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $ins->execute([
+                    $gallery['id'], $gallery['user_id'] ?? $gallery['id'],
+                    $newFilename, $currentCount,
+                    $exifMeta['focal_length'], $exifMeta['aperture'],
+                    $exifMeta['iso'], $exifMeta['shutter_speed'],
+                    $exifMeta['camera_model'], $exifMeta['taken_at']
+                ]);
+            } catch (Exception $e) {
+                // Non-fatal — image was saved, just log the metadata error
+                $errors[] = "EXIF DB error for {$origName}: " . $e->getMessage();
+            }
+        }
     } else {
         $errors[] = "File {$origName}: Failed to compress or save";
         $currentCount--; // Rollback counter

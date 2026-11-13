@@ -236,6 +236,7 @@
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
         <button class="lightbox-close">&times;</button>
+        <div class="lightbox-exif" id="lightbox-exif"></div>
         <button class="lightbox-nav lightbox-prev">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2">
@@ -430,6 +431,7 @@
         // ACTIVE GALLERY INITIALIZATION & IMAGE VIEWER LOGIC
         // =====================================================================
         let currentGalleryFiles = [];
+        let currentGalleryExif = {}; // keyed by filename → {focal_length, aperture, iso, shutter_speed, camera_model, taken_at}
         let favorites = new Set();
         let showFavoritesOnly = false;
         let selectedImages = new Set();
@@ -457,15 +459,21 @@
                 const data = await res.json();
                 if (data.success && Array.isArray(data.files) && data.files.length > 0) {
                     currentGalleryFiles = data.files;
+                    // Build EXIF map keyed by filename
+                    currentGalleryExif = {};
+                    if (Array.isArray(data.photos)) {
+                        data.photos.forEach(p => { currentGalleryExif[p.filename] = p; });
+                    }
                 } else {
-                    // Fallback to sequential numbers 1..imageCount
                     currentGalleryFiles = [];
+                    currentGalleryExif = {};
                     for (let i = 1; i <= (gal.imageCount || 0); i++) {
                         currentGalleryFiles.push(`${i}.jpg`);
                     }
                 }
             } catch (e) {
                 currentGalleryFiles = [];
+                currentGalleryExif = {};
                 for (let i = 1; i <= (gal.imageCount || 0); i++) {
                     currentGalleryFiles.push(`${i}.jpg`);
                 }
@@ -718,6 +726,23 @@
                 lightboxFavBtn.querySelector('svg').style.color = updatedFav ? 'var(--accent-color)' : '#fff';
                 lightboxFavBtn.querySelector('svg').setAttribute('fill', updatedFav ? 'currentColor' : 'none');
             };
+
+            // Populate EXIF bar
+            const exifBar = document.getElementById('lightbox-exif');
+            const exif = currentGalleryExif[filename] || {};
+            const parts = [
+                exif.camera_model || null,
+                exif.focal_length  || null,
+                exif.aperture      || null,
+                exif.shutter_speed || null,
+                exif.iso           || null,
+            ].filter(Boolean);
+            if (parts.length > 0) {
+                exifBar.textContent = parts.join('  ·  ');
+                exifBar.style.display = 'block';
+            } else {
+                exifBar.style.display = 'none';
+            }
         }
 
         document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);

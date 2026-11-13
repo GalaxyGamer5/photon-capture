@@ -51,10 +51,44 @@ foreach (scandir($fullPath) as $file) {
 natsort($files);
 $files = array_values($files);
 
+// Enrich with EXIF metadata from gallery_photos table
+$exifMap = [];
+try {
+    $db = getDB();
+    // Resolve gallery_id from folder name
+    $gStmt = $db->prepare("SELECT id FROM galleries WHERE folder = ? LIMIT 1");
+    $gStmt->execute([$folder]);
+    $galleryRow = $gStmt->fetch();
+    if ($galleryRow) {
+        $pStmt = $db->prepare(
+            "SELECT filename, focal_length, aperture, iso, shutter_speed, camera_model, taken_at
+             FROM gallery_photos WHERE gallery_id = ?"
+        );
+        $pStmt->execute([$galleryRow['id']]);
+        foreach ($pStmt->fetchAll() as $row) {
+            $exifMap[$row['filename']] = [
+                'focal_length'  => $row['focal_length'],
+                'aperture'      => $row['aperture'],
+                'iso'           => $row['iso'],
+                'shutter_speed' => $row['shutter_speed'],
+                'camera_model'  => $row['camera_model'],
+                'taken_at'      => $row['taken_at'],
+            ];
+        }
+    }
+} catch (Exception $e) {}
+
+// Build enriched file list
+$enriched = array_map(function($f) use ($exifMap) {
+    $meta = $exifMap[$f] ?? [];
+    return array_merge(['filename' => $f], $meta);
+}, $files);
+
 echo json_encode([
     'success' => true,
-    'folder' => $folder,
-    'count' => count($files),
-    'files' => $files
+    'folder'  => $folder,
+    'count'   => count($files),
+    'files'   => $files,    // keep raw list for backwards compat
+    'photos'  => $enriched  // new: enriched list with EXIF
 ]);
 
