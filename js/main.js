@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 loadedPricingData = await res.json();
                 renderPricing();
             }
-        } catch(e) { console.error("Error loading pricing:", e); }
+        } catch (e) { console.error("Error loading pricing:", e); }
     }
 
     function renderPricing() {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             pricingListContainer.innerHTML = loadedPricingData.packages.map((pkg, idx) => {
                 const letter = letters[idx] || String.fromCharCode(65 + idx);
                 const title = (pkg.title && pkg.title[lang]) || (pkg.title && pkg.title.de) || pkg.title || '';
-                
+
                 let featuresText = '';
                 if (pkg.features && Array.isArray(pkg.features)) {
                     featuresText = pkg.features
@@ -77,14 +77,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }).join('');
         }
-        
+
         // Render Legacy Grid (if present)
         if (pricingGrid && loadedPricingData.packages) {
             pricingGrid.innerHTML = '';
             loadedPricingData.packages.forEach(pkg => {
                 const card = document.createElement('div');
                 card.className = 'pricing-card';
-                
+
                 let featuresHtml = '';
                 pkg.features.forEach(feat => {
                     if (feat[lang]) {
@@ -94,11 +94,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let displayPrice = pkg.price;
                 let originalPriceHtml = '';
-                
+
                 if (loadedPricingData.globalDiscount && loadedPricingData.globalDiscount.active) {
                     const gd = loadedPricingData.globalDiscount;
                     originalPriceHtml = `<span class="original-price" style="text-decoration: line-through; opacity: 0.5; font-size: 0.8em; margin-right: 0.5rem;">${pkg.price}€</span>`;
-                    
+
                     if (gd.type === 'percent') {
                         displayPrice = Math.round(pkg.price * (1 - (gd.value / 100)));
                     } else {
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     fetchPricing();
-    
+
     // Listen for language changes to re-render texts
     window.addEventListener('languageChanged', renderPricing);
 
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         year: 'numeric',
                         month: 'short'
                     });
-                } catch(e) {}
+                } catch (e) { }
             }
             return `
                 <div class="testimonial-card">
@@ -307,13 +307,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 loadedFaqData = await res.json();
                 renderFaq();
             }
-        } catch(e) { console.error("Error loading FAQ:", e); }
+        } catch (e) { console.error("Error loading FAQ:", e); }
     }
 
     function renderFaq() {
         if (!loadedFaqData || !loadedFaqData.items || !faqContainer) return;
         const lang = localStorage.getItem('preferredLang') || 'de';
-        
+
         faqContainer.innerHTML = '';
         loadedFaqData.items.forEach(item => {
             const div = document.createElement('div');
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         faqContainer.addEventListener('click', (e) => {
             const questionBtn = e.target.closest('.faq-question');
             if (!questionBtn) return;
-            
+
             const faqItem = questionBtn.parentElement;
             const isActive = faqItem.classList.contains('active');
 
@@ -1167,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const lang = localStorage.getItem('preferredLang') || 'de';
         let basePrice = parseFloat(pkg.price) || 0;
-        
+
         let extrasTotal = 0;
         let selectedCount = 0;
         const checks = modal.querySelectorAll('.extra-check:checked');
@@ -1195,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const appliedBulk = pkg.bulkDiscounts.find(d => d.count === selectedCount);
             if (appliedBulk && appliedBulk.discountPercent > 0) {
                 total *= (1 - (appliedBulk.discountPercent / 100));
-                discountInfo = lang === 'en' 
+                discountInfo = lang === 'en'
                     ? `Bundle Discount: -${appliedBulk.discountPercent}%`
                     : `Sammelrabatt: -${appliedBulk.discountPercent}%`;
             }
@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const lang = localStorage.getItem('preferredLang') || 'de';
                 const title = pkg.title[lang];
-                
+
                 let extrasHtml = '';
                 if (pkg.extras && pkg.extras.length > 0) {
                     extrasHtml = `
