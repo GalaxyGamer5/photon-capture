@@ -346,12 +346,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof translations !== 'undefined') {
         updateContent(currentLang);
         if (langToggle) {
-            // Show the other language on the button (e.g. show "EN" when you're on DE)
-            langToggle.textContent = currentLang === 'de' ? 'EN' : 'DE';
+            // Show current language on the button (DE = currently German, EN = currently English)
+            langToggle.textContent = currentLang.toUpperCase();
             langToggle.addEventListener('click', () => {
                 const newLang = currentLang === 'de' ? 'en' : 'de';
                 updateContent(newLang);
-                langToggle.textContent = newLang === 'de' ? 'EN' : 'DE';
+                langToggle.textContent = newLang.toUpperCase();
             });
         }
     }

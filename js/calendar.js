@@ -552,5 +552,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Re-render when language changes
+    window.addEventListener('languageChanged', (e) => {
+        currentLanguage = e.detail.language;
+        renderCalendar();
+        updatePackageDisplay();
+        renderExtras();
+        updateDateTimeDisplays();
+        updatePricing();
+    });
+
     init();
 });
