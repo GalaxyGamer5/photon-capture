@@ -17,3 +17,4 @@ data/*.db
 data/*.sqlite
 gallery/data/backups/*
 !gallery/data/backups/.gitkeep
+gallery/data/users_backup.json
