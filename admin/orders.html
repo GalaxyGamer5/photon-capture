@@ -601,10 +601,17 @@
                 else totalFlat += parseFloat(pricing.globalDiscount.value) || 0;
             }
 
-            // Bulk (always %)
-            if(pkg.bulkDiscounts && extrasCount > 0) {
-                const appliedBulk = pkg.bulkDiscounts.find(d => d.count === extrasCount);
-                if(appliedBulk) totalPercent += parseFloat(appliedBulk.discountPercent) || 0;
+            // Bulk / Long session discount (always %)
+            let perkCount = extrasCount;
+            if (packageId === 'event') {
+                const extraHours = Math.max(0, hours - 2);
+                const hourPerks = extraHours >= 6 ? 3 : (extraHours >= 3 ? 2 : (extraHours >= 1 ? 1 : 0));
+                perkCount += hourPerks;
+            }
+
+            if(pkg.bulkDiscounts && perkCount > 0) {
+                const applicable = pkg.bulkDiscounts.filter(d => d.count <= perkCount).sort((a,b) => b.count - a.count);
+                if(applicable.length > 0) totalPercent += parseFloat(applicable[0].discountPercent) || 0;
             }
 
             // Manual

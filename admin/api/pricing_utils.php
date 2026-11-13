@@ -14,7 +14,7 @@ function calculateOrderPrice($order, $pricing) {
     if (!$pkg) return $order['price']; // Keep existing if package not found
 
     $basePrice = (float)$pkg['price'];
-    $hours = (float)($order['hours'] ?? 1);
+    $hours = (float)($order['hours'] ?? $order['duration'] ?? 1);
 
     if ($pkgId === 'event') {
         $total = $basePrice * $hours;
@@ -67,13 +67,21 @@ function calculateOrderPrice($order, $pricing) {
             $totalPercentDiscount += (float)$gd['value'];
         }
     }
-    if (isset($pkg['bulkDiscounts']) && $extrasCount > 0) {
+    $perkCount = $extrasCount;
+    if ($pkgId === 'event') {
+        $extraHours = max(0, $hours - 2);
+        $hourPerks = $extraHours >= 6 ? 3 : ($extraHours >= 3 ? 2 : ($extraHours >= 1 ? 1 : 0));
+        $perkCount += $hourPerks;
+    }
+
+    if (isset($pkg['bulkDiscounts']) && $perkCount > 0) {
+        $bestDiscount = 0;
         foreach ($pkg['bulkDiscounts'] as $bd) {
-            if ((int)$bd['count'] === $extrasCount) {
-                $totalPercentDiscount += (float)$bd['discountPercent'];
-                break;
+            if ($perkCount >= (int)$bd['count'] && (float)$bd['discountPercent'] > $bestDiscount) {
+                $bestDiscount = (float)$bd['discountPercent'];
             }
         }
+        $totalPercentDiscount += $bestDiscount;
     }
     $manual = $order['discount'] ?? ['value' => 0, 'type' => 'euro'];
     if ($manual['type'] === 'percent') {

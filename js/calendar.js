@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryPackagePrice: document.getElementById('summaryPackagePrice'),
         summaryExtrasRow: document.getElementById('summaryExtrasRow'),
         summaryExtrasPrice: document.getElementById('summaryExtrasPrice'),
+        summaryDiscountRow: document.getElementById('summaryDiscountRow'),
+        summaryDiscountLabel: document.getElementById('summaryDiscountLabel'),
+        summaryDiscountPrice: document.getElementById('summaryDiscountPrice'),
         summaryTotalPrice: document.getElementById('summaryTotalPrice'),
         totalPriceInput: document.getElementById('total_price_input'),
         priceDetailsInput: document.getElementById('price_details_input'),
@@ -95,6 +98,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat(val) || 2;
     }
 
+    // Render duration select options dynamically with discount badges
+    function renderDurationOptions(pkg) {
+        if (!elements.durationSelect) return;
+        const currentVal = elements.durationSelect.value || '2h';
+
+        const getDiscountForHours = (h) => {
+            if (!pkg || !pkg.bulkDiscounts) return 0;
+            const extraHours = Math.max(0, h - 2);
+            const perks = extraHours >= 6 ? 3 : (extraHours >= 3 ? 2 : (extraHours >= 1 ? 1 : 0));
+            const tier = pkg.bulkDiscounts.filter(d => d.count <= perks).sort((a,b) => b.count - a.count)[0];
+            return tier ? tier.discountPercent : 0;
+        };
+
+        const durationDefs = [
+            { value: '2h', hours: 2, labelDe: '2 Stunden (Mindestdauer)', labelEn: '2 Hours (Minimum)' },
+            { value: '3h', hours: 3, labelDe: '3 Stunden', labelEn: '3 Hours' },
+            { value: '4h', hours: 4, labelDe: '4 Stunden', labelEn: '4 Hours' },
+            { value: '5h', hours: 5, labelDe: '5 Stunden', labelEn: '5 Hours' },
+            { value: '6h', hours: 6, labelDe: '6 Stunden', labelEn: '6 Hours' },
+            { value: '8h', hours: 8, labelDe: '8 Stunden', labelEn: '8 Hours' },
+            { value: '10h', hours: 10, labelDe: '10 Stunden', labelEn: '10 Hours' },
+            { value: 'open', hours: 8, labelDe: 'Open End (ab 8 Stunden)', labelEn: 'Open End (from 8 Hours)' }
+        ];
+
+        elements.durationSelect.innerHTML = durationDefs.map(d => {
+            const discountPct = getDiscountForHours(d.hours);
+            const tagDe = discountPct > 0 ? ` (-${discountPct}% Rabatt)` : '';
+            const tagEn = discountPct > 0 ? ` (-${discountPct}% discount)` : '';
+            const text = currentLanguage === 'en' ? `${d.labelEn}${tagEn}` : `${d.labelDe}${tagDe}`;
+            return `<option value="${d.value}" ${d.value === currentVal ? 'selected' : ''}>${text}</option>`;
+        }).join('');
+    }
+
     // Find the first available date on or after minBookingDate
     function getFirstAvailableDate() {
         let checkDate = new Date(minBookingDate);
@@ -124,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.durationSelect) {
             elements.durationSelect.addEventListener('change', () => {
-                updatePackageDisplay();
                 updatePricing();
             });
         }
@@ -342,6 +377,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const isHourly = isHourlyPackage(pkg);
         if (elements.durationField) {
             elements.durationField.style.display = isHourly ? 'block' : 'none';
+            if (isHourly) {
+                renderDurationOptions(pkg);
+            }
         }
 
         if (elements.packageName) elements.packageName.textContent = title;
@@ -396,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Calculate & Update Price Summary Card with Hourly Scaling
+    // Calculate & Update Price Summary Card with Hourly Scaling & Session Discounts
     function updatePricing() {
         if (!pricingData || !pricingData.packages) return;
         const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
@@ -405,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = "Individuelles Angebot";
                 if (elements.summaryPackagePrice) elements.summaryPackagePrice.textContent = "Auf Anfrage";
                 if (elements.summaryExtrasPrice) elements.summaryExtrasPrice.textContent = "0 €";
+                if (elements.summaryDiscountRow) elements.summaryDiscountRow.style.display = "none";
                 if (elements.summaryTotalPrice) elements.summaryTotalPrice.textContent = "Auf Anfrage";
                 if (elements.totalPriceInput) elements.totalPriceInput.value = "Auf Anfrage";
                 if (elements.basePriceInput) elements.basePriceInput.value = "0€";
@@ -423,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let extrasTotal = 0;
+        let extrasCount = 0;
         let breakdown = [];
 
         if (pkg.extras) {
@@ -434,21 +474,42 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (paidOpt) p = paidOpt.price;
                     }
                     extrasTotal += p;
+                    extrasCount++;
                     const label = extra.label[currentLanguage] || extra.label.de || extra.label;
                     breakdown.push(`${label}: +${p}€`);
                 }
             });
         }
 
-        const total = basePrice + extrasTotal;
+        // Count extra hours towards bulk discounts as perks
+        let totalPerks = extrasCount;
+        if (isHourly) {
+            const extraHours = Math.max(0, hours - 2);
+            const hourPerks = extraHours >= 6 ? 3 : (extraHours >= 3 ? 2 : (extraHours >= 1 ? 1 : 0));
+            totalPerks += hourPerks;
+        }
+
+        let discountPercent = 0;
+        if (pkg.bulkDiscounts && totalPerks > 0) {
+            const applicable = pkg.bulkDiscounts
+                .filter(d => d.count <= totalPerks)
+                .sort((a, b) => b.count - a.count);
+            if (applicable.length > 0) {
+                discountPercent = parseFloat(applicable[0].discountPercent) || 0;
+            }
+        }
+
+        const subtotal = basePrice + extrasTotal;
+        const discountAmount = discountPercent > 0 ? Math.round(subtotal * (discountPercent / 100)) : 0;
+        const total = subtotal - discountAmount;
         const title = pkg.title[currentLanguage] || pkg.title.de || pkg.title;
 
         if (elements.summaryPackageLabel) {
             if (isHourly) {
                 const durText = elements.durationSelect
-                    ? elements.durationSelect.options[elements.durationSelect.selectedIndex]?.text
+                    ? elements.durationSelect.options[elements.durationSelect.selectedIndex]?.text.split('(')[0].trim()
                     : `${hours} Std.`;
-                elements.summaryPackageLabel.textContent = `${title} (${durText || `${hours} Std.`})`;
+                elements.summaryPackageLabel.textContent = `${title} (${durText || `${hours} Std.`} à ${unitRate} €)`;
             } else {
                 elements.summaryPackageLabel.textContent = title;
             }
@@ -460,6 +521,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.summaryExtrasPrice) {
             elements.summaryExtrasPrice.textContent = `${extrasTotal} €`;
         }
+
+        // Discount display
+        if (elements.summaryDiscountRow) {
+            if (discountAmount > 0) {
+                elements.summaryDiscountRow.style.display = 'flex';
+                const discountTitle = isHourly && extrasCount === 0
+                    ? (currentLanguage === 'en' ? `Session Discount (-${discountPercent}%)` : `Laufzeit-Rabatt (-${discountPercent}%)`)
+                    : (currentLanguage === 'en' ? `Bundle Discount (-${discountPercent}%)` : `Paket-Vorteil (-${discountPercent}%)`);
+                if (elements.summaryDiscountLabel) elements.summaryDiscountLabel.textContent = discountTitle;
+                if (elements.summaryDiscountPrice) elements.summaryDiscountPrice.textContent = `- ${discountAmount} €`;
+            } else {
+                elements.summaryDiscountRow.style.display = 'none';
+            }
+        }
+
         if (elements.summaryTotalPrice) {
             elements.summaryTotalPrice.textContent = `${total} €`;
         }
@@ -468,10 +544,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.totalPriceInput) elements.totalPriceInput.value = `${total}€`;
         if (elements.basePriceInput) elements.basePriceInput.value = `${basePrice}€`;
         if (elements.extrasBreakdownInput) elements.extrasBreakdownInput.value = breakdown.join(', ');
+        if (elements.discountBreakdownInput) elements.discountBreakdownInput.value = discountAmount > 0 ? `Rabatt: -${discountAmount}€ (${discountPercent}%)` : '';
         if (elements.priceDetailsInput) {
             elements.priceDetailsInput.value = isHourly
-                ? `Basis: ${basePrice}€ (${hours} Std. à ${unitRate}€), Extras: ${extrasTotal}€`
-                : `Basis: ${basePrice}€, Extras: ${extrasTotal}€`;
+                ? `Basis: ${basePrice}€ (${hours} Std. à ${unitRate}€), Extras: ${extrasTotal}€${discountAmount > 0 ? `, Rabatt: -${discountAmount}€ (${discountPercent}%)` : ''}`
+                : `Basis: ${basePrice}€, Extras: ${extrasTotal}€${discountAmount > 0 ? `, Rabatt: -${discountAmount}€ (${discountPercent}%)` : ''}`;
         }
     }
 
