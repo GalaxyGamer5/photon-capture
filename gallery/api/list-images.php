@@ -57,3 +57,4 @@ echo json_encode([
     'count' => count($files),
     'files' => $files
 ]);
+

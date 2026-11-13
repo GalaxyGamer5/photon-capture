@@ -26,3 +26,4 @@ header('Cache-Control: no-cache');
 
 readfile($dbPath);
 exit;
+

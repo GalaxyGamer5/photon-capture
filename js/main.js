@@ -207,6 +207,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Listen for language changes to re-render texts
     window.addEventListener('languageChanged', renderPricing);
 
+    // --- Load Dynamic Testimonials ---
+    const testimonialsGrid = document.getElementById('testimonials-grid');
+    const testimonialsSection = document.getElementById('testimonials');
+
+    async function fetchTestimonials() {
+        if (!testimonialsGrid) return;
+        try {
+            const response = await fetch('api/get-testimonials.php?t=' + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && Array.isArray(data.testimonials) && data.testimonials.length > 0) {
+                    renderTestimonials(data.testimonials);
+                    if (testimonialsSection) testimonialsSection.style.display = 'block';
+                } else if (testimonialsSection) {
+                    testimonialsSection.style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error("Error loading testimonials:", e);
+            if (testimonialsSection) testimonialsSection.style.display = 'none';
+        }
+    }
+
+    function renderTestimonials(testimonials) {
+        if (!testimonialsGrid) return;
+        testimonialsGrid.innerHTML = testimonials.map(t => {
+            const rating = Math.max(1, Math.min(5, parseInt(t.rating) || 5));
+            const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+            let dateStr = '';
+            if (t.date) {
+                try {
+                    const d = new Date(t.date);
+                    const lang = (typeof currentLanguage !== 'undefined' && currentLanguage === 'en') ? 'en-US' : 'de-DE';
+                    dateStr = d.toLocaleDateString(lang, {
+                        year: 'numeric',
+                        month: 'short'
+                    });
+                } catch(e) {}
+            }
+            return `
+                <div class="testimonial-card">
+                    <div>
+                        <div class="testimonial-stars" aria-label="${rating} von 5 Sternen">${stars}</div>
+                        <p class="testimonial-quote">"${escapeHtml(t.text)}"</p>
+                    </div>
+                    <div class="testimonial-author-box">
+                        <span class="testimonial-author-name">${escapeHtml(t.name)}</span>
+                        ${dateStr ? `<span class="testimonial-author-date">${dateStr}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    fetchTestimonials();
+
     // --- Randomize Gallery Items ---
     if (galleryGrid) {
         const items = Array.from(galleryGrid.children);
@@ -1120,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // --- Premium Scroll Animations ---
-const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .faq-section, .contact-section');
+const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .testimonials-section, .faq-section, .contact-section');
 
 const sectionObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

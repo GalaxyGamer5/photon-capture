@@ -66,3 +66,4 @@ echo json_encode([
     'message'  => 'Datenbank erfolgreich importiert.',
     'snapshot' => basename($snap)
 ]);
+

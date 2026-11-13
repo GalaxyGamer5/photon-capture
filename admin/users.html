@@ -736,6 +736,15 @@
             document.body.removeChild(a);
         }
 
+        function exportDB() {
+            const a = document.createElement('a');
+            a.href = 'api/db-export.php';
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         let dbImportFile = null;
 
         function openDBImportModal() {

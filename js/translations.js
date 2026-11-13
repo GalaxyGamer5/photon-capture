@@ -82,7 +82,9 @@ const translations = {
         "gallery.filter.event": "Event",
         "gallery.filter.pet": "Tier",
 
+        "testimonials.kicker": "KUNDENSTIMMEN",
         "testimonials.title": "Kundenstimmen",
+        "testimonials.headline": "Was Kunden sagen",
 
         "contact.title": "Kontakt",
         "contact.info.location": "Standort",
@@ -330,7 +332,9 @@ const translations = {
         "gallery.filter.event": "Event",
         "gallery.filter.pet": "Pet",
 
+        "testimonials.kicker": "TESTIMONIALS",
         "testimonials.title": "Testimonials",
+        "testimonials.headline": "What Clients Say",
 
         "contact.title": "Contact",
         "contact.info.location": "Location",

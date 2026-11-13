@@ -91,3 +91,4 @@ echo json_encode([
     'errors' => $errors,
     'message' => "{$added} Foto(s) erfolgreich zum Portfolio hinzugefügt!"
 ]);
+
