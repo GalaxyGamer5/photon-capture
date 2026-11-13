@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const priceFormatted = `${prefix}${displayPrice} €${unit}`;
 
                 return `
-                    <a href="calendar.html?package=${pkg.id}" class="pricing-row" data-package="${pkg.id}">
+                    <a href="calendar.html" class="pricing-row" data-package="${pkg.id}" onclick="sessionStorage.setItem('selectedPackage', '${pkg.id}')">
                         <span class="pkg-letter">${letter}</span>
                         <span class="pkg-title">${title}</span>
                         <span class="pkg-features">${featuresText}</span>

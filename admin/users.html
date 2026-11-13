@@ -178,8 +178,8 @@
                 let favHtml = '';
 
                 if (favCount > 0) {
-                    favHtml = `<div style="margin-top: 0.5rem; color: #ff4d4d; font-size: 0.85rem; font-weight: 500;">
-                        ❤️ ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg', '')).join(', ')}
+                    favHtml = `<div style="margin-top: 0.5rem; color: var(--accent); font-size: 0.85rem; font-weight: 500;">
+                        ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg', '')).join(', ')}
                     </div>`;
                 }
 

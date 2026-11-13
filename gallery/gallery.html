@@ -33,7 +33,7 @@
                             id="user-name" style="color: #ffffff; font-weight: 600;">Kunde</span></span>
                     <button id="change-pw-btn" class="btn-logout">Passwort ändern</button>
                     <button id="select-mode-btn" class="cta-button">Bilder auswählen</button>
-                    <button id="favorites-filter-btn" class="btn-logout">❤️ Favoriten</button>
+                    <button id="favorites-filter-btn" class="btn-logout">Favoriten</button>
                     <button id="logout-btn" class="btn-logout">Abmelden</button>
                 </div>
             </nav>
@@ -544,7 +544,7 @@
                 favFilterBtn.classList.toggle('active');
                 favFilterBtn.style.borderColor = showFavoritesOnly ? 'var(--accent-color)' : 'var(--glass-border)';
                 favFilterBtn.style.color = showFavoritesOnly ? 'var(--accent-color)' : 'var(--text-primary)';
-                favFilterBtn.textContent = showFavoritesOnly ? '❤️ Alle anzeigen' : '❤️ Favoriten';
+                favFilterBtn.textContent = showFavoritesOnly ? 'Alle anzeigen' : 'Favoriten';
                 renderGallery();
             });
 

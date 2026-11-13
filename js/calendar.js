@@ -1,8 +1,16 @@
 // Calendar JavaScript - Variante B Design
 document.addEventListener('DOMContentLoaded', () => {
-    // Current date state - default to November 2026 as in mockup
-    let currentDate = new Date(2026, 10, 1); // Month 10 is November (0-indexed)
-    let selectedDate = "2026-11-21";
+    // Current date & minimum booking lead time (at least 1 full month in advance)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Exactly 1 month from today (e.g. Nov 13 -> Dec 13)
+    const minBookingDate = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    minBookingDate.setHours(0, 0, 0, 0);
+
+    // Calendar starts on the month containing the earliest bookable date
+    let currentDate = new Date(minBookingDate.getFullYear(), minBookingDate.getMonth(), 1);
+    let selectedDate = formatDate(minBookingDate.getFullYear(), minBookingDate.getMonth(), minBookingDate.getDate());
     let selectedTime = "10:00";
     let currentLanguage = localStorage.getItem('preferredLang') || 'de';
     let selectedPackageId = 'event';
@@ -10,10 +18,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let pricingData = null;
     let selectedExtras = new Set();
 
-    // Check URL parameters for package
+    // Check package: prioritize URL parameter on arrival, otherwise sessionStorage
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('package')) {
         selectedPackageId = urlParams.get('package');
+        sessionStorage.setItem('selectedPackage', selectedPackageId);
+        // Clean URL so reloading won't revert to a stale query param
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        const stored = sessionStorage.getItem('selectedPackage');
+        if (stored) {
+            selectedPackageId = stored;
+        }
     }
 
     // DOM Elements
@@ -56,12 +72,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekdayNamesDe = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
     const weekdayNamesEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+    // Find the first available date on or after minBookingDate
+    function getFirstAvailableDate() {
+        let checkDate = new Date(minBookingDate);
+        for (let i = 0; i < 90; i++) {
+            const dStr = formatDate(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate());
+            if (availabilityData[dStr]?.status !== 'booked') {
+                return dStr;
+            }
+            checkDate.setDate(checkDate.getDate() + 1);
+        }
+        return formatDate(minBookingDate.getFullYear(), minBookingDate.getMonth(), minBookingDate.getDate());
+    }
+
     // Initialize
     async function init() {
         if (elements.serviceSelect) {
             elements.serviceSelect.value = selectedPackageId;
             elements.serviceSelect.addEventListener('change', (e) => {
                 selectedPackageId = e.target.value;
+                sessionStorage.setItem('selectedPackage', selectedPackageId);
                 selectedExtras.clear();
                 updatePackageDisplay();
                 renderExtras();
@@ -73,6 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setupTimeSlots();
         await loadAvailabilityData();
         await loadPricingData();
+        
+        selectedDate = getFirstAvailableDate();
         renderCalendar();
         updatePackageDisplay();
         renderExtras();
@@ -125,8 +157,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupMonthNav() {
         if (elements.prevMonthBtn) {
             elements.prevMonthBtn.addEventListener('click', () => {
-                currentDate.setMonth(currentDate.getMonth() - 1);
-                renderCalendar();
+                const prevMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+                const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                if (prevMonthDate >= currentMonthStart) {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    renderCalendar();
+                }
             });
         }
         if (elements.nextMonthBtn) {
@@ -141,6 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCalendar() {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
+
+        // Prev month button state (don't navigate earlier than current month)
+        if (elements.prevMonthBtn) {
+            const prevMonthDate = new Date(year, month - 1, 1);
+            const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            if (prevMonthDate < currentMonthStart) {
+                elements.prevMonthBtn.style.opacity = '0.3';
+                elements.prevMonthBtn.style.cursor = 'not-allowed';
+            } else {
+                elements.prevMonthBtn.style.opacity = '1';
+                elements.prevMonthBtn.style.cursor = 'pointer';
+            }
+        }
 
         // Header
         const monthList = currentLanguage === 'en' ? monthNamesEn : monthNamesDe;
@@ -167,14 +216,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Days
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = formatDate(year, month, day);
+            const cellDate = new Date(year, month, day);
+            cellDate.setHours(0, 0, 0, 0);
+
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             cell.textContent = day;
 
-            // Check mock / real status
-            const status = availabilityData[dateStr]?.status || 'available';
-            if (status === 'booked') {
+            const isLessThanMonthAhead = cellDate < minBookingDate;
+            const isBooked = availabilityData[dateStr]?.status === 'booked';
+
+            if (isLessThanMonthAhead) {
+                cell.classList.add('unavailable', 'disabled');
+                cell.title = currentLanguage === 'en'
+                    ? 'Bookings must be made at least 1 month in advance'
+                    : 'Buchungen müssen mindestens 1 Monat im Voraus erfolgen';
+            } else if (isBooked) {
                 cell.classList.add('booked');
+                cell.title = currentLanguage === 'en' ? 'Already booked' : 'Bereits gebucht';
             } else {
                 cell.classList.add('available');
                 cell.addEventListener('click', () => {
@@ -185,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            if (selectedDate === dateStr) {
+            if (selectedDate === dateStr && !isLessThanMonthAhead && !isBooked) {
                 cell.classList.add('selected');
             }
 
@@ -193,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Setup Time Slot Buttons
+    // Setup Time Slot Buttons (no brackets)
     function setupTimeSlots() {
         if (!elements.slotsPillGroup) return;
         const pills = elements.slotsPillGroup.querySelectorAll('.slot-pill');
@@ -227,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.displaySelectedDate.textContent = `${dayName}, ${d}. ${monthName} ${y}`;
         }
         if (elements.displaySelectedTime) {
-            elements.displaySelectedTime.textContent = `[${selectedTime}] Uhr`;
+            elements.displaySelectedTime.textContent = `${selectedTime} Uhr`;
         }
 
         if (elements.dateInput) elements.dateInput.value = selectedDate;
@@ -269,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let price = extra.price || 0;
 
             if (extra.type === 'select' && extra.options) {
-                // If options exist, pick the first paid upgrade option as a sample or show row
                 const paidOpt = extra.options.find(o => o.price > 0) || extra.options[1] || extra.options[0];
                 if (paidOpt) {
                     price = paidOpt.price;

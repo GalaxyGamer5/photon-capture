@@ -1010,10 +1010,12 @@ button, input, select, textarea {
     background-color: #141414;
 }
 
-.day-cell.past, .day-cell.booked {
-    color: #333333;
+.day-cell.past, .day-cell.booked, .day-cell.unavailable, .day-cell.disabled {
+    color: #383838;
     cursor: not-allowed;
     border-color: transparent;
+    pointer-events: none;
+    opacity: 0.35;
 }
 
 .day-cell.selected {
