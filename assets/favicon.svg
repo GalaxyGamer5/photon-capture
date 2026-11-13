@@ -1,28 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Background -->
-  <circle cx="50" cy="50" r="49" fill="#0d0d0d"/>
-  
-  <!-- 6 aperture blade segments arranged in a circle -->
-  <!-- Using simple arcs from outer circle to inner circle -->
-  
-  <!-- Blade 1: Pink accent -->
-  <path d="M 50,2 A 48,48 0 0 1 91.5,25 L 60.4,44 A 12,12 0 0 0 50,38 Z" fill="#ff3366" opacity="0.9"/>
-  
-  <!-- Blade 2: Black -->
-  <path d="M 91.5,25 A 48,48 0 0 1 91.5,75 L 60.4,56 A 12,12 0 0 0 60.4,44 Z" fill="#1a1a1a"/>
-  
-  <!-- Blade 3: Dark grey -->
-  <path d="M 91.5,75 A 48,48 0 0 1 50,98 L 50,62 A 12,12 0 0 0 60.4,56 Z" fill="#333"/>
-  
-  <!-- Blade 4: Black -->
-  <path d="M 50,98 A 48,48 0 0 1 8.5,75 L 39.6,56 A 12,12 0 0 0 50,62 Z" fill="#1a1a1a"/>
-  
-  <!-- Blade 5: Dark grey -->
-  <path d="M 8.5,75 A 48,48 0 0 1 8.5,25 L 39.6,44 A 12,12 0 0 0 39.6,56 Z" fill="#333"/>
-  
-  <!-- Blade 6: Black -->
-  <path d="M 8.5,25 A 48,48 0 0 1 50,2 L 50,38 A 12,12 0 0 0 39.6,44 Z" fill="#1a1a1a"/>
-  
-  <!-- Center aperture opening -->
-  <circle cx="50" cy="50" r="12" fill="#000"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181817"/>
+      <stop offset="100%" stop-color="#0a0a09"/>
+    </linearGradient>
+    <!-- Photon Core Burst Gradient -->
+    <radialGradient id="photonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#ffaa5e"/>
+      <stop offset="70%" stop-color="#e05a2b"/>
+      <stop offset="100%" stop-color="#9e330a" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Accent Blade Gradient -->
+    <linearGradient id="accentBlade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a3d"/>
+      <stop offset="100%" stop-color="#e05a2b"/>
+    </linearGradient>
+    <!-- Subtle Inner Rim Gradient -->
+    <linearGradient id="rim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base for App Icon / Tab Icon -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bg)" stroke="url(#rim)" stroke-width="1.5"/>
+
+  <!-- Outer Lens Ring (Grooved Ring) -->
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#2a2a28" stroke-width="2"/>
+  <circle cx="32" cy="32" r="20" fill="#121211"/>
+
+  <!-- 6 Aperture Blades (Rotating Iris) -->
+  <g transform="rotate(15 32 32)">
+    <!-- Blade 1 -->
+    <path d="M32 12 L46 20 L37 29 L25 24 Z" fill="#222220" stroke="#121211" stroke-width="0.8"/>
+    <!-- Blade 2 -->
+    <path d="M49 22 L51 38 L39 37 L37 25 Z" fill="#1c1c1b" stroke="#121211" stroke-width="0.8"/>
+    <!-- Blade 3 -->
+    <path d="M49 42 L39 52 L31 43 L37 35 Z" fill="#222220" stroke="#121211" stroke-width="0.8"/>
+    <!-- Blade 4 -->
+    <path d="M32 52 L18 44 L27 35 L39 40 Z" fill="#1c1c1b" stroke="#121211" stroke-width="0.8"/>
+    <!-- Blade 5 -->
+    <path d="M15 42 L13 26 L25 27 L27 39 Z" fill="#222220" stroke="#121211" stroke-width="0.8"/>
+    <!-- Blade 6 (Signature Amber Blade) -->
+    <path d="M15 22 L25 12 L33 21 L27 29 Z" fill="url(#accentBlade)" stroke="#121211" stroke-width="0.8"/>
+  </g>
+
+  <!-- Central Optical Opening / Aperture Hole -->
+  <circle cx="32" cy="32" r="8" fill="#080808"/>
+
+  <!-- Photon Capture Core (Bright Light Burst) -->
+  <circle cx="32" cy="32" r="7" fill="url(#photonGlow)"/>
+  <circle cx="32" cy="32" r="2.5" fill="#ffffff" opacity="0.95"/>
+
+  <!-- 4 Delicate Crosshairs / Sensor Alignment Marks -->
+  <line x1="32" y1="6" x2="32" y2="9" stroke="#e05a2b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="32" y1="55" x2="32" y2="58" stroke="#e05a2b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="6" y1="32" x2="9" y2="32" stroke="#e05a2b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="55" y1="32" x2="58" y2="32" stroke="#e05a2b" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
