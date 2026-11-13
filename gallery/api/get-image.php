@@ -68,7 +68,7 @@ if ($galleryProtection !== null) {
 // --- Fast Path Cached Thumbnail ---
 if ($thumbnail_mode) {
     $thumbsDir = dirname($image_path) . '/_thumbs';
-    $cachePrefix = $isProtected ? 'prot_v3_' : 'clean_';
+    $cachePrefix = $isProtected ? 'prot_v4_' : 'clean_';
     $thumbPath = $thumbsDir . '/' . $cachePrefix . $requested_image;
 
     if (file_exists($thumbPath) && filemtime($thumbPath) >= filemtime($image_path)) {
@@ -128,14 +128,32 @@ if ($thumbnail_mode) {
 // --- End Resizing Logic ---
 
 if ($isProtected) {
-    // 1. Subtle, gentle anti-AI blur applied to the photo FIRST
-    // Softens micro-textures (hair, skin pores, fabric grain) so AI inpainting/watermark-removal
-    // cannot hallucinate a sharp printable image, while faces, expressions, and colors remain clear.
+    // 1. Cap protected full-view image to 1400px width so raw 24MP/40MP file is never served to locked clients
+    $currW = imagesx($image);
+    $currH = imagesy($image);
+    if (!$thumbnail_mode && $currW > 1400) {
+        $maxW = 1400;
+        $maxH = (int)round($currH * $maxW / $currW);
+        $scaled = imagecreatetruecolor($maxW, $maxH);
+        imagecopyresampled($scaled, $image, 0, 0, 0, 0, $maxW, $maxH, $currW, $currH);
+        $image = $scaled;
+    }
+
+    // 2. Beautiful soft-focus blur (Downscale & Upscale with Bilinear Interpolation + Gaussian)
+    // Removes micro-textures (hair strands, skin pores, fabric weave) so AI inpainting/watermark-removal
+    // cannot reconstruct a printable file, while faces, smiles, lighting, and composition remain clear and inviting.
+    $w = imagesx($image);
+    $h = imagesy($image);
+    $blurFactor = $thumbnail_mode ? 3 : 4;
+    $smallW = max(50, (int)round($w / $blurFactor));
+    $smallH = max(50, (int)round($h / $blurFactor));
+    $small = imagecreatetruecolor($smallW, $smallH);
+    imagecopyresampled($small, $image, 0, 0, 0, 0, $smallW, $smallH, $w, $h);
+    imagecopyresampled($image, $small, 0, 0, 0, 0, $w, $h, $smallW, $smallH);
+
     if (function_exists('imagefilter')) {
-        $blurPasses = $thumbnail_mode ? 1 : 2;
-        for ($b = 0; $b < $blurPasses; $b++) {
-            imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
-        }
+        imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
+        imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);
     }
 
     // Ensure alpha blending is on for TrueColor images
