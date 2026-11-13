@@ -25,12 +25,12 @@ try {
     if ($user && $user['password_hash'] === $passwordHash) {
         $_SESSION['authenticated'] = true;
         $_SESSION['user'] = [
-            'id' => (string) $user['id'],
+            'id' => (string)$user['id'],
             'username' => $user['username'],
             'name' => $user['name'],
             'folder' => $user['folder'],
-            'imageCount' => (int) $user['image_count'],
-            'isProtected' => (bool) $user['is_protected']
+            'imageCount' => (int)$user['image_count'],
+            'isProtected' => (bool)$user['is_protected']
         ];
 
         echo json_encode([

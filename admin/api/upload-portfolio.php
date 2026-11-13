@@ -4,25 +4,18 @@ header('Content-Type: application/json');
 
 // Fallback function to read JPEG EXIF Orientation without the PHP exif extension
 if (!function_exists('fallback_get_jpeg_orientation')) {
-    function fallback_get_jpeg_orientation($filename)
-    {
+    function fallback_get_jpeg_orientation($filename) {
         $fp = @fopen($filename, 'rb');
-        if (!$fp)
-            return 1;
+        if (!$fp) return 1;
         $data = fread($fp, 2);
-        if ($data !== "\xFF\xD8") {
-            fclose($fp);
-            return 1;
-        }
+        if ($data !== "\xFF\xD8") { fclose($fp); return 1; }
         while (!feof($fp)) {
             $marker = fread($fp, 2);
-            if (strlen($marker) < 2)
-                break;
+            if (strlen($marker) < 2) break;
             $marker_byte = ord($marker[1]);
             if ($marker_byte === 0xE1) {
                 $len_data = fread($fp, 2);
-                if (strlen($len_data) < 2)
-                    break;
+                if (strlen($len_data) < 2) break;
                 $len = unpack('n', $len_data)[1];
                 $exif_data = fread($fp, $len - 2);
                 if (substr($exif_data, 0, 6) === "Exif\0\0") {
@@ -50,8 +43,7 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
                 break;
             } else {
                 $len_data = fread($fp, 2);
-                if (strlen($len_data) < 2)
-                    break;
+                if (strlen($len_data) < 2) break;
                 $len = unpack('n', $len_data)[1];
                 fseek($fp, $len - 2, SEEK_CUR);
             }
@@ -62,12 +54,11 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
 }
 
 // Move image and fix EXIF orientation for JPEGs
-function moveImage($sourcePath, $destinationPath, $mimeType)
-{
+function moveImage($sourcePath, $destinationPath, $mimeType) {
     if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
         $oldMemoryLimit = ini_get('memory_limit');
         @ini_set('memory_limit', '1024M'); // 100MP files need ~800MB RAM to process
-
+        
         $orientation = 1;
         if (function_exists('exif_read_data')) {
             $exif = @exif_read_data($sourcePath);
@@ -77,7 +68,7 @@ function moveImage($sourcePath, $destinationPath, $mimeType)
         } else {
             $orientation = fallback_get_jpeg_orientation($sourcePath);
         }
-
+        
         if (!empty($orientation) && $orientation != 1) {
             $image = @imagecreatefromjpeg($sourcePath);
             if ($image) {
@@ -95,8 +86,7 @@ function moveImage($sourcePath, $destinationPath, $mimeType)
                 $success = imagejpeg($image, $destinationPath, 95);
                 imagedestroy($image);
                 @ini_set('memory_limit', $oldMemoryLimit);
-                if ($success)
-                    return true;
+                if ($success) return true;
             }
         }
         @ini_set('memory_limit', $oldMemoryLimit);
@@ -136,8 +126,7 @@ if (file_exists($portfolioFile)) {
 $db = null;
 try {
     $db = getDB();
-} catch (Exception $e) {
-}
+} catch (Exception $e) {}
 
 $uploadedCount = 0;
 $errors = [];
@@ -153,32 +142,30 @@ for ($i = 0; $i < $fileCount; $i++) {
         $errors[] = "File {$name}: Upload error";
         continue;
     }
-
+    
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mimeType = finfo_file($finfo, $tmp_name);
     finfo_close($finfo);
-
+    
     $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     if (!in_array($mimeType, $allowedTypes)) {
         $errors[] = "File {$name}: Invalid type (only JPG/PNG/WEBP allowed)";
         continue;
     }
-
+    
     $ext = 'jpg';
-    if ($mimeType === 'image/png')
-        $ext = 'png';
-    if ($mimeType === 'image/webp')
-        $ext = 'webp';
-
+    if ($mimeType === 'image/png') $ext = 'png';
+    if ($mimeType === 'image/webp') $ext = 'webp';
+    
     $id = uniqid();
     $filename = $id . '_' . time() . '.' . $ext;
     $targetPath = $targetDir . $filename;
     $now = date('Y-m-d H:i:s');
-
+    
     if (moveImage($tmp_name, $targetPath, $mimeType)) {
         @chmod($targetPath, 0666);
         $uploadedCount++;
-
+        
         // Save to SQL database
         if ($db) {
             try {

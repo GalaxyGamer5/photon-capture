@@ -21,15 +21,13 @@ $backupsDir = $dataDir . DIRECTORY_SEPARATOR . 'backups';
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? 'list');
 
-function getKnownUserFolders()
-{
+function getKnownUserFolders() {
     $folders = [];
     try {
         $db = getDB();
         $stmt = $db->query("SELECT folder FROM users");
         $folders = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (Exception $e) {
-    }
+    } catch (Exception $e) {}
 
     // Also check users.js
     global $usersFile;
@@ -39,8 +37,7 @@ function getKnownUserFolders()
             $data = json_decode($m[1], true);
             if (!empty($data['users'])) {
                 foreach ($data['users'] as $u) {
-                    if (!empty($u['folder']))
-                        $folders[] = $u['folder'];
+                    if (!empty($u['folder'])) $folders[] = $u['folder'];
                 }
             }
         }
@@ -91,8 +88,7 @@ if ($action === 'scan_folders') {
     if (is_dir($assetsDir)) {
         $items = scandir($assetsDir);
         foreach ($items as $item) {
-            if ($item === '.' || $item === '..' || $item === 'demo')
-                continue;
+            if ($item === '.' || $item === '..' || $item === 'demo') continue;
             $itemPath = $assetsDir . DIRECTORY_SEPARATOR . $item;
             if (is_dir($itemPath)) {
                 $files = scandir($itemPath);
@@ -164,14 +160,13 @@ if ($action === 'restore') {
                 is_protected = excluded.is_protected");
 
         foreach ($data['users'] as $u) {
-            if (empty($u['username']))
-                continue;
+            if (empty($u['username'])) continue;
             $stmt->execute([
                 $u['username'],
                 $u['passwordHash'] ?? '',
                 $u['name'] ?? $u['username'],
                 $u['folder'] ?? ($u['username'] . '-gallery'),
-                (int) ($u['imageCount'] ?? 0),
+                (int)($u['imageCount'] ?? 0),
                 isset($u['isProtected']) ? ($u['isProtected'] ? 1 : 0) : 1
             ]);
         }
@@ -181,8 +176,7 @@ if ($action === 'restore') {
 
         echo json_encode(['success' => true, 'userCount' => count($data['users'])]);
     } catch (Exception $e) {
-        if (isset($db) && $db->inTransaction())
-            $db->rollBack();
+        if (isset($db) && $db->inTransaction()) $db->rollBack();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'DB Restore error: ' . $e->getMessage()]);
     }
@@ -242,15 +236,12 @@ if ($action === 'relink_folder') {
 
         syncUsersJs($db);
 
-        echo json_encode([
-            'success' => true,
-            'user' => [
-                'username' => $username,
-                'name' => $name,
-                'folder' => $folder,
-                'imageCount' => $imageCount
-            ]
-        ]);
+        echo json_encode(['success' => true, 'user' => [
+            'username' => $username,
+            'name' => $name,
+            'folder' => $folder,
+            'imageCount' => $imageCount
+        ]]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $e->getMessage()]);

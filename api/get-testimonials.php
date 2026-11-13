@@ -11,8 +11,8 @@ try {
     $testimonials = $stmt->fetchAll();
 
     foreach ($testimonials as &$t) {
-        $t['rating'] = (int) $t['rating'];
-        $t['approved'] = (bool) $t['approved'];
+        $t['rating'] = (int)$t['rating'];
+        $t['approved'] = (bool)$t['approved'];
     }
 
     echo json_encode([
