@@ -642,12 +642,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const zStep   = isMobile ? 70  : (isTablet ? 95  : 120);
         const baseRot = isMobile ? 18  : (isTablet ? 23  : 28);
 
-        // Smooth-step easing: turns linear 0→1 into an S-curve (no kink at center)
-        const smoothstep = (t) => {
-            const c = Math.max(0, Math.min(1, t));
-            return c * c * (3 - 2 * c);
-        };
-
         cards.forEach((card) => {
             const idx = parseInt(card.dataset.index, 10);
 
@@ -658,7 +652,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const absDist = Math.abs(dist);
 
-            // Hard-cut only cards that are truly off screen (fade out gracefully near edge)
+            // Fade-dissolve band near edge, hard-hide beyond
             if (absDist > 4.2) {
                 card.style.opacity = "0";
                 card.style.visibility = "hidden";
@@ -667,56 +661,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Fade-out band: 3.8–4.2 so the edges dissolve rather than pop
-            const edgeFade = absDist > 3.8 ? 1 - ((absDist - 3.8) / 0.4) : 1;
-
             card.style.visibility = "visible";
-            card.style.pointerEvents = absDist < 3 ? "auto" : "none";
+            card.style.pointerEvents = absDist < 3.5 ? "auto" : "none";
 
-            const sign = dist >= 0 ? 1 : -1;
+            // Original aesthetic values
+            const translateX = dist * stepX;
+            const translateZ = -absDist * zStep;
 
-            // --- Smooth all visual properties with eased distance ---
-            // "centeredness" goes 1 at dist=0, 0 at dist≥1 — drives the glow/scale boost
-            const centeredness = smoothstep(1 - Math.min(1, absDist));
+            // Continuous rotation without flip at center (0deg at center, smooth ramp to flank angle)
+            const maxRot = isMobile ? 30 : (isTablet ? 35 : 40);
+            const rotAngle = Math.min(maxRot, absDist * baseRot);
+            const rotateY = dist === 0 ? 0 : -Math.sign(dist) * rotAngle;
 
-            const translateX  = dist * stepX;
-            const translateZ  = -absDist * zStep;
-            // Rotation: gentle at center, more pronounced further out
-            const rotateY     = -(sign) * (baseRot * Math.min(1, absDist) + Math.min(6, absDist * 2.5));
-            // Scale: smooth peak at center via centeredness curve
-            const scale       = 0.70 + centeredness * 0.35;
-            // Opacity: smooth falloff
-            const opacity     = Math.max(0, (1 - absDist * 0.26)) * edgeFade;
-            const brightness  = Math.max(0.32, 0.38 + centeredness * 0.62);
-            const zIndex      = Math.round(100 - absDist * 15);
+            const scale     = Math.max(0.65, 1.05 - absDist * 0.12);
+            const opacity   = Math.max(0, (absDist > 3.8 ? (4.2 - absDist) / 0.4 : 1) * (1 - absDist * 0.28));
+            const zIndex    = Math.round(100 - absDist * 15);
+            const brightness = Math.max(0.35, 1 - absDist * 0.25);
 
             card.style.transform  = `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
             card.style.opacity    = opacity.toFixed(3);
             card.style.zIndex     = zIndex;
             card.style.filter     = `brightness(${brightness.toFixed(3)})`;
 
-            // Drive the center glow as continuous inline style so there's no discrete jump
+            // Glow driven per-frame as inline styles so it fades smoothly with dist
+            // rather than jumping when the CSS class is toggled
             const inner = card.querySelector(".camera-card-inner");
             if (inner) {
-                const glowAlpha   = (centeredness * 0.5).toFixed(3);  // 0 → 0.5
-                const glowSpread  = (centeredness * 0.25).toFixed(3); // 0 → 0.25
-                const borderAlpha = (0.08 + centeredness * 0.42).toFixed(3); // 0.08 → 0.5
-                inner.style.borderColor  = `rgba(224, 90, 43, ${borderAlpha})`;
-                inner.style.boxShadow    = `0 20px 45px -10px rgba(0,0,0,0.85), 0 0 40px -5px rgba(224,90,43,${glowAlpha})`;
+                const t = Math.max(0, 1 - absDist);  // 1 at center, 0 at dist≥1
+                const borderAlpha = (0.08 + t * 0.40).toFixed(3);
+                const glowAlpha   = (t * 0.28).toFixed(3);
+                inner.style.borderColor = `rgba(224, 90, 43, ${borderAlpha})`;
+                inner.style.boxShadow   = `0 20px 45px -10px rgba(0,0,0,0.85), 0 0 40px -5px rgba(224,90,43,${glowAlpha})`;
             }
 
-            // Keep is-center for hover styles only — toggle it without transitions by
-            // temporarily disabling transition on the inner element
+            // is-center class only used for hover styles — suppress its CSS transitions
             const shouldBeCenter = absDist < 0.5;
-            const wasCenter = card.classList.contains("is-center");
-            if (shouldBeCenter !== wasCenter) {
+            if (shouldBeCenter !== card.classList.contains("is-center")) {
                 if (inner) inner.style.transition = "none";
-                if (shouldBeCenter) {
-                    card.classList.add("is-center");
-                } else {
-                    card.classList.remove("is-center");
-                }
-                // Re-enable transition on next paint so hover effects still animate
+                card.classList.toggle("is-center", shouldBeCenter);
                 if (inner) requestAnimationFrame(() => { inner.style.transition = ""; });
             }
         });
