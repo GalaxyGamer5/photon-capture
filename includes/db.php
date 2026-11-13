@@ -200,6 +200,14 @@ function initSchema(PDO $pdo) {
 }
 
 function migrateLegacyData(PDO $pdo) {
+    // Only run one-time legacy migration once
+    try {
+        $migrated = $pdo->query("SELECT value FROM app_settings WHERE key_name = 'legacy_migrated'")->fetchColumn();
+        if ($migrated === '1') {
+            return;
+        }
+    } catch (Exception $e) {}
+
     $baseDir = dirname(__DIR__);
 
     // --- Migrate Pricing ---
@@ -415,6 +423,12 @@ function migrateLegacyData(PDO $pdo) {
             ]);
         }
     }
+
+    // Mark migration as completed so deleting records will never trigger a re-seed
+    try {
+        $mStmt = $pdo->prepare("INSERT OR REPLACE INTO app_settings (key_name, value) VALUES ('legacy_migrated', '1')");
+        $mStmt->execute();
+    } catch (Exception $e) {}
 }
 
 // Helper: sync SQL users table to gallery/data/users.js for frontend compatibility
