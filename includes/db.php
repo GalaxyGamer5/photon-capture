@@ -4,10 +4,20 @@
 
 require_once __DIR__ . '/config.php';
 
-function getDB() {
+/** Returns the filesystem path to the SQLite .db file (or null for MySQL). */
+function getDBPath(): ?string {
+    $dbType = defined('DB_TYPE') ? strtolower(DB_TYPE) : 'sqlite';
+    if ($dbType !== 'sqlite') return null;
+    return defined('DB_SQLITE_PATH') ? DB_SQLITE_PATH : (__DIR__ . '/../data/photon.db');
+}
+
+function getDB(bool $forceNew = false) {
     static $pdo = null;
-    if ($pdo !== null) {
+    if ($pdo !== null && !$forceNew) {
         return $pdo;
+    }
+    if ($forceNew) {
+        $pdo = null; // reset static cache
     }
 
     $dbType = defined('DB_TYPE') ? strtolower(DB_TYPE) : 'sqlite';

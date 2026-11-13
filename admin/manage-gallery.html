@@ -84,6 +84,107 @@
             outline-offset: -3px;
         }
 
+        /* Backup bar */
+        .backup-bar {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .backup-bar span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+        .btn-export {
+            background: rgba(100,200,100,0.15);
+            color: #7dda7d;
+            border: 1px solid rgba(100,200,100,0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-export:hover { background: rgba(100,200,100,0.28); }
+        .btn-import {
+            background: rgba(100,160,255,0.15);
+            color: #7db8ff;
+            border: 1px solid rgba(100,160,255,0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-import:hover { background: rgba(100,160,255,0.28); }
+
+        /* Import modal */
+        #importOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        #importOverlay.open { display: flex; }
+        #importModal {
+            background: var(--surface-dark, #1a1a1a);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 460px;
+            width: 90%;
+        }
+        #importModal h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+        #importModal p  { font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 1.5rem; }
+        #importDropZone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        #importDropZone.dragover, #importDropZone:hover { border-color: #7db8ff; background: rgba(100,160,255,0.06); }
+        #importDropZone p { margin: 0.5rem 0 0; color: var(--text-secondary); font-size: 0.85rem; }
+        #importFileInput { display: none; }
+        #importFileName { font-size: 0.85rem; color: #7db8ff; min-height: 1.2em; margin-bottom: 1rem; }
+        .import-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .btn-cancel-import {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem 1.1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-do-import {
+            background: #7db8ff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.3rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+        .btn-do-import:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-do-import:not(:disabled):hover { background: #a0ccff; }
+        #importStatus { font-size: 0.85rem; min-height: 1.2em; margin-bottom: 0.5rem; }
+
         /* Batch toolbar */
         #batch-toolbar {
             display: none;
@@ -154,6 +255,12 @@
         </header>
 
         <section class="upload-section">
+            <!-- Backup bar -->
+            <div class="backup-bar">
+                <span>💾 Datenbank-Backup (enthält alle Nutzer, Galerien &amp; Chats)</span>
+                <button class="btn-export" onclick="exportDB()">⬇ Backup exportieren</button>
+                <button class="btn-import" onclick="openImportModal()">⬆ Backup importieren</button>
+            </div>
             <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); margin-bottom: 1rem;">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -183,6 +290,28 @@
                 <!-- Javascript will populate this -->
             </div>
         </section>
+    </div>
+
+    <!-- Import DB Modal -->
+    <div id="importOverlay" onclick="if(event.target===this)closeImportModal()">
+        <div id="importModal">
+            <h3>⬆ Backup importieren</h3>
+            <p>Wähle eine <strong>.db</strong>-Backup-Datei, die du zuvor exportiert hast. Die aktuelle Datenbank wird vorher automatisch gesichert.</p>
+            <div id="importDropZone" onclick="document.getElementById('importFileInput').click()"
+                 ondragover="event.preventDefault();this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleImportDrop(event)">
+                <div style="font-size:2rem;">📂</div>
+                <p>Klicken oder .db-Datei hierher ziehen</p>
+            </div>
+            <input type="file" id="importFileInput" accept=".db" onchange="handleImportFile(this.files)">
+            <div id="importFileName"></div>
+            <div id="importStatus"></div>
+            <div class="import-actions">
+                <button class="btn-cancel-import" onclick="closeImportModal()">Abbrechen</button>
+                <button class="btn-do-import" id="doImportBtn" disabled onclick="doImport()">Importieren</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -721,6 +850,78 @@
                 alert(`Upload abgeschlossen: ${uploadedCount} erfolgreich, ${errorCount} Fehler.`);
                 statusLabel.innerText = `Upload abgeschlossen mit Fehlern.`;
                 await init(); // Refresh to show whatever uploaded successfully
+            }
+        }
+
+        // ── Backup Export ────────────────────────────────────────────────
+        function exportDB() {
+            const a = document.createElement('a');
+            a.href = 'api/db-export.php';
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // ── Backup Import ────────────────────────────────────────────────
+        let importFile = null;
+
+        function openImportModal() {
+            document.getElementById('importOverlay').classList.add('open');
+            document.getElementById('importFileName').textContent = '';
+            document.getElementById('importStatus').textContent = '';
+            document.getElementById('doImportBtn').disabled = true;
+            importFile = null;
+        }
+        function closeImportModal() {
+            document.getElementById('importOverlay').classList.remove('open');
+        }
+        function handleImportDrop(e) {
+            e.preventDefault();
+            document.getElementById('importDropZone').classList.remove('dragover');
+            handleImportFile(e.dataTransfer.files);
+        }
+        function handleImportFile(files) {
+            if (!files || !files.length) return;
+            const f = files[0];
+            if (!f.name.endsWith('.db')) {
+                document.getElementById('importFileName').textContent = '❌ Nur .db-Dateien erlaubt';
+                document.getElementById('doImportBtn').disabled = true;
+                return;
+            }
+            importFile = f;
+            document.getElementById('importFileName').textContent = '✅ ' + f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+            document.getElementById('doImportBtn').disabled = false;
+            document.getElementById('importStatus').textContent = '';
+        }
+        async function doImport() {
+            if (!importFile) return;
+            const btn = document.getElementById('doImportBtn');
+            const statusEl = document.getElementById('importStatus');
+            if (!confirm('⚠️ Die aktuelle Datenbank wird ersetzt. Fortfahren?')) return;
+            btn.disabled = true;
+            btn.textContent = 'Importiere...';
+            statusEl.textContent = '';
+            const form = new FormData();
+            form.append('dbfile', importFile);
+            try {
+                const res  = await fetch('api/db-import.php', { method: 'POST', body: form });
+                const data = await res.json();
+                if (data.success) {
+                    statusEl.style.color = '#7dda7d';
+                    statusEl.textContent = '✅ ' + data.message;
+                    setTimeout(() => { closeImportModal(); location.reload(); }, 1500);
+                } else {
+                    statusEl.style.color = '#ff6b6b';
+                    statusEl.textContent = '❌ ' + (data.error || 'Unbekannter Fehler');
+                    btn.disabled = false;
+                    btn.textContent = 'Importieren';
+                }
+            } catch(e) {
+                statusEl.style.color = '#ff6b6b';
+                statusEl.textContent = '❌ Netzwerkfehler: ' + e.message;
+                btn.disabled = false;
+                btn.textContent = 'Importieren';
             }
         }
 
