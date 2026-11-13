@@ -68,7 +68,7 @@ if ($galleryProtection !== null) {
 // --- Fast Path Cached Thumbnail ---
 if ($thumbnail_mode) {
     $thumbsDir = dirname($image_path) . '/_thumbs';
-    $cachePrefix = $isProtected ? 'prot_' : 'clean_';
+    $cachePrefix = $isProtected ? 'prot_v2_' : 'clean_';
     $thumbPath = $thumbsDir . '/' . $cachePrefix . $requested_image;
 
     if (file_exists($thumbPath) && filemtime($thumbPath) >= filemtime($image_path)) {
@@ -130,56 +130,92 @@ if ($thumbnail_mode) {
 if ($isProtected) {
     // Ensure alpha blending is on for TrueColor images
     imagealphablending($image, true);
+    imagesavealpha($image, true);
 
-    // 1. Apply ultra-fast Pixelation for protection (replaces slow Gaussian blur)
-    if (function_exists('imagefilter')) {
-        $pixelSize = $thumbnail_mode ? 8 : 20; // smaller pixels for thumb
-        imagefilter($image, IMG_FILTER_PIXELATE, $pixelSize, true);
-    }
-
-    // 2. Apply Watermark Overlay
     $width = imagesx($image);
     $height = imagesy($image);
-    
-    // Create colors - Increased opacity (lower alpha value = more opaque)
-    $color_main = imagecolorallocatealpha($image, 255, 255, 255, 30); // Very opaque white (30 instead of 60)
-    $color_black = imagecolorallocatealpha($image, 0, 0, 0, 50);    // Very opaque black (50 instead of 80)
-    
-    $text = "PHOTON-CAPTURE";
-    $fontSize = 5; 
-    
-    // Dense diagonal grid
-    $spacing_x = $thumbnail_mode ? 120 : 250;
-    $spacing_y = $thumbnail_mode ? 80 : 150;
-    
-    for ($y = -200; $y < $height + 200; $y += $spacing_y) {
-        $offset_x = (int)((int)($y / $spacing_y) % 2 == 0 ? 0 : $spacing_x / 2);
-        for ($x = -200 + $offset_x; $x < $width + 200; $x += $spacing_x) {
-            // Draw text with explicit integer coordinates to prevent Deprecated warnings
-            imagestring($image, $fontSize, (int)($x + 2), (int)($y + 2), $text, $color_black);
-            imagestring($image, $fontSize, (int)($x + 1), (int)($y + 1), $text, $color_black);
-            imagestring($image, $fontSize, (int)$x, (int)$y, $text, $color_main);
-        }
-    }
 
-    // 3. Centered Banner - Significantly More prominent
-    $bannerText = "PREVIEW - UNTIL PAID";
-    $bannerFontSize = 5;
-    $bannerWidth = imagefontwidth($bannerFontSize) * strlen($bannerText);
-    
-    // Draw a thick dark strip behind the banner
-    $bannerY = (int)($height / 2);
-    $bannerFullWidth = (int)$width;
-    $bannerPadding = $thumbnail_mode ? 20 : 40;
-    imagefilledrectangle($image, 0, $bannerY - $bannerPadding, $bannerFullWidth, $bannerY + $bannerPadding, $color_black);
-    
-    // Draw the banner text multiple times for bold effect and extra visibility
-    $textX = (int)(($width - $bannerWidth) / 2);
-    $textY = (int)($bannerY - 8);
-    
-    for($o = -2; $o <= 2; $o++) {
-        imagestring($image, $bannerFontSize, $textX + $o, $textY, $bannerText, $color_main);
-        imagestring($image, $bannerFontSize, $textX, $textY + $o, $bannerText, $color_main);
+    $fontFile = __DIR__ . '/../../includes/fonts/watermark-font.ttf';
+    $hasTTF = function_exists('imagettftext') && file_exists($fontFile);
+
+    if ($hasTTF) {
+        // --- 1. Elegant Repeating Diagonal Watermark Grid ---
+        $angle = 30;
+        $size = max(13, (int)round($width * 0.024));
+        $subSize = max(8, (int)round($size * 0.55));
+
+        // Soft translucent colors (visible on both dark & light backgrounds)
+        $white = imagecolorallocatealpha($image, 255, 255, 255, 68); // ~46% opacity
+        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 96);       // subtle dark shadow
+
+        $text = "PHOTON CAPTURE";
+        $sub  = "VORSCHAU  ·  PROOF";
+
+        $stepX = max(180, (int)round($width * 0.32));
+        $stepY = max(120, (int)round($height * 0.28));
+
+        for ($y = -200; $y < $height + 300; $y += $stepY) {
+            $row = (int)floor($y / $stepY);
+            $shiftX = ($row % 2 === 0) ? 0 : (int)($stepX / 2);
+            for ($x = -200 + $shiftX; $x < $width + 300; $x += $stepX) {
+                // Drop shadow
+                @imagettftext($image, $size, $angle, (int)($x + 2), (int)($y + 2), $shadow, $fontFile, $text);
+                // Main text
+                @imagettftext($image, $size, $angle, (int)$x, (int)$y, $white, $fontFile, $text);
+
+                // Subtext angled below
+                $rad = deg2rad($angle + 90);
+                $subDist = (int)round($size * 1.3);
+                $sx = (int)round($x + cos($rad) * $subDist);
+                $sy = (int)round($y - sin($rad) * $subDist);
+                @imagettftext($image, $subSize, $angle, (int)($sx + 1), (int)($sy + 1), $shadow, $fontFile, $sub);
+                @imagettftext($image, $subSize, $angle, (int)$sx, (int)$sy, $white, $fontFile, $sub);
+            }
+        }
+
+        // --- 2. Prominent Center Brand Seal ---
+        $centerSize = max(18, (int)round($width * 0.046));
+        $cWhite  = imagecolorallocatealpha($image, 255, 255, 255, 45); // ~65% opacity
+        $cShadow = imagecolorallocatealpha($image, 0, 0, 0, 85);
+
+        $mainText = "PHOTON CAPTURE";
+        $box = @imagettfbbox($centerSize, 0, $fontFile, $mainText);
+        if ($box) {
+            $textW = abs($box[4] - $box[0]);
+            $textH = abs($box[5] - $box[1]);
+            $cx = (int)(($width - $textW) / 2);
+            $cy = (int)(($height + $textH) / 2);
+
+            @imagettftext($image, $centerSize, 0, $cx + 2, $cy + 2, $cShadow, $fontFile, $mainText);
+            @imagettftext($image, $centerSize, 0, $cx, $cy, $cWhite, $fontFile, $mainText);
+
+            // Subtitle
+            $subCenterSize = max(10, (int)round($centerSize * 0.40));
+            $subText = "VORSCHAU  ·  NICHT FREIGEGEBEN";
+            $sbox = @imagettfbbox($subCenterSize, 0, $fontFile, $subText);
+            if ($sbox) {
+                $stextW = abs($sbox[4] - $sbox[0]);
+                $scx = (int)(($width - $stextW) / 2);
+                $scy = $cy + (int)round($centerSize * 0.85);
+
+                @imagettftext($image, $subCenterSize, 0, $scx + 1, $scy + 1, $cShadow, $fontFile, $subText);
+                @imagettftext($image, $subCenterSize, 0, $scx, $scy, $cWhite, $fontFile, $subText);
+            }
+        }
+    } else {
+        // Fallback: clean non-pixelated bitmap pattern
+        $color_main = imagecolorallocatealpha($image, 255, 255, 255, 55);
+        $color_dark = imagecolorallocatealpha($image, 0, 0, 0, 85);
+        $text = "PHOTON CAPTURE - VORSCHAU";
+        $fontSize = 5;
+        $stepX = 260;
+        $stepY = 160;
+        for ($y = 40; $y < $height; $y += $stepY) {
+            for ($x = 40; $x < $width; $x += $stepX) {
+                imagestring($image, $fontSize, (int)($x + 1), (int)($y + 1), $text, $color_dark);
+                imagestring($image, $fontSize, (int)$x, (int)$y, $text, $color_main);
+            }
+        }
     }
 }
 
