@@ -1,7 +1,85 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- 3D Camera Roll / Dynamic Portfolio ---
-    let portfolioImages = [];
-    const cameraRollStage = document.getElementById('cameraRollStage');
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Load Dynamic Portfolio ---
+    function renderEditorialGallery(images) {
+        const gallery = document.getElementById('editorialGallery');
+        if (!gallery || !images || images.length === 0) return;
+
+        const numCols = 4;
+        const cols = Array.from({ length: numCols }, (_, i) => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'gallery-col';
+            colDiv.dataset.col = i + 1;
+            return colDiv;
+        });
+
+        const colWeights = [0, 0, 0, 0];
+
+        images.forEach((img) => {
+            let targetCol = 0;
+            let minWeight = colWeights[0];
+            for (let c = 1; c < numCols; c++) {
+                if (colWeights[c] < minWeight) {
+                    minWeight = colWeights[c];
+                    targetCol = c;
+                }
+            }
+
+            let isTall = false;
+            if (colWeights[targetCol] === 0) {
+                isTall = (targetCol === 0 || targetCol === 3);
+            } else if (colWeights[targetCol] === 2) {
+                isTall = (targetCol === 1 || targetCol === 2);
+            } else {
+                isTall = false;
+            }
+
+            const card = document.createElement('div');
+            card.className = `gallery-card ${isTall ? 'tall' : 'square'}`;
+            card.setAttribute('data-category', img.category);
+            card.innerHTML = `
+                <div class="gallery-card-inner">
+                    <img src="assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
+                </div>
+            `;
+
+            cols[targetCol].appendChild(card);
+            colWeights[targetCol] += (isTall ? 2 : 1);
+        });
+
+        gallery.innerHTML = '';
+        cols.forEach(col => gallery.appendChild(col));
+    }
+
+    const galleryGrid = document.querySelector('.gallery-grid');
+    const editorialGrid = document.getElementById('editorialGallery');
+
+    if (galleryGrid || editorialGrid) {
+        try {
+            const response = await fetch('api/get-portfolio.php?t=' + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.images && data.images.length > 0) {
+                    if (editorialGrid) {
+                        renderEditorialGallery(data.images);
+                    }
+                    if (galleryGrid) {
+                        galleryGrid.innerHTML = '';
+                        data.images.forEach(img => {
+                            const div = document.createElement('div');
+                            div.className = 'gallery-item show';
+                            div.setAttribute('data-category', img.category);
+                            const image = document.createElement('img');
+                            image.src = `assets/portfolio/${img.filename}`;
+                            image.alt = img.category;
+                            image.loading = 'lazy';
+                            div.appendChild(image);
+                            galleryGrid.appendChild(div);
+                        });
+                    }
+                }
+            }
+        } catch (e) { console.error("Error loading dynamic portfolio:", e); }
+    }
 
     // --- Load Dynamic Pricing ---
     const pricingListContainer = document.getElementById('pricing-list-container');
@@ -189,6 +267,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     fetchTestimonials();
+
+    // --- Randomize Gallery Items ---
+    if (galleryGrid) {
+        const items = Array.from(galleryGrid.children);
+
+        // Fisher-Yates shuffle algorithm
+        for (let i = items.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [items[i], items[j]] = [items[j], items[i]];
+        }
+
+        // Append shuffled items back to the gallery
+        items.forEach(item => galleryGrid.appendChild(item));
+    }
 
     // --- Scroll Progress Indicator ---
     const scrollProgressBar = document.querySelector('.scroll-progress-bar');
@@ -440,17 +532,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let rollAnimFrameId = null;
     let wheelSnapTimer = null;
 
-    // High quality aesthetic fallback cards when portfolio has no uploaded images yet
-    const fallbackPortfolio = [
-        { id: 1, filename: '', category: 'portrait', label: 'Porträt Noir' },
-        { id: 2, filename: '', category: 'event', label: 'Festival of Lights' },
-        { id: 3, filename: '', category: 'portrait', label: 'Studio Noir' },
-        { id: 4, filename: '', category: 'pet', label: 'Golden Retriever' },
-        { id: 5, filename: '', category: 'event', label: 'Corporate Gala' },
-        { id: 6, filename: '', category: 'pet', label: 'Feline Grace' },
-        { id: 7, filename: '', category: 'portrait', label: 'Natural Light' },
-        { id: 8, filename: '', category: 'event', label: 'Summer Wedding' }
-    ];
+        const currentGalleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
+        currentGalleryItems.forEach(item => {
+            const category = item.getAttribute('data-category');
 
     const categoryLabels = {
         all: 'Portfolio',
@@ -522,9 +606,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     openPortfolioLightbox(img);
                 }
             } else {
-                goToRollSlide(cardIdx);
+                item.classList.remove('show');
+                item.classList.add('hide');
+                item.style.opacity = '0.25';
+                item.style.filter = 'grayscale(100%)';
+                item.style.pointerEvents = 'none';
             }
         });
+    };
 
         return card;
     }
@@ -560,33 +649,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.classList.remove('is-center');
                 return;
             }
+        });
+    });
 
-            card.style.visibility = 'visible';
+    // --- Service Card Click to Filter Gallery ---
+    const serviceCards = document.querySelectorAll('.service-card');
 
-            const sign = dist === 0 ? 0 : Math.sign(dist);
-            const translateX = dist * stepX;
-            const translateZ = -absDist * zStep;
-            const rotateY = -sign * (baseRot + Math.min(8, absDist * 3));
-            const scale = Math.max(0.65, 1.05 - absDist * 0.12);
-            const opacity = Math.max(0, 1 - absDist * 0.28);
-            const zIndex = Math.round(100 - absDist * 15);
-            const brightness = Math.max(0.35, 1 - absDist * 0.25);
+    serviceCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const category = card.getAttribute('data-category');
 
-            card.style.transform = `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
-            card.style.opacity = opacity.toFixed(3);
-            card.style.zIndex = zIndex;
-            card.style.filter = `brightness(${brightness.toFixed(2)})`;
-            card.style.pointerEvents = 'auto';
+            // Apply the filter
+            activateFilter(category);
+            initializeCarousel(category);
 
-            if (absDist < 0.45) {
-                card.classList.add('is-center');
-            } else {
-                card.classList.remove('is-center');
+            // Scroll to gallery section smoothly
+            const gallerySection = document.getElementById('gallery');
+            if (gallerySection) {
+                gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
 
-        updateRollControls();
-    }
+        // Add cursor pointer to indicate clickability
+        card.style.cursor = 'pointer';
+    });
 
     function updateRollControls() {
         const N = filteredRollImages.length;
@@ -656,7 +742,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         rollAnimFrameId = requestAnimationFrame(momentumStep);
-    }
 
     // Smooth navigation to a specific slide
     function goToRollSlide(targetIndex) {
@@ -730,9 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         update3DPositions();
     }
 
-    function initCameraRollDrag() {
-        const viewport = document.getElementById('cameraRollViewport');
-        if (!viewport) return;
+        if (filteredItems.length === 0) return;
 
         const isMobile = () => window.innerWidth <= 640;
         const getStepX = () => isMobile() ? 165 : 240;
@@ -757,6 +840,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Math.abs(clientX - rollDragStartX) > 6) {
                 rollHasDragged = true;
             }
+            return array;
+        }
 
             velocitySamples.push({ dx, dt, time: now, x: clientX });
             velocitySamples = velocitySamples.filter(s => now - s.time < 120);
@@ -781,6 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pxPerMs = totalDx / totalDt;
                 slideVel = -(pxPerMs * 16.67) / getStepX();
             }
+        }
 
             // Launch free momentum spinning
             startSpinMomentum(slideVel);
@@ -788,38 +874,22 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { rollHasDragged = false; }, 60);
         };
 
-        viewport.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            onStart(e.clientX);
-        });
+        row1Content.forEach(item => {
+            const clone = item.cloneNode(true);
+            row1.appendChild(clone);
 
-        window.addEventListener('mousemove', (e) => {
-            if (isRollDragging) onMove(e.clientX);
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (isRollDragging) onEnd();
-        });
-
-        viewport.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                onStart(e.touches[0].clientX);
+            // Re-add lightbox click handlers
+            const img = clone.querySelector('img');
+            if (img) {
+                img.addEventListener('click', () => {
+                    openLightbox(img);
+                });
             }
-        }, { passive: true });
-
-        viewport.addEventListener('touchmove', (e) => {
-            if (isRollDragging && e.touches.length === 1) {
-                onMove(e.touches[0].clientX);
-            }
-        }, { passive: true });
-
-        viewport.addEventListener('touchend', () => {
-            if (isRollDragging) onEnd();
         });
 
-        viewport.addEventListener('touchcancel', () => {
-            if (isRollDragging) onEnd();
-        });
+        row2Content.forEach(item => {
+            const clone = item.cloneNode(true);
+            row2.appendChild(clone);
 
         // Trackpad 2-finger swipe / mouse wheel
         viewport.addEventListener('wheel', (e) => {
@@ -857,31 +927,13 @@ document.addEventListener('DOMContentLoaded', () => {
             isScrubbing = true;
             handleScrubber(e.clientX);
         });
-
-        window.addEventListener('mousemove', (e) => {
-            if (isScrubbing) handleScrubber(e.clientX);
-        });
-
-        window.addEventListener('mouseup', () => {
-            isScrubbing = false;
-        });
-
-        wrap.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                handleScrubber(e.touches[0].clientX);
-            }
-        }, { passive: true });
-
-        wrap.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) {
-                handleScrubber(e.touches[0].clientX);
-            }
-        }, { passive: true });
     }
 
-    function initCameraRollControls() {
-        const prevBtn = document.getElementById('rollPrevBtn');
-        const nextBtn = document.getElementById('rollNextBtn');
+    // Helper function to open lightbox
+    function openLightbox(img) {
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxCaption = document.querySelector('.lightbox-caption');
 
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
@@ -973,14 +1025,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize 3D Camera Roll on page load
-    if (cameraRollStage) {
-        renderCameraRoll('all');
-        initCameraRollDrag();
-        initCameraRollScrubber();
-        initCameraRollControls();
-        loadPortfolio();
-    }
+    // Initialize carousel on page load
+    initializeCarousel('all');
 
 
 
@@ -1021,28 +1067,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update visible images based on current filter
     function updateVisibleImages() {
-        const allImgs = document.querySelectorAll('.gallery-item img, .editorial-gallery-grid .gallery-card img, .camera-card img');
+        const allImgs = document.querySelectorAll('.gallery-item img, .editorial-gallery-grid .gallery-card img');
         visibleImages = Array.from(allImgs).filter(img => {
-            const item = img.closest('.gallery-item, .gallery-card, .camera-card');
-            return item && !item.classList.contains('hide') && item.style.visibility !== 'hidden';
+            const item = img.closest('.gallery-item, .gallery-card');
+            return item && !item.classList.contains('hide');
         });
-    }
-
-    function openPortfolioLightbox(imgEl) {
-        if (!lightbox || !lightboxImg) return;
-        const track = document.getElementById('cameraRollTrack');
-        const cardImgs = track ? Array.from(track.querySelectorAll('.camera-card img')) : [];
-        visibleImages = cardImgs.filter(i => i && i.src);
-        currentImageIndex = visibleImages.indexOf(imgEl);
-        if (currentImageIndex === -1) currentImageIndex = 0;
-
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        lightboxImg.src = imgEl.src;
-        if (lightboxCaption) {
-            const cat = imgEl.closest('.camera-card')?.dataset.category || '';
-            lightboxCaption.textContent = categoryLabels[cat] || imgEl.alt || '';
-        }
     }
 
     // Lightbox delegation for editorial gallery
@@ -1147,10 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         lightboxImg.src = img.src;
-        if (lightboxCaption) {
-            const cat = img.closest('.camera-card')?.dataset.category || '';
-            lightboxCaption.textContent = (typeof categoryLabels !== 'undefined' && categoryLabels[cat]) || img.alt || '';
-        }
+        lightboxCaption.textContent = img.alt || '';
     }
 
     // Close lightbox
@@ -1479,6 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- Premium Scroll Animations ---
+const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .faq-section, .contact-section');
 const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .testimonials-section, .faq-section, .contact-section');
 
 const sectionObserver = new IntersectionObserver((entries) => {
