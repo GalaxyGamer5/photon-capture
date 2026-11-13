@@ -426,17 +426,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================================================
-    // 3D CAMERA ROLL / FILMSTRIP CAROUSEL (35MM CINEMA AESTHETIC)
+    // 3D CAMERA ROLL / FILMSTRIP CAROUSEL (FREE-SPINNING KINETIC MOMENTUM)
     // ==========================================================================
 
     let currentRollFilter = 'all';
     let filteredRollImages = [];
-    let activeRollIndex = 0;
+    let rollPos = 0;              // Continuous floating-point position
     let isRollDragging = false;
-    let rollStartX = 0;
-    let rollDragDeltaX = 0;
+    let rollDragStartX = 0;
+    let rollDragStartPos = 0;
     let rollHasDragged = false;
-    let rollWheelCooldown = false;
+    let velocitySamples = [];
+    let rollAnimFrameId = null;
+    let wheelSnapTimer = null;
 
     // High quality aesthetic fallback cards when portfolio has no uploaded images yet
     const fallbackPortfolio = [
@@ -463,7 +465,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.dataset.index = index;
         card.dataset.category = item.category;
 
-        const expNumber = String(index + 1).padStart(2, '0');
+        const originalIdx = item.originalIndex !== undefined ? item.originalIndex : index;
+        const expNumber = String(originalIdx + 1).padStart(2, '0');
         const catLabel = categoryLabels[item.category] || item.category;
 
         let frameContent = '';
@@ -510,7 +513,10 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
             if (rollHasDragged) return;
             const cardIdx = parseInt(card.dataset.index, 10);
-            if (cardIdx === activeRollIndex) {
+            const N = filteredRollImages.length;
+            const currentNorm = ((Math.round(rollPos) % N) + N) % N;
+
+            if (cardIdx === currentNorm) {
                 const img = card.querySelector('img');
                 if (img && img.src) {
                     openPortfolioLightbox(img);
@@ -523,11 +529,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     }
 
-    function update3DPositions(dragOffsetRatio = 0) {
+    function update3DPositions() {
         const track = document.getElementById('cameraRollTrack');
         if (!track) return;
         const cards = track.querySelectorAll('.camera-card');
-        if (!cards.length) return;
+        const N = filteredRollImages.length;
+        if (!cards.length || !N) return;
 
         const isMobile = window.innerWidth <= 640;
         const isTablet = window.innerWidth <= 992 && !isMobile;
@@ -536,11 +543,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const zStep = isMobile ? 70 : (isTablet ? 95 : 120);
         const baseRot = isMobile ? 18 : (isTablet ? 23 : 28);
 
-        const effectiveCenter = activeRollIndex - dragOffsetRatio;
-
         cards.forEach((card) => {
             const idx = parseInt(card.dataset.index, 10);
-            const dist = idx - effectiveCenter;
+
+            // Circular modulo shortest distance
+            let dist = (idx - rollPos) % N;
+            if (dist > N / 2) dist -= N;
+            if (dist < -N / 2) dist += N;
+
             const absDist = Math.abs(dist);
 
             if (absDist > 3.8) {
@@ -579,35 +589,102 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRollControls() {
-        const total = filteredRollImages.length;
+        const N = filteredRollImages.length;
+        if (!N) return;
+        const activeIdx = ((Math.round(rollPos) % N) + N) % N;
+
         const currentEl = document.getElementById('rollCurrent');
         const totalEl = document.getElementById('rollTotal');
-        const prevBtn = document.getElementById('rollPrevBtn');
-        const nextBtn = document.getElementById('rollNextBtn');
         const scrubberBar = document.getElementById('rollScrubberBar');
 
-        if (currentEl) currentEl.textContent = String(activeRollIndex + 1).padStart(2, '0');
-        if (totalEl) totalEl.textContent = String(total).padStart(2, '0');
+        if (currentEl) currentEl.textContent = String(activeIdx + 1).padStart(2, '0');
+        if (totalEl) totalEl.textContent = String(N).padStart(2, '0');
 
-        if (prevBtn) {
-            prevBtn.disabled = (activeRollIndex <= 0);
-            prevBtn.classList.toggle('disabled', activeRollIndex <= 0);
-        }
-        if (nextBtn) {
-            nextBtn.disabled = (activeRollIndex >= total - 1);
-            nextBtn.classList.toggle('disabled', activeRollIndex >= total - 1);
-        }
-
-        if (scrubberBar && total > 0) {
-            const percent = total <= 1 ? 100 : (activeRollIndex / (total - 1)) * 100;
+        if (scrubberBar && N > 0) {
+            const percent = N <= 1 ? 100 : (activeIdx / (N - 1)) * 100;
             scrubberBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
         }
     }
 
+    // Smooth physics snap to nearest card
+    function snapToNearest() {
+        cancelAnimationFrame(rollAnimFrameId);
+        const target = Math.round(rollPos);
+
+        function snapStep() {
+            const diff = target - rollPos;
+            if (Math.abs(diff) < 0.002) {
+                rollPos = target;
+                update3DPositions();
+                updateRollControls();
+                return;
+            }
+
+            rollPos += diff * 0.16;
+            update3DPositions();
+            rollAnimFrameId = requestAnimationFrame(snapStep);
+        }
+
+        rollAnimFrameId = requestAnimationFrame(snapStep);
+    }
+
+    // Free momentum spinning
+    function startSpinMomentum(initialVel) {
+        cancelAnimationFrame(rollAnimFrameId);
+        let vel = Math.max(-1.5, Math.min(1.5, initialVel));
+        const friction = 0.955; // Silky momentum gliding
+        let lastTime = performance.now();
+
+        if (Math.abs(vel) < 0.015) {
+            snapToNearest();
+            return;
+        }
+
+        function momentumStep() {
+            const now = performance.now();
+            const deltaRatio = Math.min(2.5, Math.max(0.4, (now - lastTime) / 16.67));
+            lastTime = now;
+
+            if (Math.abs(vel) > 0.012) {
+                rollPos += vel * deltaRatio;
+                vel *= Math.pow(friction, deltaRatio);
+                update3DPositions();
+                rollAnimFrameId = requestAnimationFrame(momentumStep);
+            } else {
+                snapToNearest();
+            }
+        }
+
+        rollAnimFrameId = requestAnimationFrame(momentumStep);
+    }
+
+    // Smooth navigation to a specific slide
     function goToRollSlide(targetIndex) {
-        if (!filteredRollImages.length) return;
-        activeRollIndex = Math.max(0, Math.min(filteredRollImages.length - 1, targetIndex));
-        update3DPositions(0);
+        cancelAnimationFrame(rollAnimFrameId);
+        const N = filteredRollImages.length;
+        if (!N) return;
+
+        const currentNorm = ((rollPos % N) + N) % N;
+        let diff = (targetIndex - currentNorm) % N;
+        if (diff > N / 2) diff -= N;
+        if (diff < -N / 2) diff += N;
+
+        const target = rollPos + diff;
+
+        function slideStep() {
+            const d = target - rollPos;
+            if (Math.abs(d) < 0.003) {
+                rollPos = target;
+                update3DPositions();
+                updateRollControls();
+                return;
+            }
+            rollPos += d * 0.16;
+            update3DPositions();
+            rollAnimFrameId = requestAnimationFrame(slideStep);
+        }
+
+        rollAnimFrameId = requestAnimationFrame(slideStep);
     }
 
     function renderCameraRoll(filterValue = 'all') {
@@ -615,21 +692,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const track = document.getElementById('cameraRollTrack');
         if (!track) return;
 
+        cancelAnimationFrame(rollAnimFrameId);
+
         const source = (portfolioImages && portfolioImages.length > 0) ? portfolioImages : fallbackPortfolio;
-        filteredRollImages = (filterValue === 'all')
+        let matched = (filterValue === 'all')
             ? [...source]
             : source.filter(item => item.category === filterValue);
 
         track.innerHTML = '';
 
-        if (filteredRollImages.length === 0) {
+        if (matched.length === 0) {
             track.innerHTML = `
                 <div style="position: absolute; transform: translate(-50%, -50%); text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; letter-spacing: 0.05em;">
                     Keine Fotos in dieser Kategorie vorhanden.
                 </div>
             `;
+            filteredRollImages = [];
             updateRollControls();
             return;
+        }
+
+        // Tag with original indices
+        matched = matched.map((item, i) => ({ ...item, originalIndex: i }));
+
+        // Ensure at least 6 cards for smooth 360-degree cylindrical spinning
+        filteredRollImages = [...matched];
+        while (filteredRollImages.length < 6) {
+            filteredRollImages = [...filteredRollImages, ...matched];
         }
 
         filteredRollImages.forEach((item, index) => {
@@ -637,41 +726,44 @@ document.addEventListener('DOMContentLoaded', () => {
             track.appendChild(card);
         });
 
-        activeRollIndex = 0;
-        update3DPositions(0);
+        rollPos = 0;
+        update3DPositions();
     }
 
     function initCameraRollDrag() {
         const viewport = document.getElementById('cameraRollViewport');
         if (!viewport) return;
 
-        let startTime = 0;
+        const isMobile = () => window.innerWidth <= 640;
+        const getStepX = () => isMobile() ? 165 : 240;
 
         const onStart = (clientX) => {
+            cancelAnimationFrame(rollAnimFrameId);
             isRollDragging = true;
             rollHasDragged = false;
-            rollStartX = clientX;
-            rollDragDeltaX = 0;
-            startTime = Date.now();
+            rollDragStartX = clientX;
+            rollDragStartPos = rollPos;
+            velocitySamples = [{ dx: 0, dt: 1, time: performance.now(), x: clientX }];
             viewport.classList.add('is-dragging');
         };
 
         const onMove = (clientX) => {
             if (!isRollDragging) return;
-            rollDragDeltaX = clientX - rollStartX;
-            if (Math.abs(rollDragDeltaX) > 6) {
+            const now = performance.now();
+            const lastSample = velocitySamples[velocitySamples.length - 1];
+            const dx = clientX - lastSample.x;
+            const dt = Math.max(1, now - lastSample.time);
+
+            if (Math.abs(clientX - rollDragStartX) > 6) {
                 rollHasDragged = true;
             }
 
-            const isMobile = window.innerWidth <= 640;
-            const stepX = isMobile ? 165 : 240;
-            let offsetRatio = rollDragDeltaX / stepX;
+            velocitySamples.push({ dx, dt, time: now, x: clientX });
+            velocitySamples = velocitySamples.filter(s => now - s.time < 120);
 
-            if ((activeRollIndex === 0 && offsetRatio > 0) || (activeRollIndex === filteredRollImages.length - 1 && offsetRatio < 0)) {
-                offsetRatio *= 0.35;
-            }
-
-            update3DPositions(offsetRatio);
+            const totalDelta = clientX - rollDragStartX;
+            rollPos = rollDragStartPos - (totalDelta / getStepX());
+            update3DPositions();
         };
 
         const onEnd = () => {
@@ -679,19 +771,20 @@ document.addEventListener('DOMContentLoaded', () => {
             isRollDragging = false;
             viewport.classList.remove('is-dragging');
 
-            const elapsed = Math.max(1, Date.now() - startTime);
-            const velocity = Math.abs(rollDragDeltaX) / elapsed;
+            const now = performance.now();
+            const recentSamples = velocitySamples.filter(s => now - s.time < 90);
 
-            if (Math.abs(rollDragDeltaX) > 35 || velocity > 0.3) {
-                if (rollDragDeltaX < 0 && activeRollIndex < filteredRollImages.length - 1) {
-                    activeRollIndex++;
-                } else if (rollDragDeltaX > 0 && activeRollIndex > 0) {
-                    activeRollIndex--;
-                }
+            let slideVel = 0;
+            if (recentSamples.length > 0) {
+                const totalDx = recentSamples.reduce((sum, s) => sum + s.dx, 0);
+                const totalDt = Math.max(1, recentSamples.reduce((sum, s) => sum + s.dt, 0));
+                const pxPerMs = totalDx / totalDt;
+                slideVel = -(pxPerMs * 16.67) / getStepX();
             }
 
-            rollDragDeltaX = 0;
-            update3DPositions(0);
+            // Launch free momentum spinning
+            startSpinMomentum(slideVel);
+
             setTimeout(() => { rollHasDragged = false; }, 60);
         };
 
@@ -728,19 +821,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isRollDragging) onEnd();
         });
 
+        // Trackpad 2-finger swipe / mouse wheel
         viewport.addEventListener('wheel', (e) => {
-            if (rollWheelCooldown) return;
-            const delta = Math.abs(e.deltaX) > 20 ? e.deltaX : (e.shiftKey && Math.abs(e.deltaY) > 20 ? e.deltaY : 0);
-            if (delta > 20 && activeRollIndex < filteredRollImages.length - 1) {
-                goToRollSlide(activeRollIndex + 1);
-                rollWheelCooldown = true;
-                setTimeout(() => { rollWheelCooldown = false; }, 300);
-            } else if (delta < -20 && activeRollIndex > 0) {
-                goToRollSlide(activeRollIndex - 1);
-                rollWheelCooldown = true;
-                setTimeout(() => { rollWheelCooldown = false; }, 300);
+            const delta = Math.abs(e.deltaX) > 4 ? e.deltaX : (e.shiftKey && Math.abs(e.deltaY) > 4 ? e.deltaY : 0);
+            if (Math.abs(delta) > 4) {
+                e.preventDefault();
+                cancelAnimationFrame(rollAnimFrameId);
+                rollPos += (delta / getStepX()) * 0.65;
+                update3DPositions();
+
+                clearTimeout(wheelSnapTimer);
+                wheelSnapTimer = setTimeout(() => {
+                    snapToNearest();
+                }, 110);
             }
-        }, { passive: true });
+        }, { passive: false });
     }
 
     function initCameraRollScrubber() {
@@ -790,13 +885,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
-                if (activeRollIndex > 0) goToRollSlide(activeRollIndex - 1);
+                goToRollSlide(Math.round(rollPos) - 1);
             });
         }
 
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
-                if (activeRollIndex < filteredRollImages.length - 1) goToRollSlide(activeRollIndex + 1);
+                goToRollSlide(Math.round(rollPos) + 1);
             });
         }
 
@@ -812,20 +907,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isInView) return;
 
             if (e.key === 'ArrowLeft') {
-                if (activeRollIndex > 0) {
-                    goToRollSlide(activeRollIndex - 1);
-                    e.preventDefault();
-                }
+                goToRollSlide(Math.round(rollPos) - 1);
+                e.preventDefault();
             } else if (e.key === 'ArrowRight') {
-                if (activeRollIndex < filteredRollImages.length - 1) {
-                    goToRollSlide(activeRollIndex + 1);
-                    e.preventDefault();
-                }
+                goToRollSlide(Math.round(rollPos) + 1);
+                e.preventDefault();
             }
         });
 
         window.addEventListener('resize', () => {
-            update3DPositions(0);
+            update3DPositions();
         });
     }
 
