@@ -262,6 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.currentMonth.textContent = `${monthList[month]} ${year}`;
         }
 
+        // Weekday header labels
+        if (elements.weekdayLabels) {
+            const weekdays = currentLanguage === 'en'
+                ? ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+                : ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'];
+            elements.weekdayLabels.innerHTML = weekdays.map(w => `<div>${w}</div>`).join('');
+        }
+
         if (!elements.daysGrid) return;
         elements.daysGrid.innerHTML = '';
 
@@ -340,18 +348,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthName = (currentLanguage === 'en' ? monthNamesEn : monthNamesDe)[m - 1];
         const dayName = (currentLanguage === 'en' ? weekdayNamesEn : weekdayNamesDe)[dayOfWeek];
 
-        // Format for left slot kicker e.g. "SAMSTAG, 21. NOVEMBER"
+        // Format for left slot kicker e.g. "SAMSTAG, 21. NOVEMBER" / "SATURDAY, NOVEMBER 21"
         const fullDayName = dt.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'de-DE', { weekday: 'long' });
         if (elements.slotDateKicker) {
-            elements.slotDateKicker.textContent = `${fullDayName.toUpperCase()}, ${d}. ${monthName.toUpperCase()}`;
+            elements.slotDateKicker.textContent = currentLanguage === 'en'
+                ? `${fullDayName.toUpperCase()}, ${monthName.toUpperCase()} ${d}`
+                : `${fullDayName.toUpperCase()}, ${d}. ${monthName.toUpperCase()}`;
         }
 
-        // Format for right column display: "Sa, 21. November 2026"
+        // Format for right column display: "Sa, 21. November 2026" / "Sat, November 21, 2026"
         if (elements.displaySelectedDate) {
-            elements.displaySelectedDate.textContent = `${dayName}, ${d}. ${monthName} ${y}`;
+            elements.displaySelectedDate.textContent = currentLanguage === 'en'
+                ? `${dayName}, ${monthName} ${d}, ${y}`
+                : `${dayName}, ${d}. ${monthName} ${y}`;
         }
         if (elements.displaySelectedTime) {
-            elements.displaySelectedTime.textContent = `${selectedTime} Uhr`;
+            elements.displaySelectedTime.textContent = currentLanguage === 'en'
+                ? `${selectedTime}`
+                : `${selectedTime} Uhr`;
         }
 
         if (elements.dateInput) elements.dateInput.value = selectedDate;
@@ -360,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Package Name & Duration visibility
     function updatePackageDisplay() {
-        let title = "Event-Begleitung";
+        let title = currentLanguage === 'en' ? 'Event Coverage' : 'Event-Begleitung';
         let pkg = null;
         if (pricingData && pricingData.packages) {
             pkg = pricingData.packages.find(p => p.id === selectedPackageId);
@@ -368,9 +382,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 title = pkg.title[currentLanguage] || pkg.title.de || pkg.title;
             }
         } else {
-            if (selectedPackageId === 'portrait') title = "Porträt-Session";
-            if (selectedPackageId === 'pet') title = "Tierfotografie";
-            if (selectedPackageId === 'other') title = "Sonstiges / Individuell";
+            if (selectedPackageId === 'portrait') title = currentLanguage === 'en' ? 'Portrait Session' : 'Porträt-Session';
+            if (selectedPackageId === 'pet') title = currentLanguage === 'en' ? 'Pet Photography' : 'Tierfotografie';
+            if (selectedPackageId === 'other') title = currentLanguage === 'en' ? 'Other / Custom' : 'Sonstiges / Individuell';
+        }
+
+        // Translate and populate service select options
+        if (elements.serviceSelect) {
+            const currentVal = selectedPackageId;
+            const optionsData = [
+                { value: 'event', labelDe: 'Event-Begleitung', labelEn: 'Event Coverage' },
+                { value: 'portrait', labelDe: 'Porträt-Session', labelEn: 'Portrait Session' },
+                { value: 'pet', labelDe: 'Tierfotografie', labelEn: 'Pet Photography' },
+                { value: 'other', labelDe: 'Sonstiges / Individuell', labelEn: 'Other / Custom' }
+            ];
+            elements.serviceSelect.innerHTML = optionsData.map(opt => {
+                let text = currentLanguage === 'en' ? opt.labelEn : opt.labelDe;
+                if (pricingData && pricingData.packages) {
+                    const p = pricingData.packages.find(item => item.id === opt.value);
+                    if (p && p.title) {
+                        text = p.title[currentLanguage] || p.title.de || text;
+                    }
+                }
+                return `<option value="${opt.value}" ${opt.value === currentVal ? 'selected' : ''}>${text}</option>`;
+            }).join('');
+            elements.serviceSelect.value = currentVal;
         }
 
         // Show duration field for hourly packages (event)
@@ -383,7 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (elements.packageName) elements.packageName.textContent = title;
-        if (elements.serviceSelect) elements.serviceSelect.value = selectedPackageId;
     }
 
     // Render Extras in Editorial Style
@@ -394,7 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!pricingData || !pricingData.packages) return;
         const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
         if (!pkg || !pkg.extras || pkg.extras.length === 0) {
-            elements.extrasContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); padding: 0.5rem 0;">Keine optionalen Extras für dieses Paket verfügbar.</p>`;
+            const noExtrasMsg = (typeof translations !== 'undefined' && translations[currentLanguage]?.['cal.noExtras']) || (currentLanguage === 'en' ? 'No optional extras available for this package.' : 'Keine optionalen Extras für dieses Paket verfügbar.');
+            elements.extrasContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); padding: 0.5rem 0;">${noExtrasMsg}</p>`;
             return;
         }
 
@@ -440,12 +476,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const pkg = pricingData.packages.find(p => p.id === selectedPackageId);
         if (!pkg) {
             if (selectedPackageId === 'other') {
-                if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = "Individuelles Angebot";
-                if (elements.summaryPackagePrice) elements.summaryPackagePrice.textContent = "Auf Anfrage";
+                const t = (key, de, en) => (typeof translations !== 'undefined' && translations[currentLanguage]?.[key]) || (currentLanguage === 'en' ? en : de);
+                if (elements.summaryPackageLabel) elements.summaryPackageLabel.textContent = t('cal.customOffer', 'Individuelles Angebot', 'Custom Quote');
+                if (elements.summaryPackagePrice) elements.summaryPackagePrice.textContent = t('cal.onRequest', 'Auf Anfrage', 'On Request');
                 if (elements.summaryExtrasPrice) elements.summaryExtrasPrice.textContent = "0 €";
                 if (elements.summaryDiscountRow) elements.summaryDiscountRow.style.display = "none";
-                if (elements.summaryTotalPrice) elements.summaryTotalPrice.textContent = "Auf Anfrage";
-                if (elements.totalPriceInput) elements.totalPriceInput.value = "Auf Anfrage";
+                if (elements.summaryTotalPrice) elements.summaryTotalPrice.textContent = t('cal.onRequest', 'Auf Anfrage', 'On Request');
+                if (elements.totalPriceInput) elements.totalPriceInput.value = t('cal.onRequest', 'Auf Anfrage', 'On Request');
                 if (elements.basePriceInput) elements.basePriceInput.value = "0€";
             }
             return;
@@ -506,10 +543,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.summaryPackageLabel) {
             if (isHourly) {
-                const durText = elements.durationSelect
-                    ? elements.durationSelect.options[elements.durationSelect.selectedIndex]?.text.split('(')[0].trim()
-                    : `${hours} Std.`;
-                elements.summaryPackageLabel.textContent = `${title} (${durText || `${hours} Std.`} à ${unitRate} €)`;
+                let durText = '';
+                if (elements.durationSelect) {
+                    const opt = elements.durationSelect.options[elements.durationSelect.selectedIndex];
+                    if (opt) durText = opt.text.split('(')[0].trim();
+                }
+                if (!durText) durText = `${hours} ${currentLanguage === 'en' ? 'Hours' : 'Stunden'}`;
+                const atSym = currentLanguage === 'en' ? '@' : 'à';
+                elements.summaryPackageLabel.textContent = `${title} (${durText} ${atSym} ${unitRate} €)`;
             } else {
                 elements.summaryPackageLabel.textContent = title;
             }
@@ -544,11 +585,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.totalPriceInput) elements.totalPriceInput.value = `${total}€`;
         if (elements.basePriceInput) elements.basePriceInput.value = `${basePrice}€`;
         if (elements.extrasBreakdownInput) elements.extrasBreakdownInput.value = breakdown.join(', ');
-        if (elements.discountBreakdownInput) elements.discountBreakdownInput.value = discountAmount > 0 ? `Rabatt: -${discountAmount}€ (${discountPercent}%)` : '';
+        if (elements.discountBreakdownInput) elements.discountBreakdownInput.value = discountAmount > 0 ? `${currentLanguage === 'en' ? 'Discount' : 'Rabatt'}: -${discountAmount}€ (${discountPercent}%)` : '';
         if (elements.priceDetailsInput) {
+            const hLabel = currentLanguage === 'en' ? 'hrs.' : 'Std.';
+            const rLabel = currentLanguage === 'en' ? 'Discount' : 'Rabatt';
             elements.priceDetailsInput.value = isHourly
-                ? `Basis: ${basePrice}€ (${hours} Std. à ${unitRate}€), Extras: ${extrasTotal}€${discountAmount > 0 ? `, Rabatt: -${discountAmount}€ (${discountPercent}%)` : ''}`
-                : `Basis: ${basePrice}€, Extras: ${extrasTotal}€${discountAmount > 0 ? `, Rabatt: -${discountAmount}€ (${discountPercent}%)` : ''}`;
+                ? `Base: ${basePrice}€ (${hours} ${hLabel} à ${unitRate}€), Extras: ${extrasTotal}€${discountAmount > 0 ? `, ${rLabel}: -${discountAmount}€ (${discountPercent}%)` : ''}`
+                : `Base: ${basePrice}€, Extras: ${extrasTotal}€${discountAmount > 0 ? `, ${rLabel}: -${discountAmount}€ (${discountPercent}%)` : ''}`;
         }
     }
 

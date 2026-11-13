@@ -11,9 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const currentLang = localStorage.getItem('preferredLang') || 'de';
             const submitBtn = bookingForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = 'Sende...';
+            submitBtn.innerText = currentLang === 'en' ? 'Sending...' : 'Sende...';
             submitBtn.disabled = true;
 
             const service = document.getElementById('service').value;
@@ -58,8 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (dv === 'open') duration = 8;
                 durationText = durationSelect.options[durationSelect.selectedIndex]?.text || `${duration} Stunden`;
             }
-
-            const currentLang = localStorage.getItem('preferredLang') || 'de';
 
             // Combine all booking details into the message payload
             const fullMessage = `Gewünschtes Paket: ${serviceName}${durationText ? ` (${durationText})` : ''}
@@ -114,9 +113,10 @@ ${message}`;
         contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const currentLang = localStorage.getItem('preferredLang') || 'de';
             const submitBtn = contactForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = 'Sende...';
+            submitBtn.innerText = currentLang === 'en' ? 'Sending...' : 'Sende...';
             submitBtn.disabled = true;
 
             const name = document.getElementById('name').value;
