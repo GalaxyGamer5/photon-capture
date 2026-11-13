@@ -641,15 +641,14 @@ textarea {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    /* No CSS transition on border/shadow — driven continuously by JS for smooth glow */
     position: relative;
     overflow: hidden;
 }
 
-/* Active Center Card Glow & Highlight */
+/* Center card: glow driven by JS inline styles, only hover styles here */
 .camera-card.is-center .camera-card-inner {
-    border-color: rgba(224, 90, 43, 0.45);
-    box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.95), 0 0 35px -5px rgba(224, 90, 43, 0.22);
+    /* border-color and box-shadow set inline by update3DPositions() */
 }
 
 .camera-card:hover .camera-card-inner {
