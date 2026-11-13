@@ -38,6 +38,13 @@
                     <li><a href="#contact" data-i18n="nav.contact">Kontakt</a></li>
                 </ul>
                 <div class="nav-actions">
+                    <button class="viewfinder-toggle-btn" id="viewfinderToggle" aria-label="Kamera-Sucher HUD" title="Kamera-Sucher (HUD) Modus">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M3 9V5a2 2 0 0 1 2-2h4M19 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+                        </svg>
+                        <span class="vf-toggle-badge">HUD</span>
+                    </button>
                     <button class="lang-toggle" id="langToggle" aria-label="Switch Language">DE</button>
                     <a href="gallery/index.html" class="portal-link" aria-label="Client Portal" title="Client Portal">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -155,7 +162,10 @@
                             <div class="roll-scrubber-handle" id="rollScrubberHandle"></div>
                         </div>
                     </div>
-
+                    <button class="roll-hud-btn" id="rollHudBtn" title="Kamera-Sucher (HUD) Modus aktivieren">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M3 9V5a2 2 0 0 1 2-2h4M19 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path></svg>
+                        <span>SUCHER HUD</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -272,6 +282,83 @@
         <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Nächstes Bild">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
+    </div>
+
+    <!-- Camera Viewfinder / Rangefinder HUD Mode Overlay -->
+    <div class="viewfinder-hud" id="viewfinderHud" aria-hidden="true">
+        <!-- Viewfinder Rangefinder Corner Framing Brackets -->
+        <div class="vf-frame-corners">
+            <div class="vf-corner tl"></div>
+            <div class="vf-corner tr"></div>
+            <div class="vf-corner bl"></div>
+            <div class="vf-corner br"></div>
+        </div>
+
+        <!-- Top Camera Status Bar -->
+        <div class="vf-top-bar">
+            <div class="vf-top-left">
+                <span class="vf-rec-badge"><span class="vf-rec-dot"></span>REC</span>
+                <span class="vf-codec">PRORES 422 HQ</span>
+                <span class="vf-res">4K · 60 FPS</span>
+            </div>
+            <div class="vf-top-center">
+                <span class="vf-cam-model">PHOTON CAPTURE · A7 III</span>
+            </div>
+            <div class="vf-top-right">
+                <span class="vf-sd">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="8" y2="10"></line><line x1="12" y1="6" x2="12" y2="10"></line><line x1="16" y1="6" x2="16" y2="10"></line></svg>
+                    RAW+JPG
+                </span>
+                <span class="vf-battery"><span class="vf-bat-level"></span>98%</span>
+                <button class="vf-close-btn" id="vfCloseBtn" title="Sucher schließen (ESC)">✕ BEENDEN</button>
+            </div>
+        </div>
+
+        <!-- Center Reticle / Autofocus Box & Dual-Axis Electronic Level Horizon -->
+        <div class="vf-center-reticle" id="vfCenterReticle">
+            <!-- Dynamic Tilt Horizon Line (reacts to mouse movement) -->
+            <div class="vf-horizon-line" id="vfHorizonLine">
+                <div class="vf-horizon-bar left"></div>
+                <div class="vf-horizon-pip" id="vfHorizonPip"></div>
+                <div class="vf-horizon-bar right"></div>
+            </div>
+
+            <!-- AF Crosshair Box -->
+            <div class="vf-af-brackets" id="vfAfBrackets">
+                <span class="vf-b tl"></span>
+                <span class="vf-b tr"></span>
+                <span class="vf-b bl"></span>
+                <span class="vf-b br"></span>
+                <span class="vf-crosshair">+</span>
+            </div>
+        </div>
+
+        <!-- Bottom Camera Exposure Bar -->
+        <div class="vf-bottom-bar">
+            <!-- Exposure Scale: -2 ... 0 ... +2 with dynamic needle -->
+            <div class="vf-meter-scale">
+                <span class="vf-meter-label">EV</span>
+                <span class="vf-scale-ticks">-2·····-1·····0·····+1·····+2</span>
+                <div class="vf-meter-needle" id="vfMeterNeedle">▲</div>
+            </div>
+
+            <!-- Live Camera Exposure Parameters -->
+            <div class="vf-exposure-readout">
+                <span class="vf-param"><span class="vf-param-label">SHUTTER</span><span id="vfShutterVal">1/250s</span></span>
+                <span class="vf-param"><span class="vf-param-label">APERTURE</span><span id="vfApertureVal">f/1.8</span></span>
+                <span class="vf-param"><span class="vf-param-label">ISO</span><span id="vfIsoVal">ISO 400</span></span>
+                <span class="vf-param"><span class="vf-param-label">FOCAL</span><span id="vfFocalVal">35mm</span></span>
+            </div>
+
+            <!-- AF & Color Profile Status -->
+            <div class="vf-bottom-right">
+                <span class="vf-peaking-badge">PEAKING: <span class="vf-peaking-color">AMBER</span></span>
+                <span class="vf-profile">S-LOG3 · S-GAMUT3</span>
+            </div>
+        </div>
+
+        <!-- Quick Snapshot White Pulse Overlay -->
+        <div class="vf-shutter-flash" id="vfShutterFlash"></div>
     </div>
 
     <!-- Cookie Banner -->

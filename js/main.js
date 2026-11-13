@@ -721,6 +721,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const percent = N <= 1 ? 100 : (activeIdx / (N - 1)) * 100;
             scrubberBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
         }
+
+        // Live update Viewfinder HUD exposure values with current center image
+        if (typeof updateViewfinderExif === 'function') {
+            updateViewfinderExif(filteredRollImages[activeIdx]);
+        }
     }
 
     // Smooth physics snap to nearest card
@@ -1098,6 +1103,172 @@ document.addEventListener('DOMContentLoaded', async () => {
         initCameraRollControls();
         loadPortfolio();
     }
+
+    // ==========================================================================
+    // LEICA / RANGEFINDER VIEWFINDER HUD MODE
+    // ==========================================================================
+
+    let isViewfinderActive = false;
+
+    function playMechanicalShutterSound() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!window._vfAudioCtx) {
+                window._vfAudioCtx = new AudioCtx();
+            }
+            const ctx = window._vfAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const now = ctx.currentTime;
+
+            // Mirror flip click
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(140, now);
+            osc1.frequency.exponentialRampToValueAtTime(30, now + 0.035);
+            gain1.gain.setValueAtTime(0.25, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.04);
+
+            // Curtain snap
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(750, now + 0.04);
+            osc2.frequency.exponentialRampToValueAtTime(120, now + 0.075);
+            gain2.gain.setValueAtTime(0.20, now + 0.04);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.04);
+            osc2.stop(now + 0.085);
+        } catch(e) {}
+    }
+
+    function triggerShutterEffect() {
+        playMechanicalShutterSound();
+        const flash = document.getElementById('vfShutterFlash');
+        if (flash) {
+            flash.classList.add('flash');
+            setTimeout(() => flash.classList.remove('flash'), 110);
+        }
+    }
+
+    function updateViewfinderExif(item) {
+        if (!item) return;
+        const shutterEl = document.getElementById('vfShutterVal');
+        const apertureEl = document.getElementById('vfApertureVal');
+        const isoEl = document.getElementById('vfIsoVal');
+        const focalEl = document.getElementById('vfFocalVal');
+
+        if (shutterEl) shutterEl.textContent = item.shutter_speed || '1/250s';
+        if (apertureEl) apertureEl.textContent = item.aperture || 'f/1.8';
+        if (isoEl) isoEl.textContent = item.iso ? (String(item.iso).startsWith('ISO') ? item.iso : `ISO ${item.iso}`) : 'ISO 400';
+        if (focalEl) focalEl.textContent = item.focal_length || '35mm';
+    }
+
+    function toggleViewfinder(force) {
+        isViewfinderActive = (typeof force === 'boolean') ? force : !isViewfinderActive;
+        document.body.classList.toggle('viewfinder-active', isViewfinderActive);
+
+        const hud = document.getElementById('viewfinderHud');
+        if (hud) hud.setAttribute('aria-hidden', String(!isViewfinderActive));
+
+        if (isViewfinderActive) {
+            playMechanicalShutterSound();
+            if (filteredRollImages && filteredRollImages.length > 0) {
+                const N = filteredRollImages.length;
+                const activeIdx = ((Math.round(rollPos) % N) + N) % N;
+                updateViewfinderExif(filteredRollImages[activeIdx]);
+            }
+        }
+    }
+
+    function initViewfinderHud() {
+        const toggleBtn = document.getElementById('viewfinderToggle');
+        const rollHudBtn = document.getElementById('rollHudBtn');
+        const closeBtn = document.getElementById('vfCloseBtn');
+        const horizonLine = document.getElementById('vfHorizonLine');
+        const meterNeedle = document.getElementById('vfMeterNeedle');
+        const centerReticle = document.getElementById('vfCenterReticle');
+
+        if (toggleBtn) toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleViewfinder();
+        });
+        if (rollHudBtn) rollHudBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleViewfinder(true);
+        });
+        if (closeBtn) closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleViewfinder(false);
+        });
+
+        // ESC key to close, Space to trigger shutter snapshot
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isViewfinderActive) {
+                toggleViewfinder(false);
+            } else if (e.code === 'Space' && isViewfinderActive && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                triggerShutterEffect();
+            }
+        });
+
+        // Click anywhere while HUD is active triggers camera shutter audio & visual micro-flash
+        window.addEventListener('click', (e) => {
+            if (!isViewfinderActive) return;
+            if (e.target.closest('#vfCloseBtn') || e.target.closest('#viewfinderToggle') || e.target.closest('#rollHudBtn')) return;
+            triggerShutterEffect();
+        }, true);
+
+        // Gyroscope / Electronic Level Horizon tracking mouse
+        let rafId = null;
+        window.addEventListener('mousemove', (e) => {
+            if (!isViewfinderActive) return;
+            if (rafId) return;
+
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+
+                const normX = (e.clientX - cx) / cx;
+                const normY = (e.clientY - cy) / cy;
+
+                // Dynamic Horizon Tilt (-7.5 deg to +7.5 deg)
+                const tilt = normX * 7.5;
+                if (horizonLine) {
+                    horizonLine.style.transform = `rotate(${tilt.toFixed(2)}deg)`;
+                    if (Math.abs(tilt) < 0.65) {
+                        horizonLine.classList.add('is-level');
+                    } else {
+                        horizonLine.classList.remove('is-level');
+                    }
+                }
+
+                // Meter needle position
+                if (meterNeedle) {
+                    const needlePct = Math.min(88, Math.max(12, 50 + (normX * 36)));
+                    meterNeedle.style.left = `${needlePct.toFixed(1)}%`;
+                }
+
+                // Parallax shift on center reticle
+                if (centerReticle) {
+                    const px = (normX * 14).toFixed(1);
+                    const py = (normY * 14).toFixed(1);
+                    centerReticle.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+                }
+            });
+        });
+    }
+
+    initViewfinderHud();
 
 
 
