@@ -41,7 +41,7 @@
         }
 
         /* Modal overlays */
-        #changePwOverlay, #restoreOverlay, #addGalleryOverlay, #chatOverlay, #dbImportOverlay {
+        #changePwOverlay, #addGalleryOverlay, #chatOverlay, #dbImportOverlay {
             display: none;
             position: fixed;
             inset: 0;
@@ -51,7 +51,7 @@
             justify-content: center;
             padding: 1.5rem;
         }
-        #changePwOverlay.open, #restoreOverlay.open, #addGalleryOverlay.open, #chatOverlay.open, #dbImportOverlay.open {
+        #changePwOverlay.open, #addGalleryOverlay.open, #chatOverlay.open, #dbImportOverlay.open {
             display: flex;
         }
         .modal-box {
@@ -69,31 +69,6 @@
             margin: 0 0 1.25rem;
             font-size: 1.2rem;
         }
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-        .scan-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-        }
     </style>
 </head>
 
@@ -108,7 +83,6 @@
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button onclick="exportDB()" class="btn" style="width: auto; background: rgba(100,200,100,0.15); color: #7dda7d; border: 1px solid rgba(100,200,100,0.3); font-size: 0.85rem;" title="Komplette SQLite-Datenbank (.db) herunterladen">⬇ Backup exportieren (.db)</button>
                 <button onclick="openDBImportModal()" class="btn" style="width: auto; background: rgba(100,160,255,0.15); color: #7db8ff; border: 1px solid rgba(100,160,255,0.3); font-size: 0.85rem;" title="Datenbank aus einer .db-Datei wiederherstellen">⬆ Backup importieren (.db)</button>
-                <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 0.85rem;">🔄 Server-Scan & JSON</button>
                 <button onclick="showAddUser()" class="btn" style="width: auto; font-size: 0.85rem;">+ Neuer Benutzer</button>
             </div>
         </header>
@@ -218,57 +192,7 @@
         </div>
     </div>
 
-    <!-- Restore & Recovery Modal -->
-    <div id="restoreOverlay">
-        <div class="modal-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">Datenbank-Wiederherstellung</h3>
-                <button onclick="closeRestoreModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
-            </div>
-
-            <!-- Tabs -->
-            <div style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
-                <button class="tab-btn active" onclick="switchRestoreTab('scan')">📁 Server-Ordner verknüpfen</button>
-                <button class="tab-btn" onclick="switchRestoreTab('backups')">🕒 Server-Backups</button>
-                <button class="tab-btn" onclick="switchRestoreTab('import')">📥 JSON importieren</button>
-            </div>
-
-            <!-- Tab 1: Scan Server Assets -->
-            <div id="tab-scan" class="tab-content">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Scannt den Ordner <code>gallery/assets/</code> auf deinem Server nach vorhandenen Kunden-Galerien. Falls deine Benutzerliste überschrieben wurde, die Fotos aber noch auf dem Server liegen, kannst du sie hier mit 1 Klick wieder als Benutzer anlegen!
-                </p>
-                <button onclick="scanServerFolders()" class="btn" style="margin-bottom: 1.25rem; width: auto;">🔍 Server nach Galerie-Ordnern scannen</button>
-                <div id="scanResults"></div>
-            </div>
-
-            <!-- Tab 2: Server Backups -->
-            <div id="tab-backups" class="tab-content" style="display: none;">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Automatisch erstellte Sicherungskopien deiner Benutzerdatenbank auf dem Server:
-                </p>
-                <div id="backupList">Lade Backups...</div>
-            </div>
-
-            <!-- Tab 3: JSON Import -->
-            <div id="tab-import" class="tab-content" style="display: none;">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Falls du ein Backup (z. B. <code>users.js</code> oder <code>users_backup.json</code>) auf deinem Computer oder aus einem Hosting-Backup hast, kannst du es hier einfügen oder hochladen:
-                </p>
-                <div class="form-group">
-                    <label>JSON oder users.js Datei auswählen</label>
-                    <input type="file" id="importFileInput" accept=".json,.js" class="form-control" onchange="handleFileImport(event)">
-                </div>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label>Oder Inhalt direkt einfügen:</label>
-                    <textarea id="importTextInput" class="form-control" rows="6" placeholder='{"users": [ ... ]}' style="font-family: monospace; font-size: 0.8rem;"></textarea>
-                </div>
-                <button onclick="importDirectJSON()" class="btn" style="margin-top: 1rem;">Importieren & Speichern</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DB Import Modal -->
+<!-- DB Import Modal -->
     <div id="dbImportOverlay">
         <div class="modal-box" style="max-width: 480px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -347,11 +271,11 @@
                     <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">👥</div>
                     <h3 style="margin: 0 0 0.5rem; color: var(--text);">Keine Galerie-Benutzer vorhanden</h3>
                     <p style="margin: 0 0 1.5rem; max-width: 520px; margin-inline: auto; font-size: 0.95rem; line-height: 1.5;">
-                        Der Demo-Testbenutzer wurde erfolgreich gelöscht. Du kannst jetzt neue Kunden anlegen oder nach bereits hochgeladenen Foto-Ordnern auf deinem Server scannen.
+                        Du kannst jetzt neue Kunden anlegen oder ein Datenbank-Backup importieren.
                     </p>
                     <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                         <button onclick="showAddUser()" class="btn" style="width: auto;">+ Neuer Benutzer anlegen</button>
-                        <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent);">🔄 Vorhandene Ordner scannen / Backup laden</button>
+                        <button onclick="openDBImportModal()" class="btn" style="width: auto; background: rgba(100,160,255,0.15); color: #7db8ff; border: 1px solid rgba(100,160,255,0.3);">⬆ Backup importieren (.db)</button>
                     </div>
                 </div>
                 `;
@@ -770,9 +694,6 @@
         document.getElementById('changePwOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeChangePw();
         });
-        document.getElementById('restoreOverlay').addEventListener('click', function(e) {
-            if (e.target === this) closeRestoreModal();
-        });
         document.getElementById('dbImportOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeDBImportModal();
         });
@@ -890,213 +811,6 @@
                 btn.textContent = 'Importieren';
             }
         }
-
-        function downloadBackup() {
-            const dataStr = JSON.stringify(usersData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const dateStr = new Date().toISOString().split('T')[0];
-            a.href = url;
-            a.download = `photon_users_backup_${dateStr}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function openRestoreModal() {
-            document.getElementById('restoreOverlay').classList.add('open');
-            switchRestoreTab('scan');
-            scanServerFolders();
-            loadBackupsList();
-        }
-
-        function closeRestoreModal() {
-            document.getElementById('restoreOverlay').classList.remove('open');
-        }
-
-        function switchRestoreTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-
-            const btn = document.querySelector(`.tab-btn[onclick="switchRestoreTab('${tabId}')"]`);
-            if (btn) btn.classList.add('active');
-            const content = document.getElementById('tab-' + tabId);
-            if (content) content.style.display = 'block';
-        }
-
-        async function scanServerFolders() {
-            const resEl = document.getElementById('scanResults');
-            resEl.innerHTML = '<p style="color: var(--text-secondary);">Scanne gallery/assets/ auf dem Server...</p>';
-
-            try {
-                const res = await fetch('api/restore_users.php?action=scan_folders&t=' + Date.now());
-                const data = await res.json();
-
-                if (data.success && data.orphanFolders && data.orphanFolders.length > 0) {
-                    resEl.innerHTML = `
-                        <p style="color: #4caf50; font-weight: bold; margin-bottom: 0.75rem;">
-                            ✓ ${data.orphanFolders.length} vorhandene Galerie-Ordner gefunden!
-                        </p>
-                        ${data.orphanFolders.map(folder => `
-                            <div class="scan-card">
-                                <div>
-                                    <strong style="color: var(--text);">${folder.suggestedName}</strong>
-                                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
-                                        Ordner: <code>${folder.folder}</code> &bull; 📷 ${folder.imageCount} Bilder
-                                    </div>
-                                </div>
-                                <button onclick="promptRelinkFolder('${encodeURIComponent(JSON.stringify(folder))}')" class="btn" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;">
-                                    + Als Kunde anbinden
-                                </button>
-                            </div>
-                        `).join('')}
-                    `;
-                } else {
-                    resEl.innerHTML = `
-                        <p style="color: var(--text-secondary); font-style: italic;">
-                            Keine verwaisten Galerie-Ordner gefunden. Alle Ordner in <code>gallery/assets/</code> sind bereits mit Benutzern verknüpft (oder es wurden noch keine Kunden-Ordner hochgeladen).
-                        </p>
-                    `;
-                }
-            } catch (e) {
-                resEl.innerHTML = `<p style="color: var(--danger);">Fehler beim Scannen: ${e.message}</p>`;
-            }
-        }
-
-        async function promptRelinkFolder(folderJsonEncoded) {
-            const folder = JSON.parse(decodeURIComponent(folderJsonEncoded));
-            const name = prompt('Kunden-Name für diesen Ordner:', folder.suggestedName);
-            if (!name) return;
-            const username = prompt('Login-Benutzername:', folder.suggestedUsername);
-            if (!username) return;
-            const password = prompt('Passwort für diesen Kunden:', '');
-            if (!password) {
-                alert('Ein Passwort ist erforderlich.');
-                return;
-            }
-
-            try {
-                const res = await fetch('api/restore_users.php?action=relink_folder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        folder: folder.folder,
-                        name: name,
-                        username: username,
-                        password: password
-                    })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    alert(`Erfolgreich! Kunde "${name}" mit Ordner "${folder.folder}" wurde wiederhergestellt.`);
-                    await loadUsers();
-                    scanServerFolders();
-                } else {
-                    alert('Fehler: ' + (result.message || 'Unbekannt'));
-                }
-            } catch (e) {
-                alert('Netzwerkfehler: ' + e.message);
-            }
-        }
-
-        async function loadBackupsList() {
-            const listEl = document.getElementById('backupList');
-            try {
-                const res = await fetch('api/restore_users.php?action=list&t=' + Date.now());
-                const data = await res.json();
-
-                if (data.success && data.backups && data.backups.length > 0) {
-                    listEl.innerHTML = data.backups.map(b => `
-                        <div class="scan-card">
-                            <div>
-                                <strong style="color: var(--text);">${b.name}</strong>
-                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
-                                    ${b.time} &bull; 👥 ${b.userCount} Benutzer
-                                </div>
-                            </div>
-                            <button onclick="restoreBackupFile('${b.file}')" class="btn" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem; background: var(--accent);">
-                                Wiederherstellen
-                            </button>
-                        </div>
-                    `).join('');
-                } else {
-                    listEl.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">Noch keine automatischen Backups auf dem Server vorhanden.</p>';
-                }
-            } catch (e) {
-                listEl.innerHTML = `<p style="color: var(--danger);">Fehler: ${e.message}</p>`;
-            }
-        }
-
-        async function restoreBackupFile(file) {
-            if (!confirm(`Möchtest du das Backup "${file}" wirklich wiederherstellen? Die aktuelle Benutzerliste wird dabei ersetzt.`)) {
-                return;
-            }
-
-            try {
-                const res = await fetch('api/restore_users.php?action=restore', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file: file })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    alert(`Backup erfolgreich wiederhergestellt! (${result.userCount} Benutzer geladen)`);
-                    closeRestoreModal();
-                    await loadUsers();
-                } else {
-                    alert('Fehler: ' + (result.message || 'Unbekannt'));
-                }
-            } catch (e) {
-                alert('Netzwerkfehler: ' + e.message);
-            }
-        }
-
-        function handleFileImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('importTextInput').value = e.target.result;
-            };
-            reader.readAsText(file);
-        }
-
-        async function importDirectJSON() {
-            const text = document.getElementById('importTextInput').value.trim();
-            if (!text) {
-                alert('Bitte erst eine Datei auswählen oder JSON einfügen.');
-                return;
-            }
-
-            try {
-                let parsed = null;
-                // If wrapped in window.usersDatabase = ...
-                const match = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});?/);
-                if (match && match[1]) {
-                    parsed = JSON.parse(match[1]);
-                } else {
-                    parsed = JSON.parse(text);
-                }
-
-                if (!parsed || !Array.isArray(parsed.users)) {
-                    throw new Error('Das JSON enthält kein gültiges "users"-Array.');
-                }
-
-                if (!confirm(`Sicher? Es werden ${parsed.users.length} Benutzer importiert und gespeichert.`)) {
-                    return;
-                }
-
-                usersData = parsed;
-                renderUsers();
-                await saveUsers();
-                closeRestoreModal();
-                alert(`Erfolgreich! ${parsed.users.length} Benutzer wurden importiert.`);
-            } catch (e) {
-                alert('Fehler beim Parsen der Daten: ' + e.message);
-            }
-        }
-
         loadUsers();
     </script>
 </body>

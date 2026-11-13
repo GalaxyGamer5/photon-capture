@@ -495,10 +495,5 @@ function syncUsersJs(PDO $pdo) {
     $file = dirname(__DIR__) . '/gallery/data/users.js';
     @file_put_contents($file, $jsContent);
     @chmod($file, 0777);
-
-    // Keep backup JSON in sync
-    $backup = dirname(__DIR__) . '/gallery/data/users_backup.json';
-    @file_put_contents($backup, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    @chmod($backup, 0777);
 }
 
