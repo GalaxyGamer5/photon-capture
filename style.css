@@ -741,45 +741,6 @@ textarea {
     text-transform: uppercase;
 }
 
-/* Hover View Pill (Center Card Only) */
-.film-frame-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(11, 11, 11, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-}
-
-.camera-card.is-center:hover .film-frame-overlay {
-    opacity: 1;
-}
-
-.view-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(23, 23, 22, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-full);
-    transform: translateY(6px);
-    transition: transform var(--transition-fast), border-color var(--transition-fast);
-}
-
-.camera-card.is-center:hover .view-pill {
-    transform: translateY(0);
-    border-color: var(--accent-orange);
-}
-
 /* Film Bottom Bar */
 .film-footer {
     display: flex;

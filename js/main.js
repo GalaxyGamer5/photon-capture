@@ -568,7 +568,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (item.filename) {
             frameContent = `
                 <img src="assets/portfolio/${item.filename}" alt="${catLabel}" loading="lazy" draggable="false">
-                <div class="film-frame-overlay"></div>
             `;
         } else {
             frameContent = `

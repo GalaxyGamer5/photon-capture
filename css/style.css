@@ -739,24 +739,6 @@ textarea {
     text-transform: uppercase;
 }
 
-/* Hover View Pill (Center Card Only) */
-.film-frame-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(11, 11, 11, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-}
-
-.camera-card.is-center:hover .film-frame-overlay {
-    opacity: 1;
-}
-
 /* Film Bottom Bar */
 .film-footer {
     display: flex;
