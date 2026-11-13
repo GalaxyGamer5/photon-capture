@@ -218,9 +218,13 @@
         @media (max-width: 768px) {
             .inbox-layout {
                 grid-template-columns: 1fr;
-                grid-template-rows: 260px 1fr;
+                grid-template-rows: 240px 1fr;
+                height: calc(100vh - 140px);
             }
             .inbox-list { border-right: none; border-bottom: 1px solid var(--border); }
+            .detail-body { padding: 1.25rem 1rem; }
+            .detail-actions { padding: 0.75rem 1rem; flex-wrap: wrap; }
+            .btn-reply, .btn-delete-detail { flex: 1; text-align: center; }
         }
     </style>
 </head>

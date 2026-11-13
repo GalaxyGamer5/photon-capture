@@ -8,6 +8,15 @@
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/portal.css">
+    <style>
+        @media (max-width: 600px) {
+            .container { padding: 1.25rem !important; }
+            .success-card { padding: 2.25rem 1.25rem !important; }
+            .success-card h2 { font-size: 1.45rem !important; }
+            .btn-group { flex-direction: column; width: 100%; }
+            .btn-group a { width: 100%; text-align: center; }
+        }
+    </style>
 </head>
 
 <body>
@@ -16,7 +25,7 @@
             <a href="../index.html" class="brand-logo" style="justify-content: center;">PHOTON CAPTURE</a>
         </div>
 
-        <div style="background: #111111; border: 1px solid #282828; border-radius: 16px; padding: 3.5rem 2.5rem; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+        <div class="success-card" style="background: #111111; border: 1px solid #282828; border-radius: 16px; padding: 3.5rem 2.5rem; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
             <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 1.5rem;">✓</div>
             <span class="section-kicker">BESTÄTIGUNG</span>
             <h2 style="color: #ffffff; font-size: 1.75rem; margin-top: 0.5rem; margin-bottom: 1rem;">Zahlung erfolgreich!</h2>
@@ -24,7 +33,7 @@
                 Deine Zahlung wurde erfolgreich verarbeitet. Du erhältst in Kürze eine Bestätigung per E-Mail.
             </p>
 
-            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <div class="btn-group" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                 <a href="index.html" class="btn-primary" style="padding: 0.75rem 1.75rem; text-decoration: none;">Zum Kundenportal</a>
                 <a href="../index.html" class="btn-secondary" style="padding: 0.75rem 1.75rem; text-decoration: none;">Zur Startseite</a>
             </div>

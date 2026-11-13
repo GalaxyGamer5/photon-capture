@@ -283,12 +283,14 @@ body.viewfinder-active .site-header {
 
 .hero-headline {
     font-family: var(--font-heading);
-    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
+    font-size: clamp(2.1rem, 7.5vw, 4.75rem);
     font-weight: 700;
     line-height: 1.05;
     letter-spacing: -0.03em;
     color: #ffffff;
     margin-top: 0.5rem;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 /* ==========================================================================
@@ -630,7 +632,6 @@ body.viewfinder-active .site-header {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     will-change: transform, opacity, filter;
-    transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.45s ease, filter 0.45s ease;
     cursor: pointer;
 }
 
@@ -649,15 +650,14 @@ body.viewfinder-active .site-header {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    /* No CSS transition on border/shadow — driven continuously by JS for smooth glow */
     position: relative;
     overflow: hidden;
 }
 
-/* Active Center Card Glow & Highlight */
+/* Center card: glow driven by JS inline styles, only hover styles here */
 .camera-card.is-center .camera-card-inner {
-    border-color: rgba(224, 90, 43, 0.45);
-    box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.95), 0 0 35px -5px rgba(224, 90, 43, 0.22);
+    /* border-color and box-shadow set inline by update3DPositions() */
 }
 
 .camera-card:hover .camera-card-inner {
@@ -888,19 +888,6 @@ body.viewfinder-active .site-header {
     transition: width 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
-.roll-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 0.04em;
-}
-
-.roll-hint svg {
-    color: var(--accent-orange);
-}
-
 /* ==========================================================================
    PAKETE & PREISE SECTION
    ========================================================================== */
@@ -976,7 +963,7 @@ body.viewfinder-active .site-header {
 
 .testimonials-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: 1.5rem;
 }
 
@@ -1935,15 +1922,67 @@ body.viewfinder-active .site-header {
 }
 
 @media (max-width: 768px) {
+    :root {
+        --header-height: 64px;
+    }
+
+    /* iOS Safari prevent auto-zoom on input focus */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    .site-header {
+        height: 64px;
+    }
+
+    .site-header .container {
+        padding: 0 1rem;
+    }
+
+    .brand-logo {
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+    }
+
+    .main-nav {
+        gap: 0.75rem;
+    }
+
+    .nav-actions {
+        gap: 0.4rem;
+        margin-left: 0;
+    }
+
+    .viewfinder-toggle-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 10px;
+    }
+
+    .lang-toggle,
+    .portal-link {
+        padding: 0.25rem 0.4rem;
+        font-size: 11.5px;
+    }
+
+    .hamburger {
+        display: flex;
+        padding: 6px;
+    }
+
     .nav-links {
         display: none;
         position: fixed;
-        top: var(--header-height);
+        top: 64px;
         left: 0;
         width: 100%;
         background-color: #0b0b0b;
         flex-direction: column;
-        padding: 2.5rem 2rem;
+        padding: 2rem 1.5rem;
         gap: 1.5rem;
         border-bottom: 1px solid var(--border-hairline);
     }
@@ -1952,8 +1991,33 @@ body.viewfinder-active .site-header {
         display: flex;
     }
 
-    .hamburger {
-        display: flex;
+    .hero-section {
+        padding-top: 64px;
+        padding-bottom: 2.5rem;
+    }
+
+    .about-section,
+    .services-section,
+    .gallery-section,
+    .pricing-section,
+    .testimonials-section {
+        padding: 4rem 0;
+    }
+
+    .contact-section {
+        padding: 4.5rem 0;
+    }
+
+    .gallery-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .gallery-filters {
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
     }
 
     .pricing-row {
@@ -1969,6 +2033,10 @@ body.viewfinder-active .site-header {
     .pkg-price {
         grid-column: 2 / 3;
         text-align: left;
+    }
+
+    .testimonials-grid {
+        grid-template-columns: 1fr;
     }
 
     .editorial-gallery-grid {
@@ -2038,13 +2106,696 @@ body.viewfinder-active .site-header {
         padding: 2rem 1.5rem;
     }
 
+    .booking-page {
+        padding-top: calc(64px + 1.5rem);
+        padding-bottom: 4rem;
+    }
+
+    .booking-title {
+        font-size: clamp(2rem, 7vw, 2.75rem);
+    }
+
     .booking-stepper {
         gap: 1.5rem;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .booking-stepper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .step-item {
+        white-space: nowrap;
+    }
+
+    .booking-grid {
+        gap: 2.5rem;
+    }
+
+    .price-summary-card {
+        padding: 1.5rem 1.25rem;
     }
 
     .date-time-row {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .booking-btn-row {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .booking-btn-row .btn,
+    .booking-btn-row button,
+    .booking-btn-row .btn-primary {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .footer-links {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .camera-roll-stage {
+        min-height: 360px;
+        margin-top: 1rem;
+    }
+
+    .camera-roll-viewport {
+        height: 360px;
+        perspective: 750px;
+    }
+
+    .camera-card {
+        width: 220px;
+        height: 315px;
+        top: -157px;
+        left: -110px;
+    }
+
+    .camera-card-inner {
+        padding: 8px 8px 10px 8px;
+        border-radius: 12px;
+    }
+
+    .film-frame-header {
+        padding: 0 4px 6px 4px;
+        font-size: 8px;
+    }
+
+    .film-frame-footer {
+        padding: 6px 4px 0 4px;
+        font-size: 8px;
+    }
+
+    .camera-roll-stage::before,
+    .camera-roll-stage::after {
+        width: 24px;
+    }
+
+    .roll-nav-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .roll-nav-btn.prev {
+        left: 0.25rem;
+    }
+
+    .roll-nav-btn.next {
+        right: 0.25rem;
+    }
+
+    .camera-roll-footer {
+        margin-top: 1.25rem;
+        gap: 0.75rem;
+    }
+
+    .roll-counter-box {
+        gap: 0.5rem;
+    }
+
+    .roll-film-label {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+
+    .roll-counter {
+        font-size: 11.5px;
+    }
+
+    .service-row {
+        grid-template-columns: 32px 1fr;
+        row-gap: 0.4rem;
+        padding: 1.25rem 0;
+    }
+
+    .service-name {
+        font-size: 1.35rem;
+    }
+
+    .pricing-row {
+        grid-template-columns: 32px 1fr;
+        row-gap: 0.4rem;
+        padding: 1.25rem 0;
+    }
+
+    .pkg-title {
+        font-size: 1.3rem;
+    }
+
+    .pkg-price {
+        font-size: 1.3rem;
+    }
+
+    .contact-card-box {
+        padding: 1.5rem 1.15rem;
+    }
+
+    .cookie-banner {
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: calc(100vw - 2rem);
+        padding: 1.25rem 1rem;
+    }
+
+    .cookie-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .cookie-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .days-grid {
+        gap: 0.25rem;
+    }
+
+    .day-cell {
+        font-size: 12.5px;
+        min-height: 34px;
+    }
+
+    .price-summary-card {
+        padding: 1.25rem 1rem;
+    }
+
+    .summary-row.total-row {
+        font-size: 1.4rem;
+    }
+
+    .calendar-legend {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .slots-pill-group {
+        gap: 0.5rem;
+    }
+
+    .slot-pill {
+        padding: 0.5rem 1rem;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 380px) {
+    .brand-logo {
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+    }
+
+    .nav-actions {
+        gap: 0.25rem;
+    }
+
+    .viewfinder-toggle-btn {
+        padding: 0.2rem 0.35rem;
+        font-size: 9px;
+    }
+
+    .vf-toggle-badge {
+        font-size: 8px;
+    }
+
+    .camera-card {
+        width: 195px;
+        height: 285px;
+        top: -142px;
+        left: -97px;
+    }
+
+    .camera-roll-viewport {
+        height: 320px;
+        perspective: 640px;
+    }
+
+    .camera-roll-stage {
+        min-height: 320px;
+    }
+}
+
+/* ==========================================================================
+   CAMERA VIEWFINDER / RANGEFINDER HUD MODE
+   ========================================================================== */
+
+.viewfinder-toggle-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    opacity: 0.85;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all var(--transition-fast);
+}
+
+.viewfinder-toggle-btn:hover,
+body.viewfinder-active .viewfinder-toggle-btn {
+    opacity: 1;
+    color: var(--accent-orange);
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 12px rgba(224, 90, 43, 0.35);
+}
+
+.vf-toggle-badge {
+    font-family: var(--font-heading), monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+}
+
+.roll-hud-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+    font-family: var(--font-heading), monospace;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.roll-hud-btn:hover,
+body.viewfinder-active .roll-hud-btn {
+    color: var(--accent-orange);
+    border-color: var(--accent-orange);
+    background: rgba(224, 90, 43, 0.1);
+}
+
+/* Main Viewfinder HUD Container */
+.viewfinder-hud {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    color: rgba(255, 255, 255, 0.85);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body.viewfinder-active .viewfinder-hud {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Rangefinder Framing Corner Brackets */
+.vf-frame-corners {
+    position: absolute;
+    inset: 24px;
+    pointer-events: none;
+}
+
+.vf-corner {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-color: rgba(255, 255, 255, 0.45);
+    border-style: solid;
+    pointer-events: none;
+    transition: border-color 0.2s ease;
+}
+
+body.viewfinder-active .vf-corner {
+    border-color: rgba(224, 90, 43, 0.6);
+}
+
+.vf-corner.tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.vf-corner.tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.vf-corner.bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.vf-corner.br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* Top Status Bar */
+.vf-top-bar {
+    position: absolute;
+    top: 28px;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.vf-top-left,
+.vf-top-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.vf-rec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #ff334b;
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(255, 51, 75, 0.6);
+}
+
+.vf-rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff334b;
+    animation: vf-pulse-dot 1.2s infinite ease-in-out;
+}
+
+@keyframes vf-pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+.vf-codec, .vf-res, .vf-sd {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.vf-cam-model {
+    font-weight: 700;
+    color: var(--accent-orange);
+    letter-spacing: 0.16em;
+    text-shadow: 0 0 10px rgba(224, 90, 43, 0.4);
+}
+
+.vf-battery {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.vf-bat-level {
+    display: inline-block;
+    width: 14px;
+    height: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 1px;
+    position: relative;
+    background: linear-gradient(to right, #00ff66 85%, transparent 85%);
+}
+
+.vf-close-btn {
+    pointer-events: auto;
+    background: rgba(23, 23, 22, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.vf-close-btn:hover {
+    background: #e05a2b;
+    border-color: #e05a2b;
+    color: #ffffff;
+}
+
+/* Center Reticle & Electronic Horizon */
+.vf-center-reticle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: transform 0.15s ease-out;
+}
+
+/* Dynamic Level Horizon Line */
+.vf-horizon-line {
+    position: absolute;
+    width: 190px;
+    height: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.08s ease-out, filter 0.2s ease;
+}
+
+.vf-horizon-bar {
+    width: 60px;
+    height: 1.5px;
+    background: rgba(255, 255, 255, 0.35);
+    transition: background 0.2s ease;
+}
+
+.vf-horizon-pip {
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* When camera is horizontally LEVEL (green cue) */
+.vf-horizon-line.is-level .vf-horizon-bar {
+    background: #00ff66;
+    box-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+
+.vf-horizon-line.is-level .vf-horizon-pip {
+    border-color: #00ff66;
+    background: #00ff66;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.8);
+}
+
+/* Autofocus Brackets */
+.vf-af-brackets {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vf-b {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: rgba(255, 255, 255, 0.45);
+    border-style: solid;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.vf-b.tl { top: 0; left: 0; border-width: 1.5px 0 0 1.5px; }
+.vf-b.tr { top: 0; right: 0; border-width: 1.5px 1.5px 0 0; }
+.vf-b.bl { bottom: 0; left: 0; border-width: 0 0 1.5px 1.5px; }
+.vf-b.br { bottom: 0; right: 0; border-width: 0 1.5px 1.5px 0; }
+
+.vf-crosshair {
+    font-size: 18px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 300;
+}
+
+/* Bottom Camera Exposure Bar */
+.vf-bottom-bar {
+    position: absolute;
+    bottom: 28px;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+}
+
+.vf-meter-scale {
+    position: relative;
+    padding-bottom: 12px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.vf-meter-label {
+    font-size: 9.5px;
+    color: var(--accent-orange);
+    font-weight: 700;
+    margin-right: 0.4rem;
+}
+
+.vf-scale-ticks {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+}
+
+.vf-meter-needle {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--accent-orange);
+    transition: left 0.15s ease-out;
+}
+
+.vf-exposure-readout {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    background: rgba(15, 15, 14, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.vf-param {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.vf-param-label {
+    font-size: 8.5px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.12em;
+}
+
+.vf-param span:last-child {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+}
+
+.vf-bottom-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+}
+
+.vf-peaking-badge {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+}
+
+.vf-peaking-color {
+    color: var(--accent-orange);
+    font-weight: 800;
+}
+
+/* Focus Peaking Highlight effect on photos/cards when HUD is active */
+body.viewfinder-active .camera-card:hover .camera-card-inner,
+body.viewfinder-active .gallery-item:hover,
+body.viewfinder-active .photographer-frame:hover {
+    outline: 2px solid var(--accent-orange) !important;
+    box-shadow: 0 0 30px rgba(224, 90, 43, 0.8) !important;
+}
+
+/* Autofocus Lock Confirmation (turns neon-green with slight snap) */
+.vf-af-brackets.is-locked .vf-b {
+    border-color: #00ff66 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.8) !important;
+    transform: scale(0.92);
+}
+
+.vf-af-brackets.is-locked .vf-crosshair {
+    color: #00ff66 !important;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.9);
+}
+
+@media (max-width: 768px) {
+    .vf-frame-corners {
+        top: max(10px, env(safe-area-inset-top));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        left: max(10px, env(safe-area-inset-left));
+        right: max(10px, env(safe-area-inset-right));
+    }
+    .vf-top-bar {
+        top: max(14px, calc(env(safe-area-inset-top) + 6px));
+        left: max(14px, env(safe-area-inset-left));
+        right: max(14px, env(safe-area-inset-right));
+        font-size: 9.5px;
+    }
+    .vf-top-left .vf-codec,
+    .vf-top-left .vf-res,
+    .vf-bottom-right { display: none; }
+    .vf-bottom-bar {
+        bottom: max(14px, calc(env(safe-area-inset-bottom) + 6px));
+        left: max(14px, env(safe-area-inset-left));
+        right: max(14px, env(safe-area-inset-right));
+        justify-content: center;
+    }
+    .vf-exposure-readout {
+        gap: 0.85rem;
+        padding: 0.4rem 0.85rem;
+        font-size: 10.5px;
+    }
+    .vf-param span:last-child {
+        font-size: 11.5px;
+    }
+    .vf-meter-scale { display: none; }
+    .vf-center-reticle {
+        width: 170px;
+        height: 170px;
+    }
+    .vf-horizon-line {
+        width: 140px;
+    }
+    .vf-horizon-bar {
+        width: 42px;
+    }
+    .vf-af-brackets {
+        width: 60px;
+        height: 60px;
     }
 }

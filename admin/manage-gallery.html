@@ -236,8 +236,13 @@
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
             .header > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
             .upload-area { padding: 1.5rem 1rem; }
+            #batch-toolbar { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; }
+            #batch-toolbar span { flex-basis: 100%; margin-bottom: 0.25rem; }
+            #batch-toolbar button { flex: 1; text-align: center; }
+            .backup-bar { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+            .backup-bar button { width: 100%; }
         }
     </style>
 </head>

@@ -149,6 +149,32 @@
         .delete-btn:hover {
             background: rgba(255, 77, 77, 0.2);
         }
+
+        @media (max-width: 600px) {
+            .portfolio-container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            .upload-form {
+                padding: 1.5rem 1rem;
+            }
+            .portfolio-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            .portfolio-item img {
+                height: 140px;
+            }
+            .portfolio-info {
+                padding: 0.6rem;
+            }
+            .picker-box {
+                padding: 1.25rem 1rem;
+            }
+            .picker-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>

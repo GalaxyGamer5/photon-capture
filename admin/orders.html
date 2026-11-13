@@ -252,7 +252,9 @@
         /* ── Responsive ────────── */
         @media (max-width: 768px) {
             td:nth-child(3), th:nth-child(3) { display: none; } /* hide date */
-            .modal-box { padding: 1.8rem; }
+            .modal-box { padding: 1.5rem 1.15rem; max-width: 94vw; }
+            .modal-actions { flex-direction: column; gap: 0.5rem; }
+            .modal-actions .btn { width: 100%; }
         }
     </style>
 </head>

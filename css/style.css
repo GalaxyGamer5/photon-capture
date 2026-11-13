@@ -283,12 +283,14 @@ body.viewfinder-active .site-header {
 
 .hero-headline {
     font-family: var(--font-heading);
-    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
+    font-size: clamp(2.1rem, 7.5vw, 4.75rem);
     font-weight: 700;
     line-height: 1.05;
     letter-spacing: -0.03em;
     color: #ffffff;
     margin-top: 0.5rem;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 /* ==========================================================================
@@ -961,7 +963,7 @@ body.viewfinder-active .site-header {
 
 .testimonials-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: 1.5rem;
 }
 
@@ -1920,15 +1922,67 @@ body.viewfinder-active .site-header {
 }
 
 @media (max-width: 768px) {
+    :root {
+        --header-height: 64px;
+    }
+
+    /* iOS Safari prevent auto-zoom on input focus */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    .site-header {
+        height: 64px;
+    }
+
+    .site-header .container {
+        padding: 0 1rem;
+    }
+
+    .brand-logo {
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+    }
+
+    .main-nav {
+        gap: 0.75rem;
+    }
+
+    .nav-actions {
+        gap: 0.4rem;
+        margin-left: 0;
+    }
+
+    .viewfinder-toggle-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 10px;
+    }
+
+    .lang-toggle,
+    .portal-link {
+        padding: 0.25rem 0.4rem;
+        font-size: 11.5px;
+    }
+
+    .hamburger {
+        display: flex;
+        padding: 6px;
+    }
+
     .nav-links {
         display: none;
         position: fixed;
-        top: var(--header-height);
+        top: 64px;
         left: 0;
         width: 100%;
         background-color: #0b0b0b;
         flex-direction: column;
-        padding: 2.5rem 2rem;
+        padding: 2rem 1.5rem;
         gap: 1.5rem;
         border-bottom: 1px solid var(--border-hairline);
     }
@@ -1937,8 +1991,33 @@ body.viewfinder-active .site-header {
         display: flex;
     }
 
-    .hamburger {
-        display: flex;
+    .hero-section {
+        padding-top: 64px;
+        padding-bottom: 2.5rem;
+    }
+
+    .about-section,
+    .services-section,
+    .gallery-section,
+    .pricing-section,
+    .testimonials-section {
+        padding: 4rem 0;
+    }
+
+    .contact-section {
+        padding: 4.5rem 0;
+    }
+
+    .gallery-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .gallery-filters {
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
     }
 
     .pricing-row {
@@ -1954,6 +2033,10 @@ body.viewfinder-active .site-header {
     .pkg-price {
         grid-column: 2 / 3;
         text-align: left;
+    }
+
+    .testimonials-grid {
+        grid-template-columns: 1fr;
     }
 
     .editorial-gallery-grid {
@@ -2023,14 +2106,256 @@ body.viewfinder-active .site-header {
         padding: 2rem 1.5rem;
     }
 
+    .booking-page {
+        padding-top: calc(64px + 1.5rem);
+        padding-bottom: 4rem;
+    }
+
+    .booking-title {
+        font-size: clamp(2rem, 7vw, 2.75rem);
+    }
+
     .booking-stepper {
         gap: 1.5rem;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .booking-stepper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .step-item {
+        white-space: nowrap;
+    }
+
+    .booking-grid {
+        gap: 2.5rem;
+    }
+
+    .price-summary-card {
+        padding: 1.5rem 1.25rem;
     }
 
     .date-time-row {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .booking-btn-row {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .booking-btn-row .btn,
+    .booking-btn-row button,
+    .booking-btn-row .btn-primary {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .footer-links {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .camera-roll-stage {
+        min-height: 360px;
+        margin-top: 1rem;
+    }
+
+    .camera-roll-viewport {
+        height: 360px;
+        perspective: 750px;
+    }
+
+    .camera-card {
+        width: 220px;
+        height: 315px;
+        top: -157px;
+        left: -110px;
+    }
+
+    .camera-card-inner {
+        padding: 8px 8px 10px 8px;
+        border-radius: 12px;
+    }
+
+    .film-frame-header {
+        padding: 0 4px 6px 4px;
+        font-size: 8px;
+    }
+
+    .film-frame-footer {
+        padding: 6px 4px 0 4px;
+        font-size: 8px;
+    }
+
+    .camera-roll-stage::before,
+    .camera-roll-stage::after {
+        width: 24px;
+    }
+
+    .roll-nav-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .roll-nav-btn.prev {
+        left: 0.25rem;
+    }
+
+    .roll-nav-btn.next {
+        right: 0.25rem;
+    }
+
+    .camera-roll-footer {
+        margin-top: 1.25rem;
+        gap: 0.75rem;
+    }
+
+    .roll-counter-box {
+        gap: 0.5rem;
+    }
+
+    .roll-film-label {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+
+    .roll-counter {
+        font-size: 11.5px;
+    }
+
+    .service-row {
+        grid-template-columns: 32px 1fr;
+        row-gap: 0.4rem;
+        padding: 1.25rem 0;
+    }
+
+    .service-name {
+        font-size: 1.35rem;
+    }
+
+    .pricing-row {
+        grid-template-columns: 32px 1fr;
+        row-gap: 0.4rem;
+        padding: 1.25rem 0;
+    }
+
+    .pkg-title {
+        font-size: 1.3rem;
+    }
+
+    .pkg-price {
+        font-size: 1.3rem;
+    }
+
+    .contact-card-box {
+        padding: 1.5rem 1.15rem;
+    }
+
+    .cookie-banner {
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: calc(100vw - 2rem);
+        padding: 1.25rem 1rem;
+    }
+
+    .cookie-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .cookie-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .days-grid {
+        gap: 0.25rem;
+    }
+
+    .day-cell {
+        font-size: 12.5px;
+        min-height: 34px;
+    }
+
+    .price-summary-card {
+        padding: 1.25rem 1rem;
+    }
+
+    .summary-row.total-row {
+        font-size: 1.4rem;
+    }
+
+    .calendar-legend {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .slots-pill-group {
+        gap: 0.5rem;
+    }
+
+    .slot-pill {
+        padding: 0.5rem 1rem;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 380px) {
+    .brand-logo {
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+    }
+
+    .nav-actions {
+        gap: 0.25rem;
+    }
+
+    .viewfinder-toggle-btn {
+        padding: 0.2rem 0.35rem;
+        font-size: 9px;
+    }
+
+    .vf-toggle-badge {
+        font-size: 8px;
+    }
+
+    .camera-card {
+        width: 195px;
+        height: 285px;
+        top: -142px;
+        left: -97px;
+    }
+
+    .camera-roll-viewport {
+        height: 320px;
+        perspective: 640px;
+    }
+
+    .camera-roll-stage {
+        min-height: 320px;
     }
 }
 
@@ -2429,12 +2754,48 @@ body.viewfinder-active .photographer-frame:hover {
 }
 
 @media (max-width: 768px) {
-    .vf-frame-corners { inset: 12px; }
-    .vf-top-bar { top: 16px; left: 16px; right: 16px; font-size: 9.5px; }
+    .vf-frame-corners {
+        top: max(10px, env(safe-area-inset-top));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        left: max(10px, env(safe-area-inset-left));
+        right: max(10px, env(safe-area-inset-right));
+    }
+    .vf-top-bar {
+        top: max(14px, calc(env(safe-area-inset-top) + 6px));
+        left: max(14px, env(safe-area-inset-left));
+        right: max(14px, env(safe-area-inset-right));
+        font-size: 9.5px;
+    }
     .vf-top-left .vf-codec,
     .vf-top-left .vf-res,
     .vf-bottom-right { display: none; }
-    .vf-bottom-bar { bottom: 16px; left: 16px; right: 16px; }
-    .vf-exposure-readout { gap: 0.85rem; padding: 0.4rem 0.85rem; font-size: 11px; }
+    .vf-bottom-bar {
+        bottom: max(14px, calc(env(safe-area-inset-bottom) + 6px));
+        left: max(14px, env(safe-area-inset-left));
+        right: max(14px, env(safe-area-inset-right));
+        justify-content: center;
+    }
+    .vf-exposure-readout {
+        gap: 0.85rem;
+        padding: 0.4rem 0.85rem;
+        font-size: 10.5px;
+    }
+    .vf-param span:last-child {
+        font-size: 11.5px;
+    }
     .vf-meter-scale { display: none; }
+    .vf-center-reticle {
+        width: 170px;
+        height: 170px;
+    }
+    .vf-horizon-line {
+        width: 140px;
+    }
+    .vf-horizon-bar {
+        width: 42px;
+    }
+    .vf-af-brackets {
+        width: 60px;
+        height: 60px;
+    }
 }
