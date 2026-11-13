@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const card = document.createElement('div');
             card.className = `gallery-card ${isTall ? 'tall' : 'square'}`;
             card.setAttribute('data-category', img.category);
-            card.innerHTML = `
+                card.innerHTML = `
                 <div class="gallery-card-inner">
                     <img src="assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
                 </div>
@@ -582,6 +582,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         }
 
+        // Build film-footer meta line from real EXIF or fall back to aesthetic placeholder
+        const focalStr   = item.focal_length  || '35mm';
+        const isoStr     = item.iso           || 'ISO 400';
+        const apertureStr = item.aperture     || null;
+        const shutterStr  = item.shutter_speed || null;
+        // Compose a compact line: ISO · focal · aperture · shutter (omit nulls)
+        const metaParts = [isoStr, focalStr, apertureStr, shutterStr].filter(Boolean);
+        const filmMeta  = metaParts.join(' · ');
+
         card.innerHTML = `
             <div class="camera-card-inner">
                 <div class="film-header">
@@ -594,7 +603,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="film-footer">
                     <span class="film-dots">••••</span>
-                    <span class="film-code">ISO 400 · 35MM</span>
+                    <span class="film-code">${filmMeta}</span>
                     <span class="film-dots">••••</span>
                 </div>
             </div>

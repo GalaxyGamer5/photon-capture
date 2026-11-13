@@ -98,8 +98,17 @@ function initSchema(PDO $pdo) {
         id VARCHAR(100) PRIMARY KEY,
         filename VARCHAR(255) NOT NULL,
         category VARCHAR(100) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        focal_length VARCHAR(50) DEFAULT NULL,
+        aperture VARCHAR(50) DEFAULT NULL,
+        iso VARCHAR(50) DEFAULT NULL,
+        shutter_speed VARCHAR(50) DEFAULT NULL,
+        camera_model VARCHAR(100) DEFAULT NULL
     )");
+    // Migrate: add EXIF columns to existing databases that don't have them
+    foreach (['focal_length', 'aperture', 'iso', 'shutter_speed', 'camera_model'] as $col) {
+        try { $pdo->exec("ALTER TABLE portfolio ADD COLUMN {$col} VARCHAR(100) DEFAULT NULL"); } catch (Exception $e) {}
+    }
 
     // 4. Inquiries table
     $pdo->exec("CREATE TABLE IF NOT EXISTS inquiries (
