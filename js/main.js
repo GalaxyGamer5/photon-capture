@@ -1,84 +1,20 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- Load Dynamic Portfolio ---
-    function renderEditorialGallery(images) {
-        const gallery = document.getElementById('editorialGallery');
-        if (!gallery || !images || images.length === 0) return;
+    // --- 3D Camera Roll / Dynamic Portfolio ---
+    let portfolioImages = [];
+    const cameraRollStage = document.getElementById('cameraRollStage');
 
-        const numCols = 4;
-        const cols = Array.from({ length: numCols }, (_, i) => {
-            const colDiv = document.createElement('div');
-            colDiv.className = 'gallery-col';
-            colDiv.dataset.col = i + 1;
-            return colDiv;
-        });
-
-        const colWeights = [0, 0, 0, 0];
-
-        images.forEach((img) => {
-            let targetCol = 0;
-            let minWeight = colWeights[0];
-            for (let c = 1; c < numCols; c++) {
-                if (colWeights[c] < minWeight) {
-                    minWeight = colWeights[c];
-                    targetCol = c;
-                }
-            }
-
-            let isTall = false;
-            if (colWeights[targetCol] === 0) {
-                isTall = (targetCol === 0 || targetCol === 3);
-            } else if (colWeights[targetCol] === 2) {
-                isTall = (targetCol === 1 || targetCol === 2);
-            } else {
-                isTall = false;
-            }
-
-            const card = document.createElement('div');
-            card.className = `gallery-card ${isTall ? 'tall' : 'square'}`;
-            card.setAttribute('data-category', img.category);
-            card.innerHTML = `
-                <div class="gallery-card-inner">
-                    <img src="assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
-                </div>
-            `;
-
-            cols[targetCol].appendChild(card);
-            colWeights[targetCol] += (isTall ? 2 : 1);
-        });
-
-        gallery.innerHTML = '';
-        cols.forEach(col => gallery.appendChild(col));
-    }
-
-    const galleryGrid = document.querySelector('.gallery-grid');
-    const editorialGrid = document.getElementById('editorialGallery');
-
-    if (galleryGrid || editorialGrid) {
+    if (cameraRollStage) {
         try {
             const response = await fetch('api/get-portfolio.php?t=' + Date.now());
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.images && data.images.length > 0) {
-                    if (editorialGrid) {
-                        renderEditorialGallery(data.images);
-                    }
-                    if (galleryGrid) {
-                        galleryGrid.innerHTML = '';
-                        data.images.forEach(img => {
-                            const div = document.createElement('div');
-                            div.className = 'gallery-item show';
-                            div.setAttribute('data-category', img.category);
-                            const image = document.createElement('img');
-                            image.src = `assets/portfolio/${img.filename}`;
-                            image.alt = img.category;
-                            image.loading = 'lazy';
-                            div.appendChild(image);
-                            galleryGrid.appendChild(div);
-                        });
-                    }
+                    portfolioImages = data.images;
                 }
             }
-        } catch(e) { console.error("Error loading dynamic portfolio:", e); }
+        } catch(e) {
+            console.error("Error loading dynamic portfolio:", e);
+        }
     }
 
     // --- Load Dynamic Pricing ---
@@ -517,192 +453,454 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // --- Gallery Filtering ---
-    const filterBtns = document.querySelectorAll('.filter-btn, .filter-tab');
-    const galleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
+    // ==========================================================================
+    // 3D CAMERA ROLL / FILMSTRIP CAROUSEL (35MM CINEMA AESTHETIC)
+    // ==========================================================================
 
-    const activateFilter = (filterValue) => {
+    let currentRollFilter = 'all';
+    let filteredRollImages = [];
+    let activeRollIndex = 0;
+    let isRollDragging = false;
+    let rollStartX = 0;
+    let rollDragDeltaX = 0;
+    let rollHasDragged = false;
+    let rollWheelCooldown = false;
+
+    // High quality aesthetic fallback cards when portfolio has no uploaded images yet
+    const fallbackPortfolio = [
+        { id: 1, filename: '', category: 'portrait', label: 'Porträt Noir' },
+        { id: 2, filename: '', category: 'event', label: 'Festival of Lights' },
+        { id: 3, filename: '', category: 'portrait', label: 'Studio Noir' },
+        { id: 4, filename: '', category: 'pet', label: 'Golden Retriever' },
+        { id: 5, filename: '', category: 'event', label: 'Corporate Gala' },
+        { id: 6, filename: '', category: 'pet', label: 'Feline Grace' },
+        { id: 7, filename: '', category: 'portrait', label: 'Natural Light' },
+        { id: 8, filename: '', category: 'event', label: 'Summer Wedding' }
+    ];
+
+    const categoryLabels = {
+        all: 'Portfolio',
+        portrait: 'Porträt',
+        event: 'Event',
+        pet: 'Tier'
+    };
+
+    function createCameraCard(item, index) {
+        const card = document.createElement('div');
+        card.className = 'camera-card';
+        card.dataset.index = index;
+        card.dataset.category = item.category;
+
+        const expNumber = String(index + 1).padStart(2, '0');
+        const catLabel = categoryLabels[item.category] || item.category;
+
+        let frameContent = '';
+        if (item.filename) {
+            frameContent = `
+                <img src="assets/portfolio/${item.filename}" alt="${catLabel}" loading="lazy" draggable="false">
+                <div class="film-frame-overlay">
+                    <span class="view-pill">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        Vollbild
+                    </span>
+                </div>
+            `;
+        } else {
+            frameContent = `
+                <div class="film-placeholder">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>${item.label || 'FOTO · ' + catLabel.toUpperCase()}</span>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="camera-card-inner">
+                <div class="film-header">
+                    <span class="film-exp">EXP ${expNumber}</span>
+                    <span class="film-brand">PHOTON · 400</span>
+                    <span class="film-badge">${catLabel}</span>
+                </div>
+                <div class="film-frame">
+                    ${frameContent}
+                </div>
+                <div class="film-footer">
+                    <span class="film-dots">••••</span>
+                    <span class="film-code">ISO 400 · 35MM</span>
+                    <span class="film-dots">••••</span>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', () => {
+            if (rollHasDragged) return;
+            const cardIdx = parseInt(card.dataset.index, 10);
+            if (cardIdx === activeRollIndex) {
+                const img = card.querySelector('img');
+                if (img && img.src) {
+                    openPortfolioLightbox(img);
+                }
+            } else {
+                goToRollSlide(cardIdx);
+            }
+        });
+
+        return card;
+    }
+
+    function update3DPositions(dragOffsetRatio = 0) {
+        const track = document.getElementById('cameraRollTrack');
+        if (!track) return;
+        const cards = track.querySelectorAll('.camera-card');
+        if (!cards.length) return;
+
+        const isMobile = window.innerWidth <= 640;
+        const isTablet = window.innerWidth <= 992 && !isMobile;
+
+        const stepX = isMobile ? 165 : (isTablet ? 210 : 255);
+        const zStep = isMobile ? 70 : (isTablet ? 95 : 120);
+        const baseRot = isMobile ? 18 : (isTablet ? 23 : 28);
+
+        const effectiveCenter = activeRollIndex - dragOffsetRatio;
+
+        cards.forEach((card) => {
+            const idx = parseInt(card.dataset.index, 10);
+            const dist = idx - effectiveCenter;
+            const absDist = Math.abs(dist);
+
+            if (absDist > 3.8) {
+                card.style.opacity = '0';
+                card.style.visibility = 'hidden';
+                card.style.pointerEvents = 'none';
+                card.classList.remove('is-center');
+                return;
+            }
+
+            card.style.visibility = 'visible';
+
+            const sign = dist === 0 ? 0 : Math.sign(dist);
+            const translateX = dist * stepX;
+            const translateZ = -absDist * zStep;
+            const rotateY = -sign * (baseRot + Math.min(8, absDist * 3));
+            const scale = Math.max(0.65, 1.05 - absDist * 0.12);
+            const opacity = Math.max(0, 1 - absDist * 0.28);
+            const zIndex = Math.round(100 - absDist * 15);
+            const brightness = Math.max(0.35, 1 - absDist * 0.25);
+
+            card.style.transform = `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+            card.style.opacity = opacity.toFixed(3);
+            card.style.zIndex = zIndex;
+            card.style.filter = `brightness(${brightness.toFixed(2)})`;
+            card.style.pointerEvents = 'auto';
+
+            if (absDist < 0.45) {
+                card.classList.add('is-center');
+            } else {
+                card.classList.remove('is-center');
+            }
+        });
+
+        updateRollControls();
+    }
+
+    function updateRollControls() {
+        const total = filteredRollImages.length;
+        const currentEl = document.getElementById('rollCurrent');
+        const totalEl = document.getElementById('rollTotal');
+        const prevBtn = document.getElementById('rollPrevBtn');
+        const nextBtn = document.getElementById('rollNextBtn');
+        const scrubberBar = document.getElementById('rollScrubberBar');
+
+        if (currentEl) currentEl.textContent = String(activeRollIndex + 1).padStart(2, '0');
+        if (totalEl) totalEl.textContent = String(total).padStart(2, '0');
+
+        if (prevBtn) {
+            prevBtn.disabled = (activeRollIndex <= 0);
+            prevBtn.classList.toggle('disabled', activeRollIndex <= 0);
+        }
+        if (nextBtn) {
+            nextBtn.disabled = (activeRollIndex >= total - 1);
+            nextBtn.classList.toggle('disabled', activeRollIndex >= total - 1);
+        }
+
+        if (scrubberBar && total > 0) {
+            const percent = total <= 1 ? 100 : (activeRollIndex / (total - 1)) * 100;
+            scrubberBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+        }
+    }
+
+    function goToRollSlide(targetIndex) {
+        if (!filteredRollImages.length) return;
+        activeRollIndex = Math.max(0, Math.min(filteredRollImages.length - 1, targetIndex));
+        update3DPositions(0);
+    }
+
+    function renderCameraRoll(filterValue = 'all') {
+        currentRollFilter = filterValue;
+        const track = document.getElementById('cameraRollTrack');
+        if (!track) return;
+
+        const source = (portfolioImages && portfolioImages.length > 0) ? portfolioImages : fallbackPortfolio;
+        filteredRollImages = (filterValue === 'all')
+            ? [...source]
+            : source.filter(item => item.category === filterValue);
+
+        track.innerHTML = '';
+
+        if (filteredRollImages.length === 0) {
+            track.innerHTML = `
+                <div style="position: absolute; transform: translate(-50%, -50%); text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; letter-spacing: 0.05em;">
+                    Keine Fotos in dieser Kategorie vorhanden.
+                </div>
+            `;
+            updateRollControls();
+            return;
+        }
+
+        filteredRollImages.forEach((item, index) => {
+            const card = createCameraCard(item, index);
+            track.appendChild(card);
+        });
+
+        activeRollIndex = 0;
+        update3DPositions(0);
+    }
+
+    function initCameraRollDrag() {
+        const viewport = document.getElementById('cameraRollViewport');
+        if (!viewport) return;
+
+        let startTime = 0;
+
+        const onStart = (clientX) => {
+            isRollDragging = true;
+            rollHasDragged = false;
+            rollStartX = clientX;
+            rollDragDeltaX = 0;
+            startTime = Date.now();
+            viewport.classList.add('is-dragging');
+        };
+
+        const onMove = (clientX) => {
+            if (!isRollDragging) return;
+            rollDragDeltaX = clientX - rollStartX;
+            if (Math.abs(rollDragDeltaX) > 6) {
+                rollHasDragged = true;
+            }
+
+            const isMobile = window.innerWidth <= 640;
+            const stepX = isMobile ? 165 : 240;
+            let offsetRatio = rollDragDeltaX / stepX;
+
+            if ((activeRollIndex === 0 && offsetRatio > 0) || (activeRollIndex === filteredRollImages.length - 1 && offsetRatio < 0)) {
+                offsetRatio *= 0.35;
+            }
+
+            update3DPositions(offsetRatio);
+        };
+
+        const onEnd = () => {
+            if (!isRollDragging) return;
+            isRollDragging = false;
+            viewport.classList.remove('is-dragging');
+
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = Math.abs(rollDragDeltaX) / elapsed;
+
+            if (Math.abs(rollDragDeltaX) > 35 || velocity > 0.3) {
+                if (rollDragDeltaX < 0 && activeRollIndex < filteredRollImages.length - 1) {
+                    activeRollIndex++;
+                } else if (rollDragDeltaX > 0 && activeRollIndex > 0) {
+                    activeRollIndex--;
+                }
+            }
+
+            rollDragDeltaX = 0;
+            update3DPositions(0);
+            setTimeout(() => { rollHasDragged = false; }, 60);
+        };
+
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            onStart(e.clientX);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isRollDragging) onMove(e.clientX);
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isRollDragging) onEnd();
+        });
+
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                onStart(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchmove', (e) => {
+            if (isRollDragging && e.touches.length === 1) {
+                onMove(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchend', () => {
+            if (isRollDragging) onEnd();
+        });
+
+        viewport.addEventListener('touchcancel', () => {
+            if (isRollDragging) onEnd();
+        });
+
+        viewport.addEventListener('wheel', (e) => {
+            if (rollWheelCooldown) return;
+            const delta = Math.abs(e.deltaX) > 20 ? e.deltaX : (e.shiftKey && Math.abs(e.deltaY) > 20 ? e.deltaY : 0);
+            if (delta > 20 && activeRollIndex < filteredRollImages.length - 1) {
+                goToRollSlide(activeRollIndex + 1);
+                rollWheelCooldown = true;
+                setTimeout(() => { rollWheelCooldown = false; }, 300);
+            } else if (delta < -20 && activeRollIndex > 0) {
+                goToRollSlide(activeRollIndex - 1);
+                rollWheelCooldown = true;
+                setTimeout(() => { rollWheelCooldown = false; }, 300);
+            }
+        }, { passive: true });
+    }
+
+    function initCameraRollScrubber() {
+        const wrap = document.getElementById('rollScrubberWrap');
+        if (!wrap) return;
+
+        let isScrubbing = false;
+
+        const handleScrubber = (clientX) => {
+            if (!filteredRollImages.length) return;
+            const rect = wrap.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            const target = Math.round(ratio * (filteredRollImages.length - 1));
+            goToRollSlide(target);
+        };
+
+        wrap.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isScrubbing = true;
+            handleScrubber(e.clientX);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isScrubbing) handleScrubber(e.clientX);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isScrubbing = false;
+        });
+
+        wrap.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                handleScrubber(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        wrap.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                handleScrubber(e.touches[0].clientX);
+            }
+        }, { passive: true });
+    }
+
+    function initCameraRollControls() {
+        const prevBtn = document.getElementById('rollPrevBtn');
+        const nextBtn = document.getElementById('rollNextBtn');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (activeRollIndex > 0) goToRollSlide(activeRollIndex - 1);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (activeRollIndex < filteredRollImages.length - 1) goToRollSlide(activeRollIndex + 1);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox && lightbox.classList.contains('active')) return;
+
+            const gallerySection = document.getElementById('gallery');
+            if (!gallerySection) return;
+
+            const rect = gallerySection.getBoundingClientRect();
+            const isInView = (rect.top < window.innerHeight * 0.8 && rect.bottom > window.innerHeight * 0.2);
+            if (!isInView) return;
+
+            if (e.key === 'ArrowLeft') {
+                if (activeRollIndex > 0) {
+                    goToRollSlide(activeRollIndex - 1);
+                    e.preventDefault();
+                }
+            } else if (e.key === 'ArrowRight') {
+                if (activeRollIndex < filteredRollImages.length - 1) {
+                    goToRollSlide(activeRollIndex + 1);
+                    e.preventDefault();
+                }
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            update3DPositions(0);
+        });
+    }
+
+    // --- Filter Buttons & Service Card Click Handlers ---
+    const filterBtns = document.querySelectorAll('.filter-btn, .filter-tab');
+
+    function activateFilter(filterValue) {
         filterBtns.forEach(b => b.classList.remove('active'));
         const activeBtns = document.querySelectorAll(`.filter-btn[data-filter="${filterValue}"], .filter-tab[data-filter="${filterValue}"]`);
         activeBtns.forEach(b => b.classList.add('active'));
 
-        const currentGalleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
-        currentGalleryItems.forEach(item => {
-            const category = item.getAttribute('data-category');
-
-            if (filterValue === 'all' || category === filterValue) {
-                item.classList.remove('hide');
-                item.classList.add('show');
-                item.style.opacity = '1';
-                item.style.filter = 'none';
-                item.style.pointerEvents = 'auto';
-            } else {
-                item.classList.remove('show');
-                item.classList.add('hide');
-                item.style.opacity = '0.25';
-                item.style.filter = 'grayscale(100%)';
-                item.style.pointerEvents = 'none';
-            }
-        });
-    };
+        renderCameraRoll(filterValue);
+    }
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const filterValue = btn.getAttribute('data-filter');
             activateFilter(filterValue);
-            if (typeof initializeCarousel === 'function') {
-                initializeCarousel(filterValue); // Rebuild carousel with filtered items if exists
-            }
         });
     });
 
-    // --- Service Card Click to Filter Gallery ---
     const serviceCards = document.querySelectorAll('.service-card');
-
     serviceCards.forEach(card => {
         card.addEventListener('click', () => {
             const category = card.getAttribute('data-category');
-
-            // Apply the filter
             activateFilter(category);
-            initializeCarousel(category);
 
-            // Scroll to gallery section smoothly
             const gallerySection = document.getElementById('gallery');
             if (gallerySection) {
                 gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
-
-        // Add cursor pointer to indicate clickability
         card.style.cursor = 'pointer';
     });
 
-    // --- Auto-Scrolling Gallery Carousel ---
-    let currentUniqueItems = []; // Track unique items for lightbox navigation
-
+    // Compatibility alias
     function initializeCarousel(filterValue = 'all') {
-        const row1 = document.getElementById('gallery-row-1');
-        const row2 = document.getElementById('gallery-row-2');
-
-        if (!row1 || !row2) {
-            // Check if we even have a gallery to build upon
-            const galleryGrid = document.querySelector('.gallery-grid');
-            if (!galleryGrid) return; // Exit if no gallery grid exists (e.g. payment page)
-
-            // If carousel rows don't exist, create them
-            const wrapper = document.querySelector('.gallery-carousel-wrapper');
-            if (!wrapper) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'gallery-carousel-wrapper';
-                wrapper.innerHTML = `
-                    <div class="gallery-row gallery-row-right" id="gallery-row-1"></div>
-                    <div class="gallery-row gallery-row-left" id="gallery-row-2"></div>
-                `;
-                galleryGrid.parentNode.insertBefore(wrapper, galleryGrid);
-                galleryGrid.style.display = 'none';
-            }
-            // Try again after creation
-            initializeCarousel(filterValue);
-            return;
-        }
-
-        // Clear existing content
-        row1.innerHTML = '';
-        row2.innerHTML = '';
-
-        // Get filtered items
-        const filteredItems = Array.from(galleryItems).filter(item => {
-            const category = item.getAttribute('data-category');
-            return filterValue === 'all' || category === filterValue;
-        });
-
-        currentUniqueItems = filteredItems; // Store for lightbox navigation
-
-        if (filteredItems.length === 0) return;
-
-        // Shuffle function using Fisher-Yates algorithm
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        // Use all items for both rows to maximize variety
-        // Create copies for row 1 and row 2
-        let row1Items = [...filteredItems];
-        let row2Items = [...filteredItems];
-
-        // Shuffle both rows independently to ensure different orders
-        if (row1Items.length > 1) {
-            row1Items = shuffleArray(row1Items);
-            row2Items = shuffleArray(row2Items);
-
-            // Ensure row 2 starts with a different item than row 1 to avoid vertical duplicates at start
-            if (row1Items[0].src === row2Items[0].src) {
-                row2Items.push(row2Items.shift());
-            }
-        }
-
-        // Duplicate items for seamless loop (need at least 3 copies for smooth scrolling)
-        // We use the full pool now, so repetition is much less frequent
-        const row1Content = [row1Items, row1Items, row1Items].flat();
-        const row2Content = [row2Items, row2Items, row2Items].flat();
-
-        row1Content.forEach(item => {
-            const clone = item.cloneNode(true);
-            row1.appendChild(clone);
-
-            // Re-add lightbox click handlers
-            const img = clone.querySelector('img');
-            if (img) {
-                img.addEventListener('click', () => {
-                    openLightbox(img);
-                });
-            }
-        });
-
-        row2Content.forEach(item => {
-            const clone = item.cloneNode(true);
-            row2.appendChild(clone);
-
-            // Re-add lightbox click handlers
-            const img = clone.querySelector('img');
-            if (img) {
-                img.addEventListener('click', () => {
-                    openLightbox(img);
-                });
-            }
-        });
+        activateFilter(filterValue);
     }
 
-    // Helper function to open lightbox
-    function openLightbox(img) {
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        const lightboxCaption = document.querySelector('.lightbox-caption');
-
-        if (lightbox && lightboxImg) {
-            // Update visible images list to match the current carousel content (unique items)
-            // Map to img elements to be consistent with grid logic
-            visibleImages = currentUniqueItems.map(item => item.querySelector('img'));
-
-            // Find index by matching src
-            currentImageIndex = visibleImages.findIndex(item => item.src === img.src);
-
-            lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            lightboxImg.src = img.src;
-            if (lightboxCaption) {
-                lightboxCaption.textContent = img.alt || '';
-            }
-        }
+    // Initialize 3D Camera Roll on page load
+    if (cameraRollStage) {
+        renderCameraRoll('all');
+        initCameraRollDrag();
+        initCameraRollScrubber();
+        initCameraRollControls();
     }
-
-    // Initialize carousel on page load
-    initializeCarousel('all');
 
 
 
@@ -743,11 +941,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update visible images based on current filter
     function updateVisibleImages() {
-        const allImgs = document.querySelectorAll('.gallery-item img, .editorial-gallery-grid .gallery-card img');
+        const allImgs = document.querySelectorAll('.gallery-item img, .editorial-gallery-grid .gallery-card img, .camera-card img');
         visibleImages = Array.from(allImgs).filter(img => {
-            const item = img.closest('.gallery-item, .gallery-card');
-            return item && !item.classList.contains('hide');
+            const item = img.closest('.gallery-item, .gallery-card, .camera-card');
+            return item && !item.classList.contains('hide') && item.style.visibility !== 'hidden';
         });
+    }
+
+    function openPortfolioLightbox(imgEl) {
+        if (!lightbox || !lightboxImg) return;
+        const track = document.getElementById('cameraRollTrack');
+        const cardImgs = track ? Array.from(track.querySelectorAll('.camera-card img')) : [];
+        visibleImages = cardImgs.filter(i => i && i.src);
+        currentImageIndex = visibleImages.indexOf(imgEl);
+        if (currentImageIndex === -1) currentImageIndex = 0;
+
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        lightboxImg.src = imgEl.src;
+        if (lightboxCaption) {
+            const cat = imgEl.closest('.camera-card')?.dataset.category || '';
+            lightboxCaption.textContent = categoryLabels[cat] || imgEl.alt || '';
+        }
     }
 
     // Lightbox delegation for editorial gallery
@@ -852,7 +1067,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         lightboxImg.src = img.src;
-        lightboxCaption.textContent = img.alt || '';
+        if (lightboxCaption) {
+            const cat = img.closest('.camera-card')?.dataset.category || '';
+            lightboxCaption.textContent = (typeof categoryLabels !== 'undefined' && categoryLabels[cat]) || img.alt || '';
+        }
     }
 
     // Close lightbox

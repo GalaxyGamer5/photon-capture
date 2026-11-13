@@ -112,7 +112,7 @@
 
         <!-- Portfolio / Galerie Section -->
         <section id="gallery" class="gallery-section">
-            <div class="container">
+            <div class="container gallery-container-wide">
                 <div class="gallery-header">
                     <div class="gallery-title-group">
                         <span class="section-kicker" data-i18n="gallery.kicker">PORTFOLIO</span>
@@ -126,49 +126,38 @@
                     </div>
                 </div>
 
-                <!-- Asymmetrical 4-Column Layout (Matching Figma Mockup) -->
-                <div class="editorial-gallery-grid" id="editorialGallery">
-                    <!-- Column 1: Tall -->
-                    <div class="gallery-col" data-col="1">
-                        <div class="gallery-card tall" data-category="portrait">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO · HOCH</span>
-                            </div>
+                <!-- 3D Camera Roll / Filmstrip Stage -->
+                <div class="camera-roll-stage" id="cameraRollStage">
+                    <button class="roll-nav-btn prev" id="rollPrevBtn" aria-label="Vorheriges Bild">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    
+                    <div class="camera-roll-viewport" id="cameraRollViewport">
+                        <div class="camera-roll-track" id="cameraRollTrack">
+                            <!-- Populated dynamically via JS -->
                         </div>
                     </div>
-                    <!-- Column 2: Stack of 2 -->
-                    <div class="gallery-col" data-col="2">
-                        <div class="gallery-card square" data-category="event">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO</span>
-                            </div>
-                        </div>
-                        <div class="gallery-card square" data-category="portrait">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO</span>
-                            </div>
+
+                    <button class="roll-nav-btn next" id="rollNextBtn" aria-label="Nächstes Bild">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <!-- Camera Roll Controls & Interactive Scrubber -->
+                <div class="camera-roll-footer">
+                    <div class="roll-counter-box">
+                        <span class="roll-film-label">35MM REEL</span>
+                        <span class="roll-counter" id="rollCounter"><span id="rollCurrent">01</span> / <span id="rollTotal">00</span></span>
+                    </div>
+                    <div class="roll-scrubber-wrap" id="rollScrubberWrap" title="Klicken oder Ziehen zum Navigieren">
+                        <div class="roll-scrubber-track">
+                            <div class="roll-scrubber-bar" id="rollScrubberBar"></div>
+                            <div class="roll-scrubber-handle" id="rollScrubberHandle"></div>
                         </div>
                     </div>
-                    <!-- Column 3: Stack of 2 -->
-                    <div class="gallery-col" data-col="3">
-                        <div class="gallery-card square" data-category="pet">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO</span>
-                            </div>
-                        </div>
-                        <div class="gallery-card square" data-category="event">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column 4: Tall -->
-                    <div class="gallery-col" data-col="4">
-                        <div class="gallery-card tall" data-category="pet">
-                            <div class="gallery-card-inner">
-                                <span class="card-placeholder-label">FOTO · HOCH</span>
-                            </div>
-                        </div>
+                    <div class="roll-hint">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        <span data-i18n="gallery.hint">Klicken für Vollbild</span>
                     </div>
                 </div>
             </div>
@@ -276,7 +265,16 @@
     <!-- Lightbox Modal -->
     <div id="lightbox" class="lightbox">
         <span class="lightbox-close" id="lightboxClose">&times;</span>
-        <img class="lightbox-content" id="lightbox-img" alt="Gallery Preview">
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Vorheriges Bild">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="lightbox-media-wrap">
+            <img class="lightbox-content" id="lightbox-img" alt="Gallery Preview">
+            <div class="lightbox-caption" id="lightboxCaption"></div>
+        </div>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Nächstes Bild">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
     </div>
 
     <!-- Cookie Banner -->

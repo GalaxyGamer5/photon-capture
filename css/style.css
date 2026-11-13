@@ -462,7 +462,7 @@ button, input, select, textarea {
     font-weight: 600;
 }
 
-/* Asymmetric 4-Column Editorial Grid (Exact Figma Layout) */
+/* Asymmetric 4-Column Editorial Grid (Legacy Fallback) */
 .editorial-gallery-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -516,10 +516,6 @@ button, input, select, textarea {
     transition: transform var(--transition-normal);
 }
 
-.gallery-card:hover img {
-    transform: scale(1.02);
-}
-
 .card-placeholder-label {
     position: absolute;
     font-size: 10.5px;
@@ -529,6 +525,399 @@ button, input, select, textarea {
     font-weight: 600;
     pointer-events: none;
     user-select: none;
+}
+
+/* ==========================================================================
+   3D CAMERA ROLL / FILMSTRIP CAROUSEL (HIGH-END 35MM CINEMA)
+   ========================================================================== */
+
+.gallery-container-wide {
+    max-width: 1440px;
+    position: relative;
+}
+
+.camera-roll-stage {
+    position: relative;
+    width: 100%;
+    min-height: 540px;
+    margin-top: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Cinematic Edge Fades */
+.camera-roll-stage::before,
+.camera-roll-stage::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 140px;
+    z-index: 20;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.camera-roll-stage::before {
+    left: 0;
+    background: linear-gradient(to right, #0b0b0b 20%, transparent 100%);
+}
+
+.camera-roll-stage::after {
+    right: 0;
+    background: linear-gradient(to left, #0b0b0b 20%, transparent 100%);
+}
+
+.camera-roll-viewport {
+    position: relative;
+    width: 100%;
+    height: 540px;
+    perspective: 1200px;
+    perspective-origin: 50% 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: pan-y;
+    cursor: grab;
+}
+
+.camera-roll-viewport.is-dragging {
+    cursor: grabbing !important;
+}
+
+.camera-roll-track {
+    position: relative;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 3D Camera Card */
+.camera-card {
+    position: absolute;
+    width: 340px;
+    height: 485px;
+    top: -242px;
+    left: -170px;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform, opacity, filter;
+    transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.45s ease, filter 0.45s ease;
+    cursor: pointer;
+}
+
+.camera-roll-viewport.is-dragging .camera-card {
+    transition: none !important;
+}
+
+/* Film Chassis Container */
+.camera-card-inner {
+    width: 100%;
+    height: 100%;
+    background: #141413;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 12px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Active Center Card Glow & Highlight */
+.camera-card.is-center .camera-card-inner {
+    border-color: rgba(224, 90, 43, 0.45);
+    box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.95), 0 0 35px -5px rgba(224, 90, 43, 0.22);
+}
+
+.camera-card:hover .camera-card-inner {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.camera-card.is-center:hover .camera-card-inner {
+    border-color: var(--accent-orange);
+}
+
+/* Filmstrip Top & Bottom Header Details */
+.film-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    font-family: var(--font-heading), monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.film-exp {
+    color: var(--accent-orange);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.film-brand {
+    letter-spacing: 0.18em;
+    opacity: 0.55;
+    font-size: 9.5px;
+}
+
+.film-badge {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.film-frame {
+    position: relative;
+    flex: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d0d0c;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+.film-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    transition: transform 0.5s ease;
+}
+
+.camera-card.is-center:hover .film-frame img {
+    transform: scale(1.03);
+}
+
+/* Fallback Film Frame Placeholder */
+.film-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(145deg, #181817 0%, #111110 100%);
+}
+
+.film-placeholder svg {
+    opacity: 0.4;
+}
+
+.film-placeholder span {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Hover View Pill (Center Card Only) */
+.film-frame-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 11, 11, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.camera-card.is-center:hover .film-frame-overlay {
+    opacity: 1;
+}
+
+.view-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(23, 23, 22, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    transform: translateY(6px);
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.camera-card.is-center:hover .view-pill {
+    transform: translateY(0);
+    border-color: var(--accent-orange);
+}
+
+/* Film Bottom Bar */
+.film-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    font-family: var(--font-heading), monospace;
+    font-size: 9.5px;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.film-dots {
+    letter-spacing: 0.25em;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* Floating Navigation Arrows */
+.roll-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(23, 23, 22, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    transition: all var(--transition-fast);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.roll-nav-btn:hover {
+    background: rgba(224, 90, 43, 0.25);
+    border-color: var(--accent-orange);
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.roll-nav-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.roll-nav-btn.prev {
+    left: 1.5rem;
+}
+
+.roll-nav-btn.next {
+    right: 1.5rem;
+}
+
+.roll-nav-btn:disabled,
+.roll-nav-btn.disabled {
+    opacity: 0.25;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Camera Roll Footer & Controls */
+.camera-roll-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 0 0.5rem;
+}
+
+.roll-counter-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.roll-film-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-orange);
+    background: rgba(224, 90, 43, 0.1);
+    border: 1px solid rgba(224, 90, 43, 0.25);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.roll-counter {
+    font-family: var(--font-heading), monospace;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+}
+
+.roll-counter #rollCurrent {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Scrubber / Progress Bar */
+.roll-scrubber-wrap {
+    flex: 1;
+    max-width: 440px;
+    padding: 12px 0;
+    cursor: pointer;
+}
+
+.roll-scrubber-track {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: height var(--transition-fast);
+}
+
+.roll-scrubber-wrap:hover .roll-scrubber-track {
+    height: 6px;
+}
+
+.roll-scrubber-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: linear-gradient(to right, rgba(224, 90, 43, 0.7), var(--accent-orange));
+    border-radius: 2px;
+    transition: width 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.roll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.04em;
+}
+
+.roll-hint svg {
+    color: var(--accent-orange);
 }
 
 /* ==========================================================================
@@ -1423,21 +1812,84 @@ button, input, select, textarea {
     display: flex;
 }
 
-.lightbox-content {
+.lightbox-media-wrap {
+    position: relative;
     max-width: 90vw;
     max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-content {
+    max-width: 88vw;
+    max-height: 80vh;
     object-fit: contain;
     border-radius: var(--radius-sm);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+}
+
+.lightbox-caption {
+    margin-top: 1rem;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
 }
 
 .lightbox-close {
     position: absolute;
     top: 2rem;
     right: 2rem;
-    font-size: 2rem;
+    font-size: 2.2rem;
     color: #ffffff;
     cursor: pointer;
     line-height: 1;
+    z-index: 10002;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.lightbox-close:hover {
+    color: var(--accent-orange);
+    transform: scale(1.1);
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(23, 23, 22, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 10001;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-nav:hover {
+    background: var(--accent-orange);
+    border-color: var(--accent-orange);
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.lightbox-prev {
+    left: 2rem;
+}
+
+.lightbox-next {
+    right: 2rem;
 }
 
 /* ==========================================================================
@@ -1465,6 +1917,23 @@ button, input, select, textarea {
     
     .editorial-gallery-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .camera-roll-stage {
+        min-height: 480px;
+    }
+    .camera-roll-viewport {
+        height: 480px;
+    }
+    .camera-card {
+        width: 300px;
+        height: 430px;
+        top: -215px;
+        left: -150px;
+    }
+    .camera-roll-stage::before,
+    .camera-roll-stage::after {
+        width: 80px;
     }
     
     .contact-grid {
@@ -1518,6 +1987,46 @@ button, input, select, textarea {
     .editorial-gallery-grid {
         grid-template-columns: 1fr;
     }
+
+    .camera-roll-stage {
+        min-height: 410px;
+        margin-top: 1.5rem;
+    }
+    .camera-roll-viewport {
+        height: 410px;
+        perspective: 900px;
+    }
+    .camera-card {
+        width: 250px;
+        height: 360px;
+        top: -180px;
+        left: -125px;
+    }
+    .camera-roll-stage::before,
+    .camera-roll-stage::after {
+        width: 40px;
+    }
+    .roll-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+    .roll-nav-btn.prev { left: 0.5rem; }
+    .roll-nav-btn.next { right: 0.5rem; }
+    .camera-roll-footer {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    .roll-scrubber-wrap {
+        width: 100%;
+        max-width: 100%;
+    }
+    .lightbox-nav {
+        width: 42px;
+        height: 42px;
+    }
+    .lightbox-prev { left: 0.75rem; }
+    .lightbox-next { right: 0.75rem; }
     
     .contact-card-box {
         padding: 2rem 1.5rem;

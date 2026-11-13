@@ -81,6 +81,7 @@ const translations = {
         "gallery.filter.portrait": "Porträt",
         "gallery.filter.event": "Event",
         "gallery.filter.pet": "Tier",
+        "gallery.hint": "Klicken für Vollbild",
 
         "testimonials.kicker": "KUNDENSTIMMEN",
         "testimonials.title": "Kundenstimmen",
@@ -331,6 +332,7 @@ const translations = {
         "gallery.filter.portrait": "Portrait",
         "gallery.filter.event": "Event",
         "gallery.filter.pet": "Pet",
+        "gallery.hint": "Click for full view",
 
         "testimonials.kicker": "TESTIMONIALS",
         "testimonials.title": "Testimonials",
