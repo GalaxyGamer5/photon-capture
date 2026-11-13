@@ -521,7 +521,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3D CAMERA ROLL / FILMSTRIP CAROUSEL (FREE-SPINNING KINETIC MOMENTUM)
     // ==========================================================================
 
-    let currentRollFilter = 'all';
+    const cameraRollStage = document.getElementById('cameraRollStage');
+    let portfolioImages = [];
+
+    let currentRollFilter = "all";
     let filteredRollImages = [];
     let rollPos = 0;              // Continuous floating-point position
     let isRollDragging = false;
@@ -532,28 +535,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     let rollAnimFrameId = null;
     let wheelSnapTimer = null;
 
-        const currentGalleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
-        currentGalleryItems.forEach(item => {
-            const category = item.getAttribute('data-category');
+    // High quality aesthetic fallback cards when portfolio has no uploaded images yet
+    const fallbackPortfolio = [
+        { id: 1, filename: "", category: "portrait", label: "Porträt Noir" },
+        { id: 2, filename: "", category: "event", label: "Festival of Lights" },
+        { id: 3, filename: "", category: "portrait", label: "Studio Noir" },
+        { id: 4, filename: "", category: "pet", label: "Golden Retriever" },
+        { id: 5, filename: "", category: "event", label: "Corporate Gala" },
+        { id: 6, filename: "", category: "pet", label: "Feline Grace" },
+        { id: 7, filename: "", category: "portrait", label: "Natural Light" },
+        { id: 8, filename: "", category: "event", label: "Summer Wedding" }
+    ];
 
     const categoryLabels = {
-        all: 'Portfolio',
-        portrait: 'Porträt',
-        event: 'Event',
-        pet: 'Tier'
+        all: "Portfolio",
+        portrait: "Porträt",
+        event: "Event",
+        pet: "Tier"
     };
 
     function createCameraCard(item, index) {
-        const card = document.createElement('div');
-        card.className = 'camera-card';
+        const card = document.createElement("div");
+        card.className = "camera-card";
         card.dataset.index = index;
         card.dataset.category = item.category;
 
         const originalIdx = item.originalIndex !== undefined ? item.originalIndex : index;
-        const expNumber = String(originalIdx + 1).padStart(2, '0');
+        const expNumber = String(originalIdx + 1).padStart(2, "0");
         const catLabel = categoryLabels[item.category] || item.category;
 
-        let frameContent = '';
+        let frameContent = "";
         if (item.filename) {
             frameContent = `
                 <img src="assets/portfolio/${item.filename}" alt="${catLabel}" loading="lazy" draggable="false">
@@ -571,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                         <circle cx="12" cy="13" r="4"></circle>
                     </svg>
-                    <span>${item.label || 'FOTO · ' + catLabel.toUpperCase()}</span>
+                    <span>${item.label || "FOTO · " + catLabel.toUpperCase()}</span>
                 </div>
             `;
         }
@@ -594,34 +605,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        card.addEventListener('click', () => {
+        card.addEventListener("click", () => {
             if (rollHasDragged) return;
             const cardIdx = parseInt(card.dataset.index, 10);
             const N = filteredRollImages.length;
             const currentNorm = ((Math.round(rollPos) % N) + N) % N;
 
             if (cardIdx === currentNorm) {
-                const img = card.querySelector('img');
+                const img = card.querySelector("img");
                 if (img && img.src) {
                     openPortfolioLightbox(img);
                 }
             } else {
-                item.classList.remove('show');
-                item.classList.add('hide');
-                item.style.opacity = '0.25';
-                item.style.filter = 'grayscale(100%)';
-                item.style.pointerEvents = 'none';
+                goToRollSlide(cardIdx);
             }
         });
-    };
 
         return card;
     }
 
     function update3DPositions() {
-        const track = document.getElementById('cameraRollTrack');
+        const track = document.getElementById("cameraRollTrack");
         if (!track) return;
-        const cards = track.querySelectorAll('.camera-card');
+        const cards = track.querySelectorAll(".camera-card");
         const N = filteredRollImages.length;
         if (!cards.length || !N) return;
 
@@ -643,48 +649,51 @@ document.addEventListener('DOMContentLoaded', async () => {
             const absDist = Math.abs(dist);
 
             if (absDist > 3.8) {
-                card.style.opacity = '0';
-                card.style.visibility = 'hidden';
-                card.style.pointerEvents = 'none';
-                card.classList.remove('is-center');
+                card.style.opacity = "0";
+                card.style.visibility = "hidden";
+                card.style.pointerEvents = "none";
+                card.classList.remove("is-center");
                 return;
             }
-        });
-    });
 
-    // --- Service Card Click to Filter Gallery ---
-    const serviceCards = document.querySelectorAll('.service-card');
+            card.style.visibility = "visible";
 
-    serviceCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.getAttribute('data-category');
+            const sign = dist === 0 ? 0 : Math.sign(dist);
+            const translateX = dist * stepX;
+            const translateZ = -absDist * zStep;
+            const rotateY = -sign * (baseRot + Math.min(8, absDist * 3));
+            const scale = Math.max(0.65, 1.05 - absDist * 0.12);
+            const opacity = Math.max(0, 1 - absDist * 0.28);
+            const zIndex = Math.round(100 - absDist * 15);
+            const brightness = Math.max(0.35, 1 - absDist * 0.25);
 
-            // Apply the filter
-            activateFilter(category);
-            initializeCarousel(category);
+            card.style.transform = `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+            card.style.opacity = opacity.toFixed(3);
+            card.style.zIndex = zIndex;
+            card.style.filter = `brightness(${brightness.toFixed(2)})`;
+            card.style.pointerEvents = "auto";
 
-            // Scroll to gallery section smoothly
-            const gallerySection = document.getElementById('gallery');
-            if (gallerySection) {
-                gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (absDist < 0.45) {
+                card.classList.add("is-center");
+            } else {
+                card.classList.remove("is-center");
             }
         });
 
-        // Add cursor pointer to indicate clickability
-        card.style.cursor = 'pointer';
-    });
+        updateRollControls();
+    }
 
     function updateRollControls() {
         const N = filteredRollImages.length;
         if (!N) return;
         const activeIdx = ((Math.round(rollPos) % N) + N) % N;
 
-        const currentEl = document.getElementById('rollCurrent');
-        const totalEl = document.getElementById('rollTotal');
-        const scrubberBar = document.getElementById('rollScrubberBar');
+        const currentEl = document.getElementById("rollCurrent");
+        const totalEl = document.getElementById("rollTotal");
+        const scrubberBar = document.getElementById("rollScrubberBar");
 
-        if (currentEl) currentEl.textContent = String(activeIdx + 1).padStart(2, '0');
-        if (totalEl) totalEl.textContent = String(N).padStart(2, '0');
+        if (currentEl) currentEl.textContent = String(activeIdx + 1).padStart(2, "0");
+        if (totalEl) totalEl.textContent = String(N).padStart(2, "0");
 
         if (scrubberBar && N > 0) {
             const percent = N <= 1 ? 100 : (activeIdx / (N - 1)) * 100;
@@ -742,6 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         rollAnimFrameId = requestAnimationFrame(momentumStep);
+    }
 
     // Smooth navigation to a specific slide
     function goToRollSlide(targetIndex) {
@@ -772,19 +782,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         rollAnimFrameId = requestAnimationFrame(slideStep);
     }
 
-    function renderCameraRoll(filterValue = 'all') {
+    function renderCameraRoll(filterValue = "all") {
         currentRollFilter = filterValue;
-        const track = document.getElementById('cameraRollTrack');
+        const track = document.getElementById("cameraRollTrack");
         if (!track) return;
 
         cancelAnimationFrame(rollAnimFrameId);
 
         const source = (portfolioImages && portfolioImages.length > 0) ? portfolioImages : fallbackPortfolio;
-        let matched = (filterValue === 'all')
+        let matched = (filterValue === "all")
             ? [...source]
             : source.filter(item => item.category === filterValue);
 
-        track.innerHTML = '';
+        track.innerHTML = "";
 
         if (matched.length === 0) {
             track.innerHTML = `
@@ -815,7 +825,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         update3DPositions();
     }
 
-        if (filteredItems.length === 0) return;
+    function initCameraRollDrag() {
+        const viewport = document.getElementById("cameraRollViewport");
+        if (!viewport) return;
 
         const isMobile = () => window.innerWidth <= 640;
         const getStepX = () => isMobile() ? 165 : 240;
@@ -827,7 +839,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             rollDragStartX = clientX;
             rollDragStartPos = rollPos;
             velocitySamples = [{ dx: 0, dt: 1, time: performance.now(), x: clientX }];
-            viewport.classList.add('is-dragging');
+            viewport.classList.add("is-dragging");
         };
 
         const onMove = (clientX) => {
@@ -840,8 +852,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (Math.abs(clientX - rollDragStartX) > 6) {
                 rollHasDragged = true;
             }
-            return array;
-        }
 
             velocitySamples.push({ dx, dt, time: now, x: clientX });
             velocitySamples = velocitySamples.filter(s => now - s.time < 120);
@@ -854,7 +864,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const onEnd = () => {
             if (!isRollDragging) return;
             isRollDragging = false;
-            viewport.classList.remove('is-dragging');
+            viewport.classList.remove("is-dragging");
 
             const now = performance.now();
             const recentSamples = velocitySamples.filter(s => now - s.time < 90);
@@ -866,7 +876,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const pxPerMs = totalDx / totalDt;
                 slideVel = -(pxPerMs * 16.67) / getStepX();
             }
-        }
 
             // Launch free momentum spinning
             startSpinMomentum(slideVel);
@@ -874,25 +883,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => { rollHasDragged = false; }, 60);
         };
 
-        row1Content.forEach(item => {
-            const clone = item.cloneNode(true);
-            row1.appendChild(clone);
-
-            // Re-add lightbox click handlers
-            const img = clone.querySelector('img');
-            if (img) {
-                img.addEventListener('click', () => {
-                    openLightbox(img);
-                });
-            }
+        viewport.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            onStart(e.clientX);
         });
 
-        row2Content.forEach(item => {
-            const clone = item.cloneNode(true);
-            row2.appendChild(clone);
+        window.addEventListener("mousemove", (e) => {
+            if (isRollDragging) onMove(e.clientX);
+        });
+
+        window.addEventListener("mouseup", () => {
+            if (isRollDragging) onEnd();
+        });
+
+        viewport.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 1) {
+                onStart(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        viewport.addEventListener("touchmove", (e) => {
+            if (isRollDragging && e.touches.length === 1) {
+                onMove(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        viewport.addEventListener("touchend", () => {
+            if (isRollDragging) onEnd();
+        });
+
+        viewport.addEventListener("touchcancel", () => {
+            if (isRollDragging) onEnd();
+        });
 
         // Trackpad 2-finger swipe / mouse wheel
-        viewport.addEventListener('wheel', (e) => {
+        viewport.addEventListener("wheel", (e) => {
             const delta = Math.abs(e.deltaX) > 4 ? e.deltaX : (e.shiftKey && Math.abs(e.deltaY) > 4 ? e.deltaY : 0);
             if (Math.abs(delta) > 4) {
                 e.preventDefault();
@@ -909,7 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function initCameraRollScrubber() {
-        const wrap = document.getElementById('rollScrubberWrap');
+        const wrap = document.getElementById("rollScrubberWrap");
         if (!wrap) return;
 
         let isScrubbing = false;
@@ -922,97 +947,115 @@ document.addEventListener('DOMContentLoaded', async () => {
             goToRollSlide(target);
         };
 
-        wrap.addEventListener('mousedown', (e) => {
+        wrap.addEventListener("mousedown", (e) => {
             if (e.button !== 0) return;
             isScrubbing = true;
             handleScrubber(e.clientX);
         });
+
+        window.addEventListener("mousemove", (e) => {
+            if (isScrubbing) handleScrubber(e.clientX);
+        });
+
+        window.addEventListener("mouseup", () => {
+            isScrubbing = false;
+        });
+
+        wrap.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 1) {
+                handleScrubber(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        wrap.addEventListener("touchmove", (e) => {
+            if (e.touches.length === 1) {
+                handleScrubber(e.touches[0].clientX);
+            }
+        }, { passive: true });
     }
 
-    // Helper function to open lightbox
-    function openLightbox(img) {
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        const lightboxCaption = document.querySelector('.lightbox-caption');
+    function initCameraRollControls() {
+        const prevBtn = document.getElementById("rollPrevBtn");
+        const nextBtn = document.getElementById("rollNextBtn");
 
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
+            prevBtn.addEventListener("click", () => {
                 goToRollSlide(Math.round(rollPos) - 1);
             });
         }
 
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+            nextBtn.addEventListener("click", () => {
                 goToRollSlide(Math.round(rollPos) + 1);
             });
         }
 
-        document.addEventListener('keydown', (e) => {
-            const lightbox = document.getElementById('lightbox');
-            if (lightbox && lightbox.classList.contains('active')) return;
+        document.addEventListener("keydown", (e) => {
+            const lightbox = document.getElementById("lightbox");
+            if (lightbox && lightbox.classList.contains("active")) return;
 
-            const gallerySection = document.getElementById('gallery');
+            const gallerySection = document.getElementById("gallery");
             if (!gallerySection) return;
 
             const rect = gallerySection.getBoundingClientRect();
             const isInView = (rect.top < window.innerHeight * 0.8 && rect.bottom > window.innerHeight * 0.2);
             if (!isInView) return;
 
-            if (e.key === 'ArrowLeft') {
+            if (e.key === "ArrowLeft") {
                 goToRollSlide(Math.round(rollPos) - 1);
                 e.preventDefault();
-            } else if (e.key === 'ArrowRight') {
+            } else if (e.key === "ArrowRight") {
                 goToRollSlide(Math.round(rollPos) + 1);
                 e.preventDefault();
             }
         });
 
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
             update3DPositions();
         });
     }
 
     // --- Filter Buttons & Service Card Click Handlers ---
-    const filterBtns = document.querySelectorAll('.filter-btn, .filter-tab');
+    const filterBtns = document.querySelectorAll(".filter-btn, .filter-tab");
 
     function activateFilter(filterValue) {
-        filterBtns.forEach(b => b.classList.remove('active'));
+        filterBtns.forEach(b => b.classList.remove("active"));
         const activeBtns = document.querySelectorAll(`.filter-btn[data-filter="${filterValue}"], .filter-tab[data-filter="${filterValue}"]`);
-        activeBtns.forEach(b => b.classList.add('active'));
+        activeBtns.forEach(b => b.classList.add("active"));
 
         renderCameraRoll(filterValue);
     }
 
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const filterValue = btn.getAttribute('data-filter');
+        btn.addEventListener("click", () => {
+            const filterValue = btn.getAttribute("data-filter");
             activateFilter(filterValue);
         });
     });
 
-    const serviceCards = document.querySelectorAll('.service-card');
+    const serviceCards = document.querySelectorAll(".service-card");
     serviceCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.getAttribute('data-category');
+        card.addEventListener("click", () => {
+            const category = card.getAttribute("data-category");
             activateFilter(category);
 
-            const gallerySection = document.getElementById('gallery');
+            const gallerySection = document.getElementById("gallery");
             if (gallerySection) {
-                gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                gallerySection.scrollIntoView({ behavior: "smooth", block: "start" });
             }
         });
-        card.style.cursor = 'pointer';
+        card.style.cursor = "pointer";
     });
 
     // Compatibility alias
-    function initializeCarousel(filterValue = 'all') {
+    function initializeCarousel(filterValue = "all") {
         activateFilter(filterValue);
     }
 
     async function loadPortfolio() {
         if (!cameraRollStage) return;
         try {
-            const response = await fetch('api/get-portfolio.php?t=' + Date.now());
+            const response = await fetch("api/get-portfolio.php?t=" + Date.now());
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && Array.isArray(data.images) && data.images.length > 0) {
@@ -1025,8 +1068,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Initialize carousel on page load
-    initializeCarousel('all');
+    // Initialize 3D Camera Roll on page load
+    if (cameraRollStage) {
+        renderCameraRoll("all");
+        initCameraRollDrag();
+        initCameraRollScrubber();
+        initCameraRollControls();
+        loadPortfolio();
+    }
 
 
 
@@ -1505,7 +1554,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // --- Premium Scroll Animations ---
-const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .faq-section, .contact-section');
 const fadeInSections = document.querySelectorAll('.about-section, .services-section, .gallery-section, .pricing-section, .testimonials-section, .faq-section, .contact-section');
 
 const sectionObserver = new IntersectionObserver((entries) => {
