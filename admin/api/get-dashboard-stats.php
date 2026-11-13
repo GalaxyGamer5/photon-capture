@@ -9,7 +9,6 @@ $stats = [
     'inquiries' => 0,
     'galleries' => 0,
     'portfolio' => 0,
-    'testimonials' => 0,
     'favorites' => 0
 ];
 
@@ -18,7 +17,6 @@ try {
     $stats['inquiries'] = (int)$db->query("SELECT COUNT(*) FROM inquiries")->fetchColumn();
     $stats['galleries'] = (int)$db->query("SELECT COUNT(*) FROM users")->fetchColumn();
     $stats['portfolio'] = (int)$db->query("SELECT COUNT(*) FROM portfolio")->fetchColumn();
-    $stats['testimonials'] = (int)$db->query("SELECT COUNT(*) FROM testimonials")->fetchColumn();
     $stats['favorites'] = (int)$db->query("SELECT COUNT(*) FROM favorites")->fetchColumn();
 
     echo json_encode($stats);

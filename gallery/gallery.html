@@ -42,6 +42,7 @@
                 <div class="nav-actions">
                     <span id="user-greeting" style="color: var(--text-secondary); font-size: 13px;">Willkommen, <span
                             id="user-name" style="color: #ffffff; font-weight: 600;">Kunde</span></span>
+                    <button id="review-nav-btn" class="btn-logout" style="background: rgba(255, 193, 7, 0.12); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.35); font-weight: 600;" onclick="openReviewModal()">⭐ Bewertung</button>
                     <button id="change-pw-btn" class="btn-logout">Passwort ändern</button>
                     <button id="logout-btn" class="btn-logout">Abmelden</button>
                 </div>
@@ -77,6 +78,47 @@
             <div style="display: flex; gap: 0.75rem;">
                 <button id="cancel-pw-btn" class="btn-secondary" style="flex: 1; padding: 0.75rem;">Abbrechen</button>
                 <button id="save-pw-btn" class="btn-primary" style="flex: 1; padding: 0.75rem;">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" style="display: none; position: fixed; inset: 0; background: rgba(11, 11, 11, 0.85); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem;">
+        <div style="background: #111111; padding: 2.5rem; border-radius: 16px; border: 1px solid #282828; width: 100%; max-width: 480px; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--accent-color);">Feedback</div>
+                <button onclick="closeReviewModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <h3 id="review-modal-title" style="margin-bottom: 0.5rem; color: #ffffff; font-size: 1.5rem;">Deine Meinung zählt</h3>
+            <p id="review-modal-subtitle" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Wie zufrieden warst du mit dem Shooting und deinen Bildern?</p>
+
+            <!-- Star Rating -->
+            <div style="margin-bottom: 1.5rem; text-align: center;">
+                <div id="star-rating" style="display: inline-flex; gap: 0.4rem; font-size: 2rem; cursor: pointer; user-select: none;">
+                    <span data-star="1" class="star" style="color: #ffc107; transition: transform 0.15s;">★</span>
+                    <span data-star="2" class="star" style="color: #ffc107; transition: transform 0.15s;">★</span>
+                    <span data-star="3" class="star" style="color: #ffc107; transition: transform 0.15s;">★</span>
+                    <span data-star="4" class="star" style="color: #ffc107; transition: transform 0.15s;">★</span>
+                    <span data-star="5" class="star" style="color: #ffc107; transition: transform 0.15s;">★</span>
+                </div>
+                <div id="star-text" style="font-size: 0.85rem; color: #ffc107; margin-top: 0.35rem; font-weight: 500;">5 von 5 Sternen</div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em;">Dein Name (öffentlich sichtbar)</label>
+                <input type="text" id="review-name" class="form-control" placeholder="Dein Name">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em;">Deine Bewertung</label>
+                <textarea id="review-text" class="form-control" rows="4" placeholder="Erzähl kurz, wie es dir gefallen hat..." style="resize: vertical;"></textarea>
+            </div>
+
+            <div id="review-status" style="font-size: 0.85rem; min-height: 1.2em; margin-bottom: 1rem;"></div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button onclick="closeReviewModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem;">Später</button>
+                <button id="submit-review-btn" onclick="submitReview()" class="btn-primary" style="flex: 1; padding: 0.75rem;">Bewertung absenden</button>
             </div>
         </div>
     </div>
@@ -575,10 +617,16 @@
             event.stopPropagation();
             if (!activeGallery) return;
 
-            if (favorites.has(imageNum)) favorites.delete(imageNum);
+            const wasFavorite = favorites.has(imageNum);
+            if (wasFavorite) favorites.delete(imageNum);
             else favorites.add(imageNum);
 
             renderGalleryGrid();
+
+            // Ask for review on first favorite
+            if (!wasFavorite) {
+                checkAskReviewOnFirstFavorite();
+            }
 
             try {
                 await fetch('api/toggle-favorite.php', {
@@ -899,6 +947,152 @@
                 savePwBtn.textContent = 'Speichern';
             }
         });
+
+        // =====================================================================
+        // CUSTOMER REVIEW SYSTEM
+        // =====================================================================
+        let selectedRating = 5;
+
+        function checkAskReviewOnFirstFavorite() {
+            const userKey = (user && user.username) ? user.username : 'customer';
+            const reviewed = localStorage.getItem('photon_reviewed_' + userKey);
+            const asked = localStorage.getItem('photon_review_asked_' + userKey);
+
+            if (!reviewed && !asked) {
+                localStorage.setItem('photon_review_asked_' + userKey, 'true');
+                setTimeout(() => {
+                    const lightbox = document.getElementById('lightbox');
+                    if (lightbox && lightbox.classList.contains('active')) {
+                        closeLightbox();
+                    }
+                    openReviewModal(true);
+                }, 700);
+            }
+        }
+
+        function openReviewModal(fromFavorite = false) {
+            const modal = document.getElementById('review-modal');
+            const title = document.getElementById('review-modal-title');
+            const sub = document.getElementById('review-modal-subtitle');
+            const nameInput = document.getElementById('review-name');
+            const statusEl = document.getElementById('review-status');
+            const btn = document.getElementById('submit-review-btn');
+
+            if (fromFavorite) {
+                title.textContent = 'Schön, dass es dir gefällt! ❤️';
+                sub.textContent = 'Du hast deinen ersten Favoriten markiert. Möchtest du eine kurze Bewertung für Jonathan da lassen?';
+            } else {
+                title.textContent = 'Deine Meinung zählt ⭐';
+                sub.textContent = 'Wie zufrieden warst du mit dem Shooting und deinen Bildern?';
+            }
+
+            if (user && user.name && !nameInput.value) {
+                nameInput.value = user.name;
+            }
+
+            setStarRating(5);
+            statusEl.textContent = '';
+            btn.disabled = false;
+            btn.textContent = 'Bewertung absenden';
+
+            modal.style.display = 'flex';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').style.display = 'none';
+        }
+
+        function setStarRating(rating) {
+            selectedRating = rating;
+            const stars = document.querySelectorAll('#star-rating .star');
+            stars.forEach(s => {
+                const val = parseInt(s.dataset.star);
+                s.style.color = (val <= rating) ? '#ffc107' : '#444';
+            });
+            const starText = document.getElementById('star-text');
+            const labels = {
+                1: '1 von 5 Sternen (Verbesserungswürdig)',
+                2: '2 von 5 Sternen (Ausbaufähig)',
+                3: '3 von 5 Sternen (Gut)',
+                4: '4 von 5 Sternen (Sehr gut)',
+                5: '5 von 5 Sternen (Hervorragend!)'
+            };
+            if (starText) starText.textContent = labels[rating] || `${rating} von 5 Sternen`;
+        }
+
+        function initStarRating() {
+            const stars = document.querySelectorAll('#star-rating .star');
+            stars.forEach(s => {
+                s.addEventListener('click', () => {
+                    setStarRating(parseInt(s.dataset.star));
+                });
+                s.addEventListener('mouseenter', () => {
+                    const hoverVal = parseInt(s.dataset.star);
+                    stars.forEach(other => {
+                        other.style.color = parseInt(other.dataset.star) <= hoverVal ? '#ffc107' : '#444';
+                    });
+                });
+            });
+            const container = document.getElementById('star-rating');
+            if (container) {
+                container.addEventListener('mouseleave', () => {
+                    setStarRating(selectedRating);
+                });
+            }
+        }
+
+        async function submitReview() {
+            const text = document.getElementById('review-text').value.trim();
+            const name = document.getElementById('review-name').value.trim();
+            const statusEl = document.getElementById('review-status');
+            const btn = document.getElementById('submit-review-btn');
+
+            if (!text) {
+                statusEl.style.color = '#ff6b6b';
+                statusEl.textContent = 'Bitte schreibe kurz ein paar Worte zu deiner Erfahrung.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Wird gesendet...';
+            statusEl.textContent = '';
+
+            try {
+                const res = await fetch('api/submit-review.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rating: selectedRating,
+                        text: text,
+                        name: name
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    statusEl.style.color = '#7dda7d';
+                    statusEl.textContent = '✅ ' + data.message;
+                    const userKey = (user && user.username) ? user.username : 'customer';
+                    localStorage.setItem('photon_reviewed_' + userKey, 'true');
+                    setTimeout(() => {
+                        closeReviewModal();
+                        document.getElementById('review-text').value = '';
+                    }, 1400);
+                } else {
+                    statusEl.style.color = '#ff6b6b';
+                    statusEl.textContent = '❌ ' + (data.error || 'Fehler beim Senden');
+                    btn.disabled = false;
+                    btn.textContent = 'Bewertung absenden';
+                }
+            } catch (e) {
+                statusEl.style.color = '#ff6b6b';
+                statusEl.textContent = '❌ Netzwerkfehler: ' + e.message;
+                btn.disabled = false;
+                btn.textContent = 'Bewertung absenden';
+            }
+        }
+
+        // Initialize star ratings
+        initStarRating();
     </script>
 </body>
 
