@@ -191,3 +191,4 @@ function pure_php_read_exif($filePath) {
 }
 
 } // end if !function_exists
+
