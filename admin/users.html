@@ -40,39 +40,59 @@
             }
         }
 
-        /* Change-password overlay */
-        #changePwOverlay {
+        /* Modal overlays */
+        #changePwOverlay, #restoreOverlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.55);
+            background: rgba(0,0,0,0.65);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            padding: 1.5rem;
         }
-        #changePwOverlay.open {
+        #changePwOverlay.open, #restoreOverlay.open {
             display: flex;
         }
-        #changePwBox {
+        .modal-box {
             background: var(--surface-dark);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 2rem;
             width: 100%;
-            max-width: 380px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-        #changePwBox h3 {
+        .modal-box h3 {
             margin: 0 0 1.25rem;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
         }
-        #changePwBox .form-group {
-            margin-bottom: 1rem;
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
-        #changePwActions {
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .scan-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
             display: flex;
-            gap: 0.5rem;
-            margin-top: 1.25rem;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
         }
     </style>
 </head>
@@ -85,39 +105,45 @@
                 <p><a href="dashboard.html" style="color: var(--accent); text-decoration: none;">&larr; Zurück zum
                         Dashboard</a></p>
             </div>
-            <button onclick="showAddUser()" class="btn" style="width: auto;">+ Neuer Benutzer</button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button onclick="downloadBackup()" class="btn" style="width: auto; background: transparent; border: 1px solid var(--border); font-size: 0.85rem;" title="Aktuelle Benutzer als JSON herunterladen">💾 Backup exportieren</button>
+                <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 0.85rem;">🔄 Wiederherstellen & Ordner-Scan</button>
+                <button onclick="showAddUser()" class="btn" style="width: auto; font-size: 0.85rem;">+ Neuer Benutzer</button>
+            </div>
         </header>
 
         <div class="user-list" id="userList">
             <!-- JS Generated -->
         </div>
 
-        <!-- Simple Add User Modal (Hardcoded for simplicity in this file) -->
+        <!-- Add User Modal / Form -->
         <div id="addUserForm"
             style="display:none; background: var(--surface-dark); padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px;">
             <h3>Neuen Benutzer anlegen</h3>
             <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="newUserName" class="form-control">
+                <label>Name des Kunden</label>
+                <input type="text" id="newUserName" class="form-control" placeholder="z. B. Familie Mustermann">
             </div>
             <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="newUserUsername" class="form-control">
+                <label>Username / Login</label>
+                <input type="text" id="newUserUsername" class="form-control" placeholder="z. B. mustermann">
             </div>
             <div class="form-group">
                 <label>Passwort</label>
                 <input type="text" id="newUserPassword" class="form-control" placeholder="Passwort eingeben">
-                <small style="color: var(--text-secondary)">Wird automatisch verschlüsselt (SHA1)</small>
+                <small style="color: var(--text-secondary)">Wird automatisch sicher verschlüsselt (SHA1)</small>
             </div>
-            <button onclick="addUser()" class="btn">Hinzufügen</button>
-            <button onclick="document.getElementById('addUserForm').style.display='none'" class="btn"
-                style="background: transparent; border: 1px solid var(--border); margin-top: 0.5rem;">Abbrechen</button>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <button onclick="addUser()" class="btn">Hinzufügen & Speichern</button>
+                <button onclick="document.getElementById('addUserForm').style.display='none'" class="btn"
+                    style="background: transparent; border: 1px solid var(--border);">Abbrechen</button>
+            </div>
         </div>
     </div>
 
     <!-- Change Password Modal -->
     <div id="changePwOverlay">
-        <div id="changePwBox">
+        <div class="modal-box" style="max-width: 400px;">
             <h3 id="changePwTitle">Passwort ändern</h3>
             <div class="form-group">
                 <label>Neues Passwort</label>
@@ -127,9 +153,59 @@
                 <label>Passwort bestätigen</label>
                 <input type="password" id="changePwConfirm" class="form-control" placeholder="Passwort wiederholen">
             </div>
-            <div id="changePwActions">
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
                 <button onclick="changePassword()" class="btn" style="flex:1;">Speichern</button>
                 <button onclick="closeChangePw()" class="btn" style="flex:1; background: transparent; border: 1px solid var(--border);">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore & Recovery Modal -->
+    <div id="restoreOverlay">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Datenbank-Wiederherstellung</h3>
+                <button onclick="closeRestoreModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
+                <button class="tab-btn active" onclick="switchRestoreTab('scan')">📁 Server-Ordner verknüpfen</button>
+                <button class="tab-btn" onclick="switchRestoreTab('backups')">🕒 Server-Backups</button>
+                <button class="tab-btn" onclick="switchRestoreTab('import')">📥 JSON importieren</button>
+            </div>
+
+            <!-- Tab 1: Scan Server Assets -->
+            <div id="tab-scan" class="tab-content">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Scannt den Ordner <code>gallery/assets/</code> auf deinem Server nach vorhandenen Kunden-Galerien. Falls deine Benutzerliste überschrieben wurde, die Fotos aber noch auf dem Server liegen, kannst du sie hier mit 1 Klick wieder als Benutzer anlegen!
+                </p>
+                <button onclick="scanServerFolders()" class="btn" style="margin-bottom: 1.25rem; width: auto;">🔍 Server nach Galerie-Ordnern scannen</button>
+                <div id="scanResults"></div>
+            </div>
+
+            <!-- Tab 2: Server Backups -->
+            <div id="tab-backups" class="tab-content" style="display: none;">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Automatisch erstellte Sicherungskopien deiner Benutzerdatenbank auf dem Server:
+                </p>
+                <div id="backupList">Lade Backups...</div>
+            </div>
+
+            <!-- Tab 3: JSON Import -->
+            <div id="tab-import" class="tab-content" style="display: none;">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Falls du ein Backup (z. B. <code>users.js</code> oder <code>users_backup.json</code>) auf deinem Computer oder aus einem Hosting-Backup hast, kannst du es hier einfügen oder hochladen:
+                </p>
+                <div class="form-group">
+                    <label>JSON oder users.js Datei auswählen</label>
+                    <input type="file" id="importFileInput" accept=".json,.js" class="form-control" onchange="handleFileImport(event)">
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Oder Inhalt direkt einfügen:</label>
+                    <textarea id="importTextInput" class="form-control" rows="6" placeholder='{"users": [ ... ]}' style="font-family: monospace; font-size: 0.8rem;"></textarea>
+                </div>
+                <button onclick="importDirectJSON()" class="btn" style="margin-top: 1rem;">Importieren & Speichern</button>
             </div>
         </div>
     </div>
@@ -150,15 +226,19 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch('api/get_users.php');
+                const response = await fetch('api/get_users.php?t=' + Date.now());
                 const text = await response.text();
                 // Extract JSON part from "window.usersDatabase = { ... };"
-                const jsonStr = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/)[1];
-                usersData = JSON.parse(jsonStr);
+                const match = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});/);
+                if (match && match[1]) {
+                    usersData = JSON.parse(match[1]);
+                } else {
+                    usersData = { users: [] };
+                }
 
                 // Fetch Favorites
                 try {
-                    const favRes = await fetch('../gallery/data/favorites.json');
+                    const favRes = await fetch('../gallery/data/favorites.json?t=' + Date.now());
                     if (favRes.ok) {
                         favoritesData = await favRes.json();
                     }
@@ -167,11 +247,30 @@
                 renderUsers();
             } catch (e) {
                 console.error("Error loading users", e);
+                renderUsers();
             }
         }
 
         function renderUsers() {
             const container = document.getElementById('userList');
+
+            if (!usersData.users || usersData.users.length === 0) {
+                container.innerHTML = `
+                <div style="background: var(--surface-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 3rem 2rem; text-align: center; color: var(--text-secondary); margin-top: 1rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">👥</div>
+                    <h3 style="margin: 0 0 0.5rem; color: var(--text);">Keine Galerie-Benutzer vorhanden</h3>
+                    <p style="margin: 0 0 1.5rem; max-width: 520px; margin-inline: auto; font-size: 0.95rem; line-height: 1.5;">
+                        Der Demo-Testbenutzer wurde erfolgreich gelöscht. Du kannst jetzt neue Kunden anlegen oder nach bereits hochgeladenen Foto-Ordnern auf deinem Server scannen.
+                    </p>
+                    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="showAddUser()" class="btn" style="width: auto;">+ Neuer Benutzer anlegen</button>
+                        <button onclick="openRestoreModal()" class="btn" style="width: auto; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent);">🔄 Vorhandene Ordner scannen / Backup laden</button>
+                    </div>
+                </div>
+                `;
+                return;
+            }
+
             container.innerHTML = usersData.users.map((user, index) => {
                 const userFavs = favoritesData[user.username] || [];
                 const favCount = userFavs.length;
@@ -195,8 +294,8 @@
                             </span>
                         </div>
                         <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                            Username: ${user.username} <br>
-                            Folder: ${user.folder}
+                            Username: <strong>${user.username}</strong> <br>
+                            Ordner: <code>gallery/assets/${user.folder}/</code>
                         </div>
                         ${favHtml}
                     </div>
@@ -221,14 +320,21 @@
 
         function showAddUser() {
             document.getElementById('addUserForm').style.display = 'block';
+            document.getElementById('newUserName').focus();
         }
 
         async function addUser() {
-            const name = document.getElementById('newUserName').value;
-            const username = document.getElementById('newUserUsername').value;
-            const password = document.getElementById('newUserPassword').value;
+            const name = document.getElementById('newUserName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim();
+            const password = document.getElementById('newUserPassword').value.trim();
 
             if (name && username && password) {
+                // Check duplicate username
+                if (usersData.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                    alert('Dieser Benutzername existiert bereits!');
+                    return;
+                }
+
                 const hash = await sha1(password);
 
                 usersData.users.push({
@@ -242,7 +348,7 @@
                 });
                 renderUsers();
                 document.getElementById('addUserForm').style.display = 'none';
-                saveUsers();
+                await saveUsers();
 
                 // Reset form
                 document.getElementById('newUserName').value = '';
@@ -254,10 +360,8 @@
         }
 
         async function deleteUser(index) {
-            if (confirm('Benutzer wirklich löschen?\n\nACHTUNG: Hierdurch werden auch alle hochgeladenen Bilder dieses Benutzers unwiderruflich vom Server gelöscht!')) {
-                const user = usersData.users[index];
-
-                // Securely tell the backend to delete the folder full of images
+            const user = usersData.users[index];
+            if (confirm(`Benutzer "${user.name}" (${user.username}) wirklich löschen?\n\nACHTUNG: Hierdurch werden auch alle hochgeladenen Bilder dieses Benutzers unwiderruflich vom Server gelöscht!`)) {
                 try {
                     await fetch('api/delete-user-folder.php', {
                         method: 'POST',
@@ -271,7 +375,7 @@
                 // Remove from database and UI
                 usersData.users.splice(index, 1);
                 renderUsers();
-                saveUsers();
+                await saveUsers();
             }
         }
 
@@ -311,9 +415,12 @@
             alert('Passwort erfolgreich gespeichert ✓');
         }
 
-        // Close overlay when clicking outside the box
+        // Close overlays on outside click
         document.getElementById('changePwOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeChangePw();
+        });
+        document.getElementById('restoreOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeRestoreModal();
         });
 
         async function saveUsers() {
@@ -329,7 +436,7 @@
                 try {
                     result = JSON.parse(text);
                 } catch (e) {
-                    throw new Error('Server Return Invalid JSON: ' + text.substring(0, 100)); // Show start of error
+                    throw new Error('Server Return Invalid JSON: ' + text.substring(0, 100));
                 }
 
                 if (result.success) {
@@ -340,6 +447,214 @@
             } catch (e) {
                 console.error("Save error", e);
                 alert("Fehler: " + e.message);
+            }
+        }
+
+        // --- Backup & Restore Functions ---
+
+        function downloadBackup() {
+            const dataStr = JSON.stringify(usersData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `photon_users_backup_${dateStr}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function openRestoreModal() {
+            document.getElementById('restoreOverlay').classList.add('open');
+            switchRestoreTab('scan');
+            scanServerFolders();
+            loadBackupsList();
+        }
+
+        function closeRestoreModal() {
+            document.getElementById('restoreOverlay').classList.remove('open');
+        }
+
+        function switchRestoreTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+            const btn = document.querySelector(`.tab-btn[onclick="switchRestoreTab('${tabId}')"]`);
+            if (btn) btn.classList.add('active');
+            const content = document.getElementById('tab-' + tabId);
+            if (content) content.style.display = 'block';
+        }
+
+        async function scanServerFolders() {
+            const resEl = document.getElementById('scanResults');
+            resEl.innerHTML = '<p style="color: var(--text-secondary);">Scanne gallery/assets/ auf dem Server...</p>';
+
+            try {
+                const res = await fetch('api/restore_users.php?action=scan_folders&t=' + Date.now());
+                const data = await res.json();
+
+                if (data.success && data.orphanFolders && data.orphanFolders.length > 0) {
+                    resEl.innerHTML = `
+                        <p style="color: #4caf50; font-weight: bold; margin-bottom: 0.75rem;">
+                            ✓ ${data.orphanFolders.length} vorhandene Galerie-Ordner gefunden!
+                        </p>
+                        ${data.orphanFolders.map(folder => `
+                            <div class="scan-card">
+                                <div>
+                                    <strong style="color: var(--text);">${folder.suggestedName}</strong>
+                                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
+                                        Ordner: <code>${folder.folder}</code> &bull; 📷 ${folder.imageCount} Bilder
+                                    </div>
+                                </div>
+                                <button onclick="promptRelinkFolder('${encodeURIComponent(JSON.stringify(folder))}')" class="btn" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                                    + Als Kunde anbinden
+                                </button>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    resEl.innerHTML = `
+                        <p style="color: var(--text-secondary); font-style: italic;">
+                            Keine verwaisten Galerie-Ordner gefunden. Alle Ordner in <code>gallery/assets/</code> sind bereits mit Benutzern verknüpft (oder es wurden noch keine Kunden-Ordner hochgeladen).
+                        </p>
+                    `;
+                }
+            } catch (e) {
+                resEl.innerHTML = `<p style="color: var(--danger);">Fehler beim Scannen: ${e.message}</p>`;
+            }
+        }
+
+        async function promptRelinkFolder(folderJsonEncoded) {
+            const folder = JSON.parse(decodeURIComponent(folderJsonEncoded));
+            const name = prompt('Kunden-Name für diesen Ordner:', folder.suggestedName);
+            if (!name) return;
+            const username = prompt('Login-Benutzername:', folder.suggestedUsername);
+            if (!username) return;
+            const password = prompt('Passwort für diesen Kunden:', '');
+            if (!password) {
+                alert('Ein Passwort ist erforderlich.');
+                return;
+            }
+
+            try {
+                const res = await fetch('api/restore_users.php?action=relink_folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        folder: folder.folder,
+                        name: name,
+                        username: username,
+                        password: password
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`Erfolgreich! Kunde "${name}" mit Ordner "${folder.folder}" wurde wiederhergestellt.`);
+                    await loadUsers();
+                    scanServerFolders();
+                } else {
+                    alert('Fehler: ' + (result.message || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Netzwerkfehler: ' + e.message);
+            }
+        }
+
+        async function loadBackupsList() {
+            const listEl = document.getElementById('backupList');
+            try {
+                const res = await fetch('api/restore_users.php?action=list&t=' + Date.now());
+                const data = await res.json();
+
+                if (data.success && data.backups && data.backups.length > 0) {
+                    listEl.innerHTML = data.backups.map(b => `
+                        <div class="scan-card">
+                            <div>
+                                <strong style="color: var(--text);">${b.name}</strong>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
+                                    ${b.time} &bull; 👥 ${b.userCount} Benutzer
+                                </div>
+                            </div>
+                            <button onclick="restoreBackupFile('${b.file}')" class="btn" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem; background: var(--accent);">
+                                Wiederherstellen
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">Noch keine automatischen Backups auf dem Server vorhanden.</p>';
+                }
+            } catch (e) {
+                listEl.innerHTML = `<p style="color: var(--danger);">Fehler: ${e.message}</p>`;
+            }
+        }
+
+        async function restoreBackupFile(file) {
+            if (!confirm(`Möchtest du das Backup "${file}" wirklich wiederherstellen? Die aktuelle Benutzerliste wird dabei ersetzt.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('api/restore_users.php?action=restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: file })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`Backup erfolgreich wiederhergestellt! (${result.userCount} Benutzer geladen)`);
+                    closeRestoreModal();
+                    await loadUsers();
+                } else {
+                    alert('Fehler: ' + (result.message || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Netzwerkfehler: ' + e.message);
+            }
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('importTextInput').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        async function importDirectJSON() {
+            const text = document.getElementById('importTextInput').value.trim();
+            if (!text) {
+                alert('Bitte erst eine Datei auswählen oder JSON einfügen.');
+                return;
+            }
+
+            try {
+                let parsed = null;
+                // If wrapped in window.usersDatabase = ...
+                const match = text.match(/window\.usersDatabase\s*=\s*({[\s\S]*?});?/);
+                if (match && match[1]) {
+                    parsed = JSON.parse(match[1]);
+                } else {
+                    parsed = JSON.parse(text);
+                }
+
+                if (!parsed || !Array.isArray(parsed.users)) {
+                    throw new Error('Das JSON enthält kein gültiges "users"-Array.');
+                }
+
+                if (!confirm(`Sicher? Es werden ${parsed.users.length} Benutzer importiert und gespeichert.`)) {
+                    return;
+                }
+
+                usersData = parsed;
+                renderUsers();
+                await saveUsers();
+                closeRestoreModal();
+                alert(`Erfolgreich! ${parsed.users.length} Benutzer wurden importiert.`);
+            } catch (e) {
+                alert('Fehler beim Parsen der Daten: ' + e.message);
             }
         }
 

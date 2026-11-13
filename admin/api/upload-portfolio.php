@@ -155,6 +155,7 @@ for ($i = 0; $i < $fileCount; $i++) {
     $targetPath = $targetDir . $filename;
     
     if (moveImage($tmp_name, $targetPath, $mimeType)) {
+        @chmod($targetPath, 0666);
         $uploadedCount++;
         $portfolioData['images'][] = [
             'id' => $id,

@@ -5,50 +5,61 @@ if (!isset($_GET['path'])) {
     exit('No path provided');
 }
 
-$baseDir = realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR;
 $relPath = (string)$_GET['path'];
 
 // Security: strip directory traversal attempts
-$relPath = ltrim(str_replace('..', '', $relPath), '/\\');
-$fullPath = realpath($baseDir . $relPath);
+$relPath = ltrim(str_replace(['../', '..\\', '..'], '', $relPath), '/\\');
 
 // Only allow within gallery/assets or assets/portfolio
-if (!$fullPath || strpos($fullPath, $baseDir) !== 0) {
+$isAllowedPrefix = (
+    strpos($relPath, 'gallery/assets/') === 0 ||
+    strpos($relPath, 'gallery\\assets\\') === 0 ||
+    strpos($relPath, 'assets/portfolio/') === 0 ||
+    strpos($relPath, 'assets\\portfolio\\') === 0
+);
+
+if (!$isAllowedPrefix) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-$allowed = [
-    $baseDir . 'gallery' . DIRECTORY_SEPARATOR . 'assets',
-    $baseDir . 'assets' . DIRECTORY_SEPARATOR . 'portfolio'
-];
-
-$inAllowed = false;
-foreach ($allowed as $a) {
-    $realA = realpath($a);
-    if ($realA && strpos($fullPath, $realA) === 0) {
-        $inAllowed = true;
-        break;
-    }
+$baseDir = realpath(__DIR__ . '/../../');
+if (!$baseDir) {
+    $baseDir = dirname(dirname(__DIR__));
 }
+$baseDir = rtrim($baseDir, '/\\') . DIRECTORY_SEPARATOR;
 
-if (!$inAllowed || !is_file($fullPath)) {
+$fullPath = $baseDir . $relPath;
+
+// Try realpath first
+$realFullPath = realpath($fullPath);
+if ($realFullPath && is_file($realFullPath)) {
+    $fullPath = $realFullPath;
+} elseif (!is_file($fullPath)) {
     http_response_code(404);
     exit('File not found');
 }
 
 // Determine MIME type
 $mime = 'image/jpeg';
-if (function_exists('finfo_open')) {
+$ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+if ($ext === 'png') {
+    $mime = 'image/png';
+} elseif ($ext === 'webp') {
+    $mime = 'image/webp';
+} elseif ($ext === 'gif') {
+    $mime = 'image/gif';
+} elseif (function_exists('finfo_open')) {
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_file($finfo, $fullPath);
+    $detected = finfo_file($finfo, $fullPath);
+    if ($detected) $mime = $detected;
     if (PHP_VERSION_ID < 80500) {
         @finfo_close($finfo);
     }
 }
 
 // Output the file directly (this avoids CORS and path issues on subdomains)
-header('Content-Type: ' . ($mime ?: 'image/jpeg'));
+header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($fullPath));
 header('Cache-Control: public, max-age=86400');
 readfile($fullPath);
