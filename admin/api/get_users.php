@@ -9,8 +9,28 @@ try {
     $stmt = $db->query("SELECT id, username, password_hash, name, folder, image_count, is_protected FROM users ORDER BY id ASC");
     $rows = $stmt->fetchAll();
 
+    $galStmt = $db->prepare("SELECT id, user_id, title, folder, image_count, is_protected FROM galleries WHERE user_id = ? ORDER BY id ASC");
+    $chatStmt = $db->prepare("SELECT COUNT(*) FROM chat_messages WHERE user_id = ? AND sender = 'customer' AND is_read = 0");
+
     $users = [];
     foreach ($rows as $r) {
+        $galStmt->execute([$r['id']]);
+        $userGalleries = $galStmt->fetchAll();
+
+        if (empty($userGalleries) && !empty($r['folder'])) {
+            $userGalleries = [[
+                'id' => 0,
+                'user_id' => $r['id'],
+                'title' => 'Hauptgalerie',
+                'folder' => $r['folder'],
+                'image_count' => (int)$r['image_count'],
+                'is_protected' => (bool)$r['is_protected']
+            ]];
+        }
+
+        $chatStmt->execute([$r['id']]);
+        $unreadChat = (int)$chatStmt->fetchColumn();
+
         $users[] = [
             'id' => (string)$r['id'],
             'username' => $r['username'],
@@ -18,7 +38,17 @@ try {
             'name' => $r['name'],
             'folder' => $r['folder'],
             'imageCount' => (int)$r['image_count'],
-            'isProtected' => (bool)$r['is_protected']
+            'isProtected' => (bool)$r['is_protected'],
+            'unreadChatCount' => $unreadChat,
+            'galleries' => array_map(function($g) {
+                return [
+                    'id' => (int)$g['id'],
+                    'title' => $g['title'],
+                    'folder' => $g['folder'],
+                    'imageCount' => (int)$g['image_count'],
+                    'isProtected' => (bool)$g['is_protected']
+                ];
+            }, $userGalleries)
         ];
     }
 

@@ -12,12 +12,23 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true ||
 require_once __DIR__ . '/../../includes/db.php';
 
 $username = $_SESSION['user']['username'];
+$folder = trim($_GET['folder'] ?? '');
 
 try {
     $db = getDB();
-    $stmt = $db->prepare("SELECT filename FROM favorites WHERE username = ? ORDER BY id ASC");
-    $stmt->execute([$username]);
-    $favorites = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    if ($folder !== '') {
+        $prefix = $folder . '/';
+        $stmt = $db->prepare("SELECT filename FROM favorites WHERE username = ? AND (filename LIKE ? OR filename NOT LIKE '%/%') ORDER BY id ASC");
+        $stmt->execute([$username, $prefix . '%']);
+        $raw = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $favorites = array_map(function($f) use ($prefix) {
+            return str_replace($prefix, '', $f);
+        }, $raw);
+    } else {
+        $stmt = $db->prepare("SELECT filename FROM favorites WHERE username = ? ORDER BY id ASC");
+        $stmt->execute([$username]);
+        $favorites = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 
     echo json_encode(['success' => true, 'favorites' => $favorites ?: []]);
 } catch (Exception $e) {

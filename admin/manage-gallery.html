@@ -191,9 +191,11 @@
 
         const params = new URLSearchParams(window.location.search);
         const usernameParam = params.get('user');
+        const folderParam   = params.get('folder');
         if (!usernameParam) window.location.href = 'users.html';
 
         let currentUser = null;
+        let currentFolder = null;
         let usersData   = null;
         /** Actual list of filenames fetched from the server (e.g. ['1.jpg','2.jpg',...]) */
         let imageFiles  = [];
@@ -218,7 +220,16 @@
                 currentUser = usersData.users.find(u => u.username === usernameParam);
                 if (!currentUser) throw new Error("Benutzer nicht gefunden");
 
-                document.getElementById('pageTitle').innerText = 'Galerie: ' + currentUser.name;
+                // Determine active folder (either explicit folderParam or user's primary folder)
+                currentFolder = folderParam || currentUser.folder;
+
+                let galleryTitle = '';
+                if (currentUser.galleries && Array.isArray(currentUser.galleries)) {
+                    const matchedGal = currentUser.galleries.find(g => g.folder === currentFolder);
+                    if (matchedGal) galleryTitle = ' — ' + matchedGal.title;
+                }
+
+                document.getElementById('pageTitle').innerText = 'Galerie: ' + currentUser.name + galleryTitle;
 
                 // Fetch the actual list of filenames from the server so we always
                 // delete the correct file (the backend renumbers after each deletion).
@@ -233,7 +244,7 @@
             // list-gallery-files.php scans the actual folder on disk so we always
             // get the real, current filenames (after any rename that followed a deletion).
             try {
-                const r = await fetch(`api/list-gallery-files.php?folder=${encodeURIComponent(currentUser.folder)}`);
+                const r = await fetch(`api/list-gallery-files.php?folder=${encodeURIComponent(currentFolder)}`);
                 const d = await r.json();
                 if (d && d.success && Array.isArray(d.files)) {
                     imageFiles = d.files;
@@ -300,10 +311,10 @@
 
             for (let idx = start; idx < end; idx++) {
                 const filename = imageFiles[idx];
-                const relPath  = `gallery/assets/${currentUser.folder}/${filename}`;
+                const relPath  = `gallery/assets/${currentFolder}/${filename}`;
                 // cacheBust ensures the browser never serves a stale cached thumbnail
                 // after the server renumbers files following a deletion.
-                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentUser.folder)}&i=${encodeURIComponent(filename)}&thumb=1&cb=${cacheBust}`;
+                const thumbUrl = `api/get-gallery-image.php?f=${encodeURIComponent(currentFolder)}&i=${encodeURIComponent(filename)}&thumb=1&cb=${cacheBust}`;
 
                 const item = document.createElement('div');
                 item.className = 'gallery-skeleton';
@@ -405,7 +416,7 @@
 
         /** Set the selected state for an item by its imageFiles[] index */
         function setSelected(idx, state) {
-            const relPath = `gallery/assets/${currentUser.folder}/${imageFiles[idx]}`;
+            const relPath = `gallery/assets/${currentFolder}/${imageFiles[idx]}`;
             const item = document.querySelector(`[data-img-idx="${idx}"]`);
             if (state) {
                 selectedFiles.add(relPath);
@@ -418,7 +429,7 @@
 
         /** Returns true if the item at imageFiles[idx] is currently selected */
         function isSelected(idx) {
-            return selectedFiles.has(`gallery/assets/${currentUser.folder}/${imageFiles[idx]}`);
+            return selectedFiles.has(`gallery/assets/${currentFolder}/${imageFiles[idx]}`);
         }
 
         /**
@@ -667,6 +678,7 @@
                 const f = validFiles[i];
                 const formData = new FormData();
                 formData.append('galleryId', currentUser.id);
+                formData.append('folder', currentFolder);
                 formData.append('photos[]', f);
 
                 statusLabel.innerText = `Lade hoch... ${uploadedCount}/${totalFiles}`;

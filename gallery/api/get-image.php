@@ -8,13 +8,38 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     exit('Forbidden');
 }
 
+require_once __DIR__ . '/../../includes/db.php';
+
 $user = $_SESSION['user'];
-$requested_folder = isset($_GET['f']) ? $_GET['f'] : '';
-$requested_image = isset($_GET['i']) ? $_GET['i'] : '';
+$requested_folder = isset($_GET['f']) ? (string)$_GET['f'] : '';
+$requested_image = isset($_GET['i']) ? (string)$_GET['i'] : '';
 $thumbnail_mode = isset($_GET['thumb']) && $_GET['thumb'] === '1';
 
-// Ensure user only accesses their own folder
-if ($requested_folder !== $user['folder']) {
+// Verify access: user's primary folder or one of their galleries
+$allowed = ($requested_folder === ($user['folder'] ?? ''));
+$galleryProtection = null;
+
+try {
+    $db = getDB();
+    if (!$allowed && isset($user['id'])) {
+        $stmt = $db->prepare("SELECT is_protected FROM galleries WHERE user_id = ? AND folder = ? LIMIT 1");
+        $stmt->execute([(int)$user['id'], $requested_folder]);
+        $row = $stmt->fetch();
+        if ($row !== false) {
+            $allowed = true;
+            $galleryProtection = (bool)$row['is_protected'];
+        }
+    } elseif ($allowed && isset($user['id'])) {
+        $stmt = $db->prepare("SELECT is_protected FROM galleries WHERE user_id = ? AND folder = ? LIMIT 1");
+        $stmt->execute([(int)$user['id'], $requested_folder]);
+        $val = $stmt->fetchColumn();
+        if ($val !== false) {
+            $galleryProtection = (bool)$val;
+        }
+    }
+} catch (Exception $e) {}
+
+if (!$allowed) {
     http_response_code(403);
     exit('Access Denied');
 }
@@ -33,40 +58,11 @@ if (!file_exists($image_path)) {
     exit('Image not found');
 }
 
-// Check protection status (from session, DB, or fallback to users.js)
-$isProtected = isset($user['isProtected']) ? (bool)$user['isProtected'] : false;
-
-if (!isset($user['isProtected'])) {
-    try {
-        require_once __DIR__ . '/../../includes/db.php';
-        $db = getDB();
-        $stmt = $db->prepare("SELECT is_protected FROM users WHERE username = ? LIMIT 1");
-        $stmt->execute([$user['username']]);
-        $val = $stmt->fetchColumn();
-        if ($val !== false) {
-            $isProtected = (bool)$val;
-        }
-    } catch (Exception $e) {
-        $usersFile = __DIR__ . '/../data/users.js';
-        if (!file_exists($usersFile)) {
-            $usersFile = __DIR__ . '/../gallery/data/users.js';
-        }
-        if (file_exists($usersFile)) {
-            $usersContent = file_get_contents($usersFile);
-            preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches);
-            if (isset($matches[1])) {
-                $usersData = json_decode($matches[1], true);
-                if ($usersData && isset($usersData['users'])) {
-                    foreach ($usersData['users'] as $u) {
-                        if ($u['username'] === $user['username']) {
-                            $isProtected = isset($u['isProtected']) ? (bool)$u['isProtected'] : true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
+// Check protection status (from gallery record, session, or DB)
+if ($galleryProtection !== null) {
+    $isProtected = $galleryProtection;
+} else {
+    $isProtected = isset($user['isProtected']) ? (bool)$user['isProtected'] : false;
 }
 
 // --- Fast Path Cached Thumbnail ---

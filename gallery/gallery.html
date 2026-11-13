@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meine Galerie | Photon Capture</title>
+    <title>Kundenportal | Photon Capture</title>
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -25,15 +25,24 @@
 <body>
     <!-- Navigation -->
     <header>
-        <div class="container">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
             <a href="../index.html" class="brand-logo">PHOTON CAPTURE</a>
-            <nav>
+            <nav style="display: flex; align-items: center; gap: 1.25rem;">
+                <!-- Main Portal Tabs -->
+                <div class="portal-tabs-nav">
+                    <button id="tab-btn-galleries" class="portal-tab-btn active" onclick="switchPortalTab('galleries')">
+                        <span>🖼️ Meine Galerien</span>
+                    </button>
+                    <button id="tab-btn-chat" class="portal-tab-btn" onclick="switchPortalTab('chat')">
+                        <span>💬 Chat mit Jonathan</span>
+                        <span id="chat-unread-badge" class="tab-badge" style="display: none;">0</span>
+                    </button>
+                </div>
+
                 <div class="nav-actions">
-                    <span id="user-greeting" style="margin-right: 0.75rem; color: var(--text-secondary); font-size: 13px;">Willkommen, <span
+                    <span id="user-greeting" style="color: var(--text-secondary); font-size: 13px;">Willkommen, <span
                             id="user-name" style="color: #ffffff; font-weight: 600;">Kunde</span></span>
                     <button id="change-pw-btn" class="btn-logout">Passwort ändern</button>
-                    <button id="select-mode-btn" class="cta-button">Bilder auswählen</button>
-                    <button id="favorites-filter-btn" class="btn-logout">Favoriten</button>
                     <button id="logout-btn" class="btn-logout">Abmelden</button>
                 </div>
             </nav>
@@ -72,27 +81,115 @@
         </div>
     </div>
 
-    <div class="container" style="padding-top: 90px;">
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: GALLERIES VIEW (Overview + Detail)                             -->
+    <!-- ===================================================================== -->
+    <main id="galleries-view">
+        <!-- 1A: MULTI-GALLERY OVERVIEW -->
+        <div id="galleries-overview" class="container" style="padding-top: 100px;">
+            <div class="gallery-title-wrapper">
+                <span class="section-kicker">Kundenbereich</span>
+                <h1 id="overview-greeting">Deine Galerien</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem; max-width: 600px;">
+                    Hier findest du alle deine Fotosammlungen. Wähle eine Galerie aus, um deine Bilder anzusehen, Favoriten zu markieren oder Fotos herunterzuladen.
+                </p>
+            </div>
+
+            <div class="galleries-grid" id="galleries-cards-grid">
+                <div style="text-align: center; color: var(--text-secondary); padding: 3rem; grid-column: 1 / -1;">
+                    Lade Galerien...
+                </div>
+            </div>
+        </div>
+
+        <!-- 1B: SINGLE GALLERY PHOTO VIEWER -->
+        <div id="single-gallery-view" style="display: none;">
+            <div class="container" style="padding-top: 95px;">
+                <button class="btn-back" onclick="showGalleriesOverview()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Alle Galerien
+                </button>
+
+                <div class="gallery-title-wrapper" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <span class="section-kicker" id="active-gallery-kicker">Galerie</span>
+                        <h1 id="active-gallery-title" style="margin-bottom: 0.25rem;">Deine persönliche Galerie</h1>
+                        <p id="active-gallery-info" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;"></p>
+                    </div>
+
+                    <!-- Gallery Action Buttons -->
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <button id="select-mode-btn" class="cta-button">Bilder auswählen</button>
+                        <button id="favorites-filter-btn" class="btn-logout">Favoriten</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selection Toolbar (hidden by default) -->
+            <div class="selection-toolbar" id="selection-toolbar" style="display: none;">
+                <div class="toolbar-content">
+                    <button id="select-all-btn" class="btn-primary">Alle auswählen</button>
+                    <button id="deselect-all-btn" class="btn-secondary">Auswahl aufheben</button>
+                    <span id="selection-count" class="selection-count">0 Bilder ausgewählt</span>
+                    <button id="download-selected-btn" class="btn-success" disabled>Ausgewählte herunterladen</button>
+                    <button id="cancel-selection-btn" class="btn-secondary">Abbrechen</button>
+                </div>
+            </div>
+
+            <div class="gallery-grid" id="gallery-grid">
+                <!-- Images will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: CHAT MESSENGER (Client <-> Jonathan)                          -->
+    <!-- ===================================================================== -->
+    <main id="chat-view" class="container" style="display: none; padding-top: 100px;">
         <div class="gallery-title-wrapper">
-            <span class="section-kicker">Kundenbereich</span>
-            <h1>Deine persönliche Galerie</h1>
+            <span class="section-kicker">Direkter Kontakt</span>
+            <h1>Chat mit Jonathan</h1>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; max-width: 600px;">
+                Stelle Fragen zu deiner Fotogalerie, bitte um Nachbearbeitungen bestimmter Bilder oder bespreche dein nächstes Shooting direkt mit deinem Fotografen.
+            </p>
         </div>
-    </div>
 
-    <!-- Selection Toolbar (hidden by default) -->
-    <div class="selection-toolbar" id="selection-toolbar" style="display: none;">
-        <div class="toolbar-content">
-            <button id="select-all-btn" class="btn-primary">Alle auswählen</button>
-            <button id="deselect-all-btn" class="btn-secondary">Auswahl aufheben</button>
-            <span id="selection-count" class="selection-count">0 Bilder ausgewählt</span>
-            <button id="download-selected-btn" class="btn-success" disabled>Ausgewählte herunterladen</button>
-            <button id="cancel-selection-btn" class="btn-secondary">Abbrechen</button>
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-photographer-info">
+                    <div class="photographer-avatar">JW</div>
+                    <div class="photographer-meta">
+                        <h3>Jonathan Weidner</h3>
+                        <span class="photographer-status">
+                            <span style="display: inline-block; width: 7px; height: 7px; background: #10b981; border-radius: 50%;"></span>
+                            Fotograf & Bildbearbeiter
+                        </span>
+                    </div>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.8rem;">
+                    Photon Capture Portal
+                </div>
+            </div>
+
+            <div class="chat-messages-area" id="chat-messages-area">
+                <div class="chat-empty">
+                    <div class="chat-empty-icon">💬</div>
+                    <p style="margin: 0; font-weight: 600; color: #fff;">Noch keine Nachrichten</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.25rem;">Schreibe Jonathan eine Nachricht – er antwortet dir direkt hier im Portal.</p>
+                </div>
+            </div>
+
+            <div class="chat-input-bar">
+                <textarea id="chat-input" placeholder="Nachricht an Jonathan schreiben... (Enter zum Senden)" rows="1"></textarea>
+                <button id="chat-send-btn" class="chat-send-btn" title="Nachricht senden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
         </div>
-    </div>
-
-    <div class="gallery-grid" id="gallery-grid">
-        <!-- Images will be loaded here -->
-    </div>
+    </main>
 
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
@@ -121,11 +218,6 @@
                 </svg>
             </button>
             
-            <!-- Share button -->
-            <button class="lightbox-share" id="lightbox-share-btn" title="Teilen" style="display: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-            </button>
-            
             <!-- Download Button -->
             <a href="#" class="lightbox-download" id="lightbox-download" download>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -139,9 +231,13 @@
         </div>
     </div>
 
-    <!-- Server-side session authentication -->
+    <!-- Server-side session authentication & logic -->
     <script>
         let user = null;
+        let userGalleries = [];
+        let activeGallery = null;
+        let chatPollingInterval = null;
+        let activeTab = 'galleries';
 
         // Check session and load user data
         fetch('api/check-session.php')
@@ -157,7 +253,10 @@
 
                 user = data.user;
                 document.getElementById('user-name').textContent = user.name;
-                initializeGallery();
+                document.getElementById('overview-greeting').textContent = 'Willkommen, ' + user.name;
+                
+                loadUserGalleries();
+                checkUnreadChatCount();
             })
             .catch(() => {
                 window.location.href = 'index.html';
@@ -174,902 +273,632 @@
                 });
         });
 
-        async function initializeGallery() {
-            // Setup session cache buster once per page load to ensure performance
-            const sessionCacheBuster = Date.now();
+        // Tab Switching
+        function switchPortalTab(tab) {
+            activeTab = tab;
+            const tabGalleries = document.getElementById('tab-btn-galleries');
+            const tabChat = document.getElementById('tab-btn-chat');
+            const viewGalleries = document.getElementById('galleries-view');
+            const viewChat = document.getElementById('chat-view');
 
-            // Favorites State
-            let favorites = new Set();
-            let showFavoritesOnly = false;
-            
+            if (tab === 'chat') {
+                tabChat.classList.add('active');
+                tabGalleries.classList.remove('active');
+                viewChat.style.display = 'block';
+                viewGalleries.style.display = 'none';
+
+                loadChatMessages();
+                if (!chatPollingInterval) {
+                    chatPollingInterval = setInterval(loadChatMessages, 5000);
+                }
+            } else {
+                tabGalleries.classList.add('active');
+                tabChat.classList.remove('active');
+                viewGalleries.style.display = 'block';
+                viewChat.style.display = 'none';
+
+                if (chatPollingInterval) {
+                    clearInterval(chatPollingInterval);
+                    chatPollingInterval = null;
+                }
+            }
+        }
+
+        // --- Fetch & Render User Galleries ---
+        async function loadUserGalleries() {
+            const container = document.getElementById('galleries-cards-grid');
             try {
-                const favRes = await fetch('api/get-favorites.php');
-                const favData = await favRes.json();
-                if (favData.success && favData.favorites) {
-                    favorites = new Set(favData.favorites.map(img => parseInt(img.replace('.jpg', ''))));
-                }
-            } catch(e) { console.error('Error loading favorites', e); }
-
-            // Load Images
-            const galleryGrid = document.getElementById('gallery-grid');
-            const imageFolder = `assets/${user.folder}`;
-            const imageCount = user.imageCount || 0;
-
-            // Advanced Selection gestures state
-            let anchorIndex = -1;
-            let lastShiftRange = new Set();
-            let shiftTargetState = true;
-            let lastShiftClickTarget = -1;
-            let isDraggingToSelect = false;
-            let dragTargetState = true; 
-            let longPressTimer = null;
-            let ignoreNextClick = false;
-            let lastHoveredIdx = -1;
-            let selectionTouchStartX = 0;
-            let selectionTouchStartY = 0;
-
-            function getGalleryItemIndex(el) {
-                const item = el.closest('.gallery-item');
-                if (!item) return -1;
-                const cb = item.querySelector('input');
-                return cb ? parseInt(cb.dataset.imageIndex) : -1;
-            }
-
-            function setSelectionState(index, state) {
-                const cb = document.getElementById(`select-${index}`);
-                if (!cb) return;
-                cb.checked = state;
-                if (state) selectedImages.add(index);
-                else selectedImages.delete(index);
-            }
-
-            function updateSelectionHtml() {
-                updateSelectionCount();
-            }
-
-            function toggleImageSelection(index, isShiftKey = false) {
-                const cbList = Array.from(document.querySelectorAll('.selection-checkbox input'));
-                
-                if (isShiftKey && anchorIndex !== -1) {
-                    let targetState = true;
-                    if (index === lastShiftClickTarget) {
-                        shiftTargetState = !shiftTargetState;
-                        targetState = shiftTargetState;
-                    } else {
-                        shiftTargetState = true;
-                        targetState = true;
-                    }
-
-                    // Undo previous range. This resets the items to their original unselected state.
-                    lastShiftRange.forEach(idx => {
-                        if (idx !== anchorIndex) setSelectionState(idx, false);
-                    });
-                    lastShiftRange.clear();
-
-                    const startIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === anchorIndex);
-                    const endIndex = cbList.findIndex(c => parseInt(c.dataset.imageIndex) === index);
-                    const minIdx = Math.min(startIndex, endIndex);
-                    const maxIdx = Math.max(startIndex, endIndex);
-
-                    for (let n = minIdx; n <= maxIdx; n++) {
-                        const targetImageIdx = parseInt(cbList[n].dataset.imageIndex);
-                        setSelectionState(targetImageIdx, targetState);
-                        if (targetState) {
-                            lastShiftRange.add(targetImageIdx);
-                        }
-                    }
-                    
-                    lastShiftClickTarget = index;
+                const res = await fetch('api/get-galleries.php?t=' + Date.now());
+                const data = await res.json();
+                if (data.success && Array.isArray(data.galleries)) {
+                    userGalleries = data.galleries;
                 } else {
-                    const cb = document.getElementById(`select-${index}`);
-                    if (!cb) return;
-                    const newState = !cb.checked;
-                    setSelectionState(index, newState);
-
-                    if (newState) {
-                        anchorIndex = index;
-                        lastShiftRange.clear();
-                        lastShiftRange.add(index);
-                        lastShiftClickTarget = index;
-                        shiftTargetState = true;
-                    } else {
-                        anchorIndex = -1;
-                        lastShiftRange.clear();
-                        lastShiftClickTarget = -1;
-                        shiftTargetState = false;
-                    }
+                    userGalleries = [];
                 }
-                updateSelectionHtml();
+            } catch (e) {
+                console.error('Error fetching galleries', e);
+                userGalleries = [];
             }
 
-            function handlePointerDown(e) {
-                if (e.button && e.button !== 0) return; // Only left click
-                const idx = getGalleryItemIndex(e.target);
-                if (idx === -1) return;
-
-                const isTouch = e.type === 'touchstart';
-                if (isTouch && e.touches && e.touches.length > 0) {
-                    selectionTouchStartX = e.touches[0].clientX;
-                    selectionTouchStartY = e.touches[0].clientY;
-                } else {
-                    selectionTouchStartX = e.clientX;
-                    selectionTouchStartY = e.clientY;
-                }
-
-                if (selectionMode) {
-                    if (!isTouch) {
-                        // Mouse immediately enters drag mode
-                        isDraggingToSelect = true;
-                        const cb = document.getElementById(`select-${idx}`);
-                        dragTargetState = cb ? !cb.checked : true;
-                        lastHoveredIdx = idx;
-                    } else {
-                        // Touch waits 500ms to allow native scrolling otherwise
-                        longPressTimer = setTimeout(() => {
-                            isDraggingToSelect = true;
-                            const cb = document.getElementById(`select-${idx}`);
-                            dragTargetState = cb ? !cb.checked : true;
-                            ignoreNextClick = true;
-                            lastHoveredIdx = idx;
-                            
-                            setSelectionState(idx, dragTargetState);
-                            updateSelectionHtml();
-                            
-                            anchorIndex = idx;
-                            lastShiftRange.clear();
-                            lastShiftRange.add(idx);
-                            lastShiftClickTarget = idx;
-                            shiftTargetState = dragTargetState;
-                        }, 500);
-                    }
-                } else {
-                    // Start Long Press timer outside selection mode
-                    longPressTimer = setTimeout(() => {
-                        document.getElementById('select-mode-btn').click();
-                        setSelectionState(idx, true);
-                        updateSelectionHtml();
-                        
-                        anchorIndex = idx;
-                        lastShiftRange.clear();
-                        lastShiftRange.add(idx);
-                        lastShiftClickTarget = idx;
-                        shiftTargetState = true;
-
-                        isDraggingToSelect = true;
-                        dragTargetState = true;
-                        ignoreNextClick = true;
-                        lastHoveredIdx = idx;
-                    }, 500); // 500ms hold
-                }
+            if (userGalleries.length === 0) {
+                container.innerHTML = `
+                    <div style="background: #111; border: 1px dashed var(--border-light); border-radius: 16px; padding: 3rem 2rem; text-align: center; color: var(--text-secondary); grid-column: 1 / -1;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📸</div>
+                        <h3 style="color: #fff; margin-bottom: 0.5rem;">Noch keine Galerie freigeschaltet</h3>
+                        <p style="margin: 0; font-size: 0.95rem;">Dein Fotograf lädt deine Fotos in Kürze hoch. Sobald sie bereit sind, findest du sie hier.</p>
+                    </div>
+                `;
+                return;
             }
 
-            function handlePointerMove(e) {
-                let clientX = e.clientX;
-                let clientY = e.clientY;
-                if (e.touches && e.touches.length > 0) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                }
+            container.innerHTML = userGalleries.map((gal, idx) => {
+                const isProtected = gal.isProtected !== false;
+                const coverHtml = gal.coverImage 
+                    ? `<img src="${gal.coverImage}" alt="${gal.title}" loading="lazy">`
+                    : `<div class="gallery-card-placeholder">📷<span style="font-size: 0.9rem;">Keine Fotos</span></div>`;
 
-                if (!isDraggingToSelect) {
-                    if (longPressTimer) {
-                        // Very important: don't cancel long press for microscopic 3px finger wiggles
-                        let diffX = Math.abs(clientX - selectionTouchStartX);
-                        let diffY = Math.abs(clientY - selectionTouchStartY);
-                        if (diffX > 10 || diffY > 10) {
-                            clearTimeout(longPressTimer);
-                            longPressTimer = null;
-                        }
-                    }
-                    return;
-                }
-
-                if (e.cancelable) e.preventDefault(); // Prevent scrolling while actively dragging an area
-
-                const el = document.elementFromPoint(clientX, clientY);
-                if (!el) return;
-
-                const idx = getGalleryItemIndex(el);
-                if (idx !== -1 && idx !== lastHoveredIdx) {
-                    setSelectionState(idx, dragTargetState);
-                    updateSelectionHtml();
-                    
-                    lastHoveredIdx = idx;
-                    anchorIndex = idx; // Update anchor so if they shift click later it continues logically
-                    lastShiftRange.clear();
-                    lastShiftRange.add(idx);
-                }
-            }
-
-            function handlePointerUp() {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                isDraggingToSelect = false;
-                lastHoveredIdx = -1;
-            }
-
-            // Bind Events Handlers
-            galleryGrid.addEventListener('mousedown', handlePointerDown);
-            galleryGrid.addEventListener('touchstart', handlePointerDown, {passive: true});
-            window.addEventListener('mousemove', handlePointerMove);
-            window.addEventListener('touchmove', handlePointerMove, {passive: false}); 
-            window.addEventListener('mouseup', handlePointerUp);
-            window.addEventListener('touchend', handlePointerUp);
-
-            // Ctrl+A globally for mass selection
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                    if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-                    e.preventDefault();
-                    if (!selectionMode) document.getElementById('select-mode-btn').click();
-                    
-                    const allCheckboxes = document.querySelectorAll('.selection-checkbox input');
-                    let allSelected = true;
-                    for (let cb of allCheckboxes) {
-                        if (!cb.checked) {
-                            allSelected = false;
-                            break;
-                        }
-                    }
-                    
-                    if (allSelected && allCheckboxes.length > 0) {
-                        document.getElementById('deselect-all-btn').click();
-                    } else {
-                        document.getElementById('select-all-btn').click();
-                    }
-                }
-            });
-
-            // Render Main Gallery Grid
-            function renderGallery() {
-                galleryGrid.innerHTML = '';
-
-                if (imageCount > 0) {
-                    for (let i = 1; i <= imageCount; i++) {
-                        // Filter if favorites mode is on
-                        if (showFavoritesOnly && !favorites.has(i)) continue;
-
-                        const item = document.createElement('div');
-                        item.className = 'gallery-item';
-                        const isFavorite = favorites.has(i);
-
-                        // Use secure delivery API for watermarking/protection
-                        const imgSrc = `api/get-image.php?f=${user.folder}&i=${i}.jpg&thumb=1&v=${sessionCacheBuster}`;
-
-                        item.innerHTML = `
-                        <div class="selection-checkbox" style="display: none; pointer-events: none;">
-                            <input type="checkbox" id="select-${i}" data-image-index="${i}">
-                            <label for="select-${i}"></label>
+                return `
+                    <div class="gallery-card" onclick="openGallery(${idx})">
+                        <div class="gallery-card-cover">
+                            ${coverHtml}
                         </div>
-                        <img src="${imgSrc}" loading="lazy" alt="Bild ${i}">
-                        <div class="gallery-overlay">
-                            <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${i})" style="margin-right: 0.5rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                            </button>
-                            <button class="btn-icon" onclick="openLightbox(${i})">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                            </button>
+                        <div class="gallery-card-body">
+                            <div>
+                                <h3 class="gallery-card-title">${gal.title}</h3>
+                                <div class="gallery-card-meta">
+                                    <span class="gallery-pill">📸 ${gal.imageCount} Foto${gal.imageCount !== 1 ? 's' : ''}</span>
+                                    <span class="gallery-pill ${isProtected ? 'protected' : 'unlocked'}">
+                                        ${isProtected ? '🔒 Vorschau (Wasserzeichen)' : '🔓 Freigegeben'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="gallery-card-footer">
+                                <span>Galerie öffnen</span>
+                                <span>→</span>
+                            </div>
                         </div>
-                    `;
+                    </div>
+                `;
+            }).join('');
+        }
 
-                        // Add click event to intercept if selection mode is open
-                        item.querySelector('img').addEventListener('click', (e) => {
-                            if (ignoreNextClick) {
-                                ignoreNextClick = false;
-                                return;
-                            }
-                            if (selectionMode) {
-                                toggleImageSelection(i, e.shiftKey);
-                            } else {
-                                openLightbox(i);
-                            }
-                        });
+        function showGalleriesOverview() {
+            document.getElementById('galleries-overview').style.display = 'block';
+            document.getElementById('single-gallery-view').style.display = 'none';
+            document.getElementById('selection-toolbar').style.display = 'none';
+            activeGallery = null;
+        }
 
-                        galleryGrid.appendChild(item);
-                    }
-                } else {
-                    galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 4rem;">Noch keine Bilder verfügbar.</p>';
-                }
-            }
+        // --- Open Single Gallery View ---
+        async function openGallery(index) {
+            const gal = userGalleries[index];
+            if (!gal) return;
 
-            renderGallery();
-
-            // Try alternative image extensions if the default .jpg fails
-            window.tryNextExtension = function(img) {
-                let src = img.src;
-                let newSrc = null;
-
-                if (src.includes('.jpg')) {
-                    newSrc = src.replace('.jpg', '.png');
-                } else if (src.includes('.png')) {
-                    newSrc = src.replace('.png', '.webp');
-                }
-                
-                if (newSrc) {
-                    img.src = newSrc;
-                    // If this is the lightbox image, also update the download button URL
-                    if (img.id === 'lightbox-img') {
-                        const dlBtn = document.getElementById('lightbox-download');
-                        if (dlBtn) dlBtn.href = newSrc;
-                    }
-                } else {
-                    img.style.opacity = '0';
-                }
-            };
-            // Favorites Logic
-            window.toggleFavorite = async function (event, index) {
-                event.stopPropagation(); // Prevent lightbox opening
-
-                // Optimistic UI update
-                if (favorites.has(index)) {
-                    favorites.delete(index);
-                } else {
-                    favorites.add(index);
-                }
-
-                renderGallery(); // Re-render to update icons
-
-                // Sync with server
-                const imgSrc = `${index}.jpg`;
-                try {
-                    await fetch('api/toggle-favorite.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: imgSrc })
-                    });
-                } catch(e) { console.error('Error saving favorite', e); }
-
-                // Update lightbox button if open
-                const lightboxImg = document.getElementById('lightbox-img');
-                if (lightbox.classList.contains('active') && lightboxImg.src.includes(`${index}.jpg`)) {
-                    updateLightboxFavoriteBtn(index);
-                }
-            };
-
-            function updateLightboxFavoriteBtn(index) {
-                const btn = document.getElementById('lightbox-favorite-btn');
-                const isFavorite = favorites.has(index);
-                
-                btn.className = `lightbox-favorite ${isFavorite ? 'active' : ''}`;
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-                btn.onclick = (e) => toggleFavorite(e, index);
-            }
-
-            // Filter Button
-            const favFilterBtn = document.getElementById('favorites-filter-btn');
-            favFilterBtn.addEventListener('click', () => {
-                showFavoritesOnly = !showFavoritesOnly;
-                favFilterBtn.classList.toggle('active');
-                favFilterBtn.style.borderColor = showFavoritesOnly ? 'var(--accent-color)' : 'var(--glass-border)';
-                favFilterBtn.style.color = showFavoritesOnly ? 'var(--accent-color)' : 'var(--text-primary)';
-                favFilterBtn.textContent = showFavoritesOnly ? 'Alle anzeigen' : 'Favoriten';
-                renderGallery();
-            });
-
-            // Lightbox Logic
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightbox-img');
-            const downloadBtn = document.getElementById('lightbox-download');
-            let currentIndex = 1;
+            activeGallery = gal;
+            document.getElementById('galleries-overview').style.display = 'none';
+            document.getElementById('single-gallery-view').style.display = 'block';
             
-            // Zoom & Pan State
-            let currentScale = 1;
-            let currentX = 0;
-            let currentY = 0;
-            let isZoomGesture = false;
+            document.getElementById('active-gallery-title').textContent = gal.title;
+            document.getElementById('active-gallery-info').textContent = `${gal.imageCount} Fotos • ${gal.isProtected ? 'Vorschau' : 'Freigegeben'}`;
 
-            window.openLightbox = (index) => {
-                currentIndex = index;
-                updateLightbox('none');
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                updateLightboxFavoriteBtn(index);
+            initializeActiveGalleryView(gal);
+        }
+
+        // =====================================================================
+        // ACTIVE GALLERY INITIALIZATION & IMAGE VIEWER LOGIC
+        // =====================================================================
+        let currentGalleryFiles = [];
+        let favorites = new Set();
+        let showFavoritesOnly = false;
+        let selectedImages = new Set();
+        let selectionMode = false;
+        let sessionCacheBuster = Date.now();
+
+        async function initializeActiveGalleryView(gal) {
+            sessionCacheBuster = Date.now();
+            selectedImages.clear();
+            selectionMode = false;
+            showFavoritesOnly = false;
+            updateSelectionCount();
+
+            const selectModeBtn = document.getElementById('select-mode-btn');
+            const favoritesBtn = document.getElementById('favorites-filter-btn');
+            const selectionToolbar = document.getElementById('selection-toolbar');
+            
+            selectModeBtn.classList.remove('active');
+            favoritesBtn.classList.remove('active');
+            selectionToolbar.style.display = 'none';
+
+            // Load real files for this gallery
+            try {
+                const res = await fetch(`api/list-images.php?folder=${encodeURIComponent(gal.folder)}&t=${sessionCacheBuster}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.files) && data.files.length > 0) {
+                    currentGalleryFiles = data.files;
+                } else {
+                    // Fallback to sequential numbers 1..imageCount
+                    currentGalleryFiles = [];
+                    for (let i = 1; i <= (gal.imageCount || 0); i++) {
+                        currentGalleryFiles.push(`${i}.jpg`);
+                    }
+                }
+            } catch (e) {
+                currentGalleryFiles = [];
+                for (let i = 1; i <= (gal.imageCount || 0); i++) {
+                    currentGalleryFiles.push(`${i}.jpg`);
+                }
+            }
+
+            // Load favorites for this folder
+            try {
+                const favRes = await fetch(`api/get-favorites.php?folder=${encodeURIComponent(gal.folder)}&t=${sessionCacheBuster}`);
+                const favData = await favRes.json();
+                if (favData.success && Array.isArray(favData.favorites)) {
+                    favorites = new Set(favData.favorites.map(f => parseInt(f.replace('.jpg', ''))));
+                } else {
+                    favorites = new Set();
+                }
+            } catch (e) {
+                favorites = new Set();
+            }
+
+            renderGalleryGrid();
+        }
+
+        function renderGalleryGrid() {
+            const galleryGrid = document.getElementById('gallery-grid');
+            galleryGrid.innerHTML = '';
+
+            if (!activeGallery || currentGalleryFiles.length === 0) {
+                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 4rem;">Noch keine Bilder in dieser Galerie vorhanden.</p>';
+                return;
+            }
+
+            const total = currentGalleryFiles.length;
+            let renderedCount = 0;
+
+            for (let idx = 0; idx < total; idx++) {
+                const filename = currentGalleryFiles[idx];
+                const imageNum = parseInt(filename.replace(/\D/g, '')) || (idx + 1);
+
+                if (showFavoritesOnly && !favorites.has(imageNum)) continue;
+
+                renderedCount++;
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                const isFavorite = favorites.has(imageNum);
+                const isSelected = selectedImages.has(imageNum);
+
+                // Use get-image API with folder and filename
+                const imgSrc = `api/get-image.php?f=${encodeURIComponent(activeGallery.folder)}&i=${encodeURIComponent(filename)}&thumb=1&v=${sessionCacheBuster}`;
+
+                item.innerHTML = `
+                    <div class="selection-checkbox" style="display: ${selectionMode ? 'block' : 'none'}; pointer-events: none;">
+                        <input type="checkbox" id="select-${imageNum}" data-image-index="${imageNum}" ${isSelected ? 'checked' : ''}>
+                        <label for="select-${imageNum}"></label>
+                    </div>
+                    <img src="${imgSrc}" loading="lazy" alt="Foto ${imageNum}">
+                    <div class="gallery-overlay">
+                        <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${imageNum})" style="margin-right: 0.5rem;" title="Als Favorit markieren">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${isFavorite ? 'var(--accent-color)' : 'black'};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="openLightbox(${idx})" title="Vollbild">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        </button>
+                    </div>
+                `;
+
+                item.querySelector('img').addEventListener('click', (e) => {
+                    if (selectionMode) {
+                        toggleImageSelection(imageNum, e.shiftKey);
+                    } else {
+                        openLightbox(idx);
+                    }
+                });
+
+                galleryGrid.appendChild(item);
+            }
+
+            if (renderedCount === 0 && showFavoritesOnly) {
+                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 4rem;">Du hast in dieser Galerie noch keine Favoriten mit dem Herz markiert.</p>';
+            }
+        }
+
+        // Selection mode toggling
+        document.getElementById('select-mode-btn').addEventListener('click', function() {
+            selectionMode = !selectionMode;
+            this.classList.toggle('active', selectionMode);
+            this.textContent = selectionMode ? 'Auswahl beenden' : 'Bilder auswählen';
+
+            document.getElementById('selection-toolbar').style.display = selectionMode ? 'flex' : 'none';
+            document.querySelectorAll('.selection-checkbox').forEach(cb => {
+                cb.style.display = selectionMode ? 'block' : 'none';
+            });
+
+            if (!selectionMode) {
+                selectedImages.clear();
+                updateSelectionCount();
+                document.querySelectorAll('.selection-checkbox input').forEach(input => input.checked = false);
+            }
+        });
+
+        function toggleImageSelection(index, isShiftKey = false) {
+            const cb = document.getElementById(`select-${index}`);
+            if (!cb) return;
+
+            const newState = !cb.checked;
+            cb.checked = newState;
+            if (newState) selectedImages.add(index);
+            else selectedImages.delete(index);
+
+            updateSelectionCount();
+        }
+
+        function updateSelectionCount() {
+            const count = selectedImages.size;
+            const countEl = document.getElementById('selection-count');
+            const downloadBtn = document.getElementById('download-selected-btn');
+            if (countEl) countEl.textContent = `${count} Bild${count !== 1 ? 'er' : ''} ausgewählt`;
+            if (downloadBtn) downloadBtn.disabled = count === 0;
+        }
+
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            currentGalleryFiles.forEach((f, idx) => {
+                const num = parseInt(f.replace(/\D/g, '')) || (idx + 1);
+                selectedImages.add(num);
+                const cb = document.getElementById(`select-${num}`);
+                if (cb) cb.checked = true;
+            });
+            updateSelectionCount();
+        });
+
+        document.getElementById('deselect-all-btn').addEventListener('click', () => {
+            selectedImages.clear();
+            document.querySelectorAll('.selection-checkbox input').forEach(cb => cb.checked = false);
+            updateSelectionCount();
+        });
+
+        document.getElementById('cancel-selection-btn').addEventListener('click', () => {
+            document.getElementById('select-mode-btn').click();
+        });
+
+        // Favorites filter button
+        document.getElementById('favorites-filter-btn').addEventListener('click', function() {
+            showFavoritesOnly = !showFavoritesOnly;
+            this.classList.toggle('active', showFavoritesOnly);
+            this.textContent = showFavoritesOnly ? 'Alle Bilder anzeigen' : 'Favoriten';
+            renderGalleryGrid();
+        });
+
+        // Toggle favorite action
+        window.toggleFavorite = async function(event, imageNum) {
+            event.stopPropagation();
+            if (!activeGallery) return;
+
+            if (favorites.has(imageNum)) favorites.delete(imageNum);
+            else favorites.add(imageNum);
+
+            renderGalleryGrid();
+
+            try {
+                await fetch('api/toggle-favorite.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: `${imageNum}.jpg`,
+                        folder: activeGallery.folder
+                    })
+                });
+            } catch (e) {
+                console.error('Error toggling favorite', e);
+            }
+        };
+
+        // Download selected as ZIP
+        document.getElementById('download-selected-btn').addEventListener('click', async () => {
+            if (selectedImages.size === 0 || !activeGallery) return;
+            const downloadBtn = document.getElementById('download-selected-btn');
+            const oldText = downloadBtn.textContent;
+
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Erstelle ZIP...';
+
+            try {
+                const zip = new JSZip();
+                const imagesArray = Array.from(selectedImages);
+
+                for (let i = 0; i < imagesArray.length; i++) {
+                    const num = imagesArray[i];
+                    downloadBtn.textContent = `Lade Bild ${i + 1}/${imagesArray.length}...`;
+                    const filename = `${num}.jpg`;
+                    const url = `api/get-image.php?f=${encodeURIComponent(activeGallery.folder)}&i=${encodeURIComponent(filename)}`;
+                    
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const blob = await res.blob();
+                        zip.file(filename, blob);
+                    }
+                }
+
+                downloadBtn.textContent = 'Komprimiere...';
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                saveAs(zipBlob, `${activeGallery.title.replace(/[^a-zA-Z0-9_\-]/g, '_')}_Auswahl.zip`);
+            } catch (e) {
+                alert('Fehler beim Herunterladen der Bilder: ' + e.message);
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = oldText;
+            }
+        });
+
+        // =====================================================================
+        // LIGHTBOX
+        // =====================================================================
+        let currentLightboxIndex = 0;
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxDownload = document.getElementById('lightbox-download');
+        const lightboxFavBtn = document.getElementById('lightbox-favorite-btn');
+
+        function openLightbox(fileIndex) {
+            if (!activeGallery || !currentGalleryFiles[fileIndex]) return;
+            currentLightboxIndex = fileIndex;
+            updateLightboxContent();
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function updateLightboxContent() {
+            if (!activeGallery || !currentGalleryFiles[currentLightboxIndex]) return;
+            const filename = currentGalleryFiles[currentLightboxIndex];
+            const num = parseInt(filename.replace(/\D/g, '')) || (currentLightboxIndex + 1);
+
+            const url = `api/get-image.php?f=${encodeURIComponent(activeGallery.folder)}&i=${encodeURIComponent(filename)}&v=${sessionCacheBuster}`;
+            lightboxImg.src = url;
+            lightboxDownload.href = url;
+            lightboxDownload.setAttribute('download', filename);
+
+            const isFav = favorites.has(num);
+            lightboxFavBtn.querySelector('svg').style.color = isFav ? 'var(--accent-color)' : '#fff';
+            lightboxFavBtn.querySelector('svg').setAttribute('fill', isFav ? 'currentColor' : 'none');
+
+            lightboxFavBtn.onclick = (e) => {
+                toggleFavorite(e, num);
+                const updatedFav = favorites.has(num);
+                lightboxFavBtn.querySelector('svg').style.color = updatedFav ? 'var(--accent-color)' : '#fff';
+                lightboxFavBtn.querySelector('svg').setAttribute('fill', updatedFav ? 'currentColor' : 'none');
             };
+        }
 
-            function updateLightbox(direction = null) {
-                const targetIndex = currentIndex;
-                const thumbSrc = `api/get-image.php?f=${user.folder}&i=${targetIndex}.jpg&thumb=1&v=${sessionCacheBuster}`;
-                const fullSrc = `api/get-image.php?f=${user.folder}&i=${targetIndex}.jpg&v=${sessionCacheBuster}`;
-                
-                downloadBtn.href = fullSrc;
-
-                // Reset zoom on navigation
-                currentScale = 1;
-                currentX = 0;
-                currentY = 0;
-                lightboxImg.style.transition = 'none';
-                lightboxImg.style.transform = `translate(0px, 0px) scale(1)`;
-
-                const loadHighRes = () => {
-                    const highResImg = new Image();
-                    highResImg.onload = () => {
-                        if (lightbox.classList.contains('active') && currentIndex === targetIndex) {
-                            // Swap silently to high res
-                            lightboxImg.src = highResImg.src;
-                        }
-                    };
-                    highResImg.onerror = function() { tryNextExtension(this); };
-                    highResImg.src = fullSrc;
-                };
-
-                if (direction && direction !== 'none') {
-                    const outClass = direction === 'next' ? 'anim-slide-out-left' : 'anim-slide-out-right';
-                    const inClass = direction === 'next' ? 'anim-slide-in-right' : 'anim-slide-in-left';
-                    
-                    // Reset classes and force reflow to ensure animation restarts
-                    lightboxImg.className = '';
-                    void lightboxImg.offsetWidth; 
-                    lightboxImg.classList.add(outClass);
-                    
-                    setTimeout(() => {
-                        lightboxImg.onload = () => {
-                            lightboxImg.className = inClass;
-                            
-                            setTimeout(() => {
-                                lightboxImg.classList.remove(inClass);
-                            }, 180);
-                            lightboxImg.onload = null;
-                            loadHighRes();
-                        };
-                        lightboxImg.onerror = function() { tryNextExtension(this); };
-                        
-                        lightboxImg.src = thumbSrc;
-                    }, 140);
-                } else {
-                    lightboxImg.src = thumbSrc;
-                    lightboxImg.onerror = function() { tryNextExtension(this); };
-                    loadHighRes();
-                }
-                updateLightboxFavoriteBtn(targetIndex);
+        document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+        document.querySelector('.lightbox-prev').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentLightboxIndex > 0) {
+                currentLightboxIndex--;
+                updateLightboxContent();
             }
-
-            function closeLightbox() {
-                lightbox.classList.remove('active');
-                document.body.style.overflow = '';
+        });
+        document.querySelector('.lightbox-next').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentLightboxIndex < currentGalleryFiles.length - 1) {
+                currentLightboxIndex++;
+                updateLightboxContent();
             }
+        });
 
-            document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
 
-            document.querySelector('.lightbox-prev').addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (currentIndex > 1) {
-                    currentIndex--;
-                } else {
-                    currentIndex = imageCount; // Loop
-                }
-                updateLightbox('prev');
-            });
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox();
+            else if (e.key === 'ArrowLeft' && currentLightboxIndex > 0) {
+                currentLightboxIndex--;
+                updateLightboxContent();
+            } else if (e.key === 'ArrowRight' && currentLightboxIndex < currentGalleryFiles.length - 1) {
+                currentLightboxIndex++;
+                updateLightboxContent();
+            }
+        });
 
-            document.querySelector('.lightbox-next').addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (currentIndex < imageCount) {
-                    currentIndex++;
-                } else {
-                    currentIndex = 1; // Loop
-                }
-                updateLightbox('next');
-            });
-
-            // Close on background click
-            lightbox.addEventListener('click', (e) => {
-                if (e.target === lightbox) closeLightbox();
-            });
-
-            // Keyboard nav
-            document.addEventListener('keydown', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-                if (e.key === 'Escape') closeLightbox();
-                if (e.key === 'ArrowLeft') document.querySelector('.lightbox-prev').click();
-                if (e.key === 'ArrowRight') document.querySelector('.lightbox-next').click();
-            });
-
-            // Touch Swipe & Pinch-to-Zoom & Pan — all on the lightbox container
-            // Using { passive: false } so e.preventDefault() can block native browser zoom/scroll
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let initialPinchDistance = null;
-            let initialScale = 1;
-            let pinchCenterX = 0;
-            let pinchCenterY = 0;
-            let isDragging = false;
-            let startDragX = 0;
-            let startDragY = 0;
-
-            lightbox.addEventListener('touchstart', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-
-                if (e.touches.length === 2) {
-                    // Two fingers: start pinch-to-zoom
-                    e.preventDefault();
-                    isZoomGesture = true;
-                    initialPinchDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    initialScale = currentScale;
-                    pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                    pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                    lightboxImg.style.transition = 'none';
-                } else if (e.touches.length === 1) {
-                    isZoomGesture = false;
-                    touchStartX = e.changedTouches[0].clientX;
-                    touchStartY = e.changedTouches[0].clientY;
-                    if (currentScale > 1) {
-                        // Single finger pan while zoomed in
-                        isDragging = true;
-                        startDragX = e.touches[0].clientX - currentX;
-                        startDragY = e.touches[0].clientY - currentY;
-                        lightboxImg.style.transition = 'none';
-                    }
-                }
-            }, { passive: false });
-
-            lightbox.addEventListener('touchmove', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-
-                if (e.touches.length === 2 && initialPinchDistance) {
-                    e.preventDefault();
-
-                    const currentDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-
-                    const newScale = Math.max(1, Math.min(initialScale * (currentDistance / initialPinchDistance), 5.0));
-                    const ratio = newScale / currentScale;
-
-                    const newPinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                    const newPinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-
-                    const windowCenterX = window.innerWidth / 2;
-                    const windowCenterY = window.innerHeight / 2;
-
-                    // Zoom towards pinch center
-                    const dX = pinchCenterX - windowCenterX - currentX;
-                    const dY = pinchCenterY - windowCenterY - currentY;
-
-                    currentX -= dX * (ratio - 1);
-                    currentY -= dY * (ratio - 1);
-
-                    // Pan with finger movement during pinch
-                    currentX += (newPinchCenterX - pinchCenterX);
-                    currentY += (newPinchCenterY - pinchCenterY);
-
-                    currentScale = newScale;
-                    pinchCenterX = newPinchCenterX;
-                    pinchCenterY = newPinchCenterY;
-
-                    lightboxImg.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
-
-                } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
-                    e.preventDefault();
-                    currentX = e.touches[0].clientX - startDragX;
-                    currentY = e.touches[0].clientY - startDragY;
-                    lightboxImg.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
-                }
-            }, { passive: false });
-
-            lightbox.addEventListener('touchend', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-
-                if (e.touches.length < 2) {
-                    initialPinchDistance = null;
-                }
-
-                if (e.touches.length === 0) {
-                    // All fingers lifted
-                    isDragging = false;
-
-                    if (isZoomGesture) {
-                        // Snap back if barely zoomed
-                        if (currentScale <= 1.05) {
-                            currentScale = 1;
-                            currentX = 0;
-                            currentY = 0;
-                            lightboxImg.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-                            lightboxImg.style.transform = 'translate(0px, 0px) scale(1)';
-                        }
-                        return; // Don't trigger swipe logic after a zoom gesture
-                    }
-
-                    // Swipe navigation (only when not zoomed in)
-                    if (currentScale <= 1) {
-                        const touchEndX = e.changedTouches[0].clientX;
-                        const touchEndY = e.changedTouches[0].clientY;
-                        const deltaX = touchEndX - touchStartX;
-                        const deltaY = touchEndY - touchStartY;
-                        const swipeThreshold = 50;
-
-                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                            if (Math.abs(deltaX) > swipeThreshold) {
-                                if (deltaX > 0) {
-                                    document.querySelector('.lightbox-prev').click();
-                                } else {
-                                    document.querySelector('.lightbox-next').click();
-                                }
-                            }
+        // =====================================================================
+        // CHAT MESSENGER LOGIC
+        // =====================================================================
+        async function checkUnreadChatCount() {
+            try {
+                const res = await fetch('api/chat.php');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.messages)) {
+                    const unread = data.messages.filter(m => m.sender === 'admin' && m.is_read == 0).length;
+                    const badge = document.getElementById('chat-unread-badge');
+                    if (badge) {
+                        if (unread > 0) {
+                            badge.textContent = unread;
+                            badge.style.display = 'inline-block';
                         } else {
-                            if (Math.abs(deltaY) > swipeThreshold) {
-                                closeLightbox();
-                            }
+                            badge.style.display = 'none';
                         }
                     }
-
-                } else if (e.touches.length === 1 && currentScale > 1) {
-                    // Transition from pinch to single-finger pan
-                    isDragging = true;
-                    startDragX = e.touches[0].clientX - currentX;
-                    startDragY = e.touches[0].clientY - currentY;
                 }
-            }, { passive: false });
+            } catch (e) {}
+        }
 
-            // Web Share API
-            if (navigator.share) {
-                const shareBtn = document.getElementById('lightbox-share-btn');
-                shareBtn.style.display = 'flex';
-                shareBtn.addEventListener('click', async () => {
-                    try {
-                        const apiSrc = downloadBtn.href;
-                        // For modern devices, try sharing the File directly to invoke WhatsApp/Insta payload
-                        const response = await fetch(apiSrc);
-                        const blob = await response.blob();
-                        const file = new File([blob], `PhotonCapture-${currentIndex}.jpg`, { type: blob.type });
-                        
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: 'Photon Capture',
-                                text: 'Schau dir dieses Foto an!'
-                            });
-                        } else {
-                            throw new Error('Fallback');
-                        }
-                    } catch (error) {
-                        // Fallback to URL
-                        try {
-                            await navigator.share({
-                                title: 'Photon Capture',
-                                text: 'Schau dir dieses Foto an!',
-                                url: window.location.origin + window.location.pathname
-                            });
-                        } catch(e) {}
-                    }
-                });
+        async function loadChatMessages() {
+            const container = document.getElementById('chat-messages-area');
+            try {
+                const res = await fetch('api/chat.php');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.messages)) {
+                    renderChatMessages(data.messages);
+                    // Hide unread badge as we are reading them
+                    const badge = document.getElementById('chat-unread-badge');
+                    if (badge) badge.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Error fetching chat messages', e);
+            }
+        }
+
+        function renderChatMessages(messages) {
+            const container = document.getElementById('chat-messages-area');
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="chat-empty">
+                        <div class="chat-empty-icon">💬</div>
+                        <p style="margin: 0; font-weight: 600; color: #fff;">Noch keine Nachrichten</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.25rem;">Schreibe Jonathan eine Nachricht – er antwortet dir direkt hier im Portal.</p>
+                    </div>
+                `;
+                return;
             }
 
-            // Selection Mode
-            let selectionMode = false;
-            const selectedImages = new Set();
+            container.innerHTML = messages.map(m => {
+                const isCustomer = m.sender === 'customer';
+                const timeStr = m.created_at ? formatTime(m.created_at) : '';
+                const senderName = isCustomer ? 'Du' : (m.sender_name || 'Jonathan (Fotograf)');
 
-            document.getElementById('select-mode-btn').addEventListener('click', () => {
-                selectionMode = true;
-                document.getElementById('selection-toolbar').style.display = 'flex';
-                document.getElementById('select-mode-btn').style.display = 'none';
-                document.querySelectorAll('.selection-checkbox').forEach(cb => cb.style.display = 'flex');
-                document.querySelectorAll('.gallery-item').forEach(item => item.classList.add('selection-active'));
-            });
+                return `
+                    <div class="chat-msg-row ${isCustomer ? 'customer' : 'admin'}">
+                        <span class="chat-sender-label">${senderName}</span>
+                        <div class="chat-bubble">
+                            ${escapeHtml(m.message)}
+                            <span class="chat-msg-time">${timeStr}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-            document.getElementById('cancel-selection-btn').addEventListener('click', () => {
-                exitSelectionMode();
-            });
+            container.scrollTop = container.scrollHeight;
+        }
 
-            function exitSelectionMode() {
-                selectionMode = false;
-                selectedImages.clear();
-                document.getElementById('selection-toolbar').style.display = 'none';
-                document.getElementById('select-mode-btn').style.display = 'block';
-                document.querySelectorAll('.selection-checkbox').forEach(cb => {
-                    cb.style.display = 'none';
-                    cb.querySelector('input').checked = false;
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = '48px';
+
+            try {
+                const res = await fetch('api/chat.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
                 });
-                document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('selection-active'));
-                updateSelectionCount();
+                const data = await res.json();
+                if (data.success) {
+                    loadChatMessages();
+                } else {
+                    alert('Fehler beim Senden: ' + (data.error || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Netzwerkfehler beim Senden der Nachricht.');
+            }
+        }
+
+        document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
+        document.getElementById('chat-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+        function formatTime(str) {
+            try {
+                const d = new Date(str.replace(' ', 'T'));
+                if (isNaN(d.getTime())) return str;
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+            } catch (e) { return str; }
+        }
+
+        function escapeHtml(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/\n/g, '<br>');
+        }
+
+        // =====================================================================
+        // PASSWORD CHANGE LOGIC
+        // =====================================================================
+        const pwModal = document.getElementById('pw-modal');
+        const changePwBtn = document.getElementById('change-pw-btn');
+        const cancelPwBtn = document.getElementById('cancel-pw-btn');
+        const savePwBtn = document.getElementById('save-pw-btn');
+
+        changePwBtn.addEventListener('click', () => {
+            pwModal.style.display = 'flex';
+        });
+
+        cancelPwBtn.addEventListener('click', () => {
+            pwModal.style.display = 'none';
+        });
+
+        savePwBtn.addEventListener('click', async () => {
+            const oldPw = document.getElementById('old-pw').value;
+            const newPw = document.getElementById('new-pw').value;
+            const confirmPw = document.getElementById('confirm-pw').value;
+
+            if (!oldPw || !newPw || !confirmPw) {
+                alert('Bitte alle Felder ausfüllen.');
+                return;
             }
 
-            document.getElementById('select-all-btn').addEventListener('click', () => {
-                document.querySelectorAll('.selection-checkbox input').forEach(cb => {
-                    cb.checked = true;
-                    selectedImages.add(parseInt(cb.dataset.imageIndex));
-                });
-                updateSelectionCount();
-            });
-
-            document.getElementById('deselect-all-btn').addEventListener('click', () => {
-                document.querySelectorAll('.selection-checkbox input').forEach(cb => {
-                    cb.checked = false;
-                });
-                selectedImages.clear();
-                updateSelectionCount();
-            });
-
-            // Handle checkbox changes
-            document.addEventListener('change', (e) => {
-                if (e.target.matches('.selection-checkbox input')) {
-                    const index = parseInt(e.target.dataset.imageIndex);
-                    if (e.target.checked) {
-                        selectedImages.add(index);
-                    } else {
-                        selectedImages.delete(index);
-                    }
-                    updateSelectionCount();
-                }
-            });
-
-            function updateSelectionCount() {
-                const count = selectedImages.size;
-                document.getElementById('selection-count').textContent = `${count} Bild${count !== 1 ? 'er' : ''} ausgewählt`;
-                document.getElementById('download-selected-btn').disabled = count === 0;
+            if (newPw !== confirmPw) {
+                alert('Die neuen Passwörter stimmen nicht überein.');
+                return;
             }
 
-            // Download selected images as ZIP
-            document.getElementById('download-selected-btn').addEventListener('click', async () => {
-                if (selectedImages.size === 0) return;
-
-                // Check for local file protocol
-                if (window.location.protocol === 'file:') {
-                    alert('⚠️ WICHTIG:\n\nDer ZIP-Download funktioniert aus Sicherheitsgründen nicht bei lokalen Dateien (file://).\n\nBitte starte einen lokalen Server (z.B. "php -S localhost:8000") oder lade die Website auf einen Server hoch, damit dieses Feature funktioniert.');
-                    return;
-                }
-
-                const downloadBtn = document.getElementById('download-selected-btn');
-                const originalText = downloadBtn.textContent;
-                downloadBtn.disabled = true;
-                downloadBtn.textContent = 'Erstelle ZIP-Datei...';
-
-                try {
-                    // Create new ZIP file
-                    const zip = new JSZip();
-                    const imagesToDownload = Array.from(selectedImages).sort((a, b) => a - b);
-                    let addedCount = 0;
-
-                    // Add each image to the ZIP
-                    for (let i = 0; i < imagesToDownload.length; i++) {
-                        const index = imagesToDownload[i];
-                        const imgSrc = `${imageFolder}/${index}.jpg`;
-
-                        downloadBtn.textContent = `Bild ${i + 1}/${imagesToDownload.length} wird hinzugefügt...`;
-
-                        try {
-                            // Fetch via secure delivery API to maintain protection
-                            const apiSrc = `api/get-image.php?f=${user.folder}&i=${index}.jpg`;
-                            let response = await fetch(apiSrc);
-                            
-                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                            const blob = await response.blob();
-
-                            // Add to ZIP (API returns JPG)
-                            zip.file(`Bild_${String(index).padStart(3, '0')}.jpg`, blob);
-                            addedCount++;
-                        } catch (err) {
-                            console.error(`Error adding image ${index} to ZIP:`, err);
-                        }
-                    }
-
-                    if (addedCount === 0) {
-                        throw new Error('Keine Bilder konnten geladen werden (CORS/Netzwerkfehler).');
-                    }
-
-                    // Generate ZIP file
-                    downloadBtn.textContent = 'Erstelle Download...';
-                    const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-                    // Create filename with user name and date
-                    const today = new Date();
-                    const dateStr = today.toISOString().split('T')[0];
-                    const filename = `${user.name}_Bilder_${dateStr}.zip`;
-
-                    // Download the ZIP file
-                    saveAs(zipBlob, filename);
-
-                    downloadBtn.textContent = 'Download abgeschlossen!';
-                    setTimeout(() => {
-                        downloadBtn.textContent = originalText;
-                        downloadBtn.disabled = false;
-                        exitSelectionMode();
-                    }, 1500);
-
-                } catch (error) {
-                    console.error('ZIP creation error:', error);
-                    alert('Fehler beim Erstellen der ZIP-Datei.');
-                    downloadBtn.textContent = originalText;
-                    downloadBtn.disabled = false;
-                }
-            });
-
-            // --- Password Change Logic ---
-            const pwModal = document.getElementById('pw-modal');
-            const changePwBtn = document.getElementById('change-pw-btn');
-            const cancelPwBtn = document.getElementById('cancel-pw-btn');
-            const savePwBtn = document.getElementById('save-pw-btn');
-
-            changePwBtn.addEventListener('click', () => {
-                pwModal.style.display = 'flex';
-            });
-
-            cancelPwBtn.addEventListener('click', () => {
-                pwModal.style.display = 'none';
-            });
-
-            savePwBtn.addEventListener('click', async () => {
-                const oldPw = document.getElementById('old-pw').value;
-                const newPw = document.getElementById('new-pw').value;
-                const confirmPw = document.getElementById('confirm-pw').value;
-
-                if (!oldPw || !newPw || !confirmPw) {
-                    alert("Bitte alle Felder ausfüllen.");
-                    return;
-                }
-
-                if (newPw !== confirmPw) {
-                    alert("Die neuen Passwörter stimmen nicht überein.");
-                    return;
-                }
-
-                // Client-side hashing (SHA-1 to match existing system)
-                async function sha1(message) {
-                    const msgBuffer = new TextEncoder().encode(message);
-                    const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                }
-
-                savePwBtn.disabled = true;
-                savePwBtn.textContent = "Speichert...";
-
-                try {
-                    const oldHash = await sha1(oldPw);
-                    const newHash = await sha1(newPw);
-
-                    const response = await fetch('api/change_password.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: user.id,
-                            oldPasswordHash: oldHash,
-                            newPasswordHash: newHash
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        alert("Passwort erfolgreich geändert!");
-                        pwModal.style.display = 'none';
-                        // Clear fields
-                        document.getElementById('old-pw').value = '';
-                        document.getElementById('new-pw').value = '';
-                        document.getElementById('confirm-pw').value = '';
-                    } else {
-                        alert("Fehler: " + (result.message || "Unbekannter Fehler"));
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert("Verbindungsfehler beim Speichern.");
-                } finally {
-                    savePwBtn.disabled = false;
-                    savePwBtn.textContent = "Speichern";
-                }
-            });
-
-            // Register Service Worker for PWA
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(registration => console.log('SW registered:', registration))
-                        .catch(error => console.error('SW registration failed:', error));
-                });
+            async function sha1(message) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             }
 
-            // Disable mobile's disruptive long-press menu over images so our native 500ms gestures rule
-            document.getElementById('gallery-grid').addEventListener('contextmenu', e => {
-                if (e.target.tagName === 'IMG' || e.target.closest('.gallery-item')) {
-                    e.preventDefault();
-                }
-            });
+            savePwBtn.disabled = true;
+            savePwBtn.textContent = 'Speichert...';
 
-        } // End of initializeGallery
+            try {
+                const oldHash = await sha1(oldPw);
+                const newHash = await sha1(newPw);
+
+                const response = await fetch('api/change_password.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        oldPasswordHash: oldHash,
+                        newPasswordHash: newHash
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Passwort erfolgreich geändert!');
+                    pwModal.style.display = 'none';
+                    document.getElementById('old-pw').value = '';
+                    document.getElementById('new-pw').value = '';
+                    document.getElementById('confirm-pw').value = '';
+                } else {
+                    alert('Fehler: ' + (result.message || 'Unbekannter Fehler'));
+                }
+            } catch (e) {
+                alert('Verbindungsfehler beim Speichern.');
+            } finally {
+                savePwBtn.disabled = false;
+                savePwBtn.textContent = 'Speichern';
+            }
+        });
     </script>
 </body>
 

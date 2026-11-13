@@ -121,22 +121,63 @@ if (!isset($_POST['galleryId']) || !isset($_FILES['photos'])) {
 
 require_once __DIR__ . '/../../includes/db.php';
 
-$galleryId = $_POST['galleryId'];
+$galleryId = $_POST['galleryId'] ?? '';
+$folderParam = trim($_POST['folder'] ?? '');
 
 $db = null;
 $gallery = null;
 try {
     $db = getDB();
-    $stmt = $db->prepare("SELECT id, username, folder, image_count FROM users WHERE id = ? OR username = ? LIMIT 1");
-    $stmt->execute([$galleryId, $galleryId]);
-    $uRow = $stmt->fetch();
-    if ($uRow) {
-        $gallery = [
-            'id' => (string)$uRow['id'],
-            'username' => $uRow['username'],
-            'folder' => $uRow['folder'],
-            'imageCount' => (int)$uRow['image_count']
-        ];
+
+    // 1. Match by explicit folder if passed
+    if ($folderParam !== '') {
+        $stmt = $db->prepare("SELECT id, user_id, title, folder, image_count FROM galleries WHERE folder = ? LIMIT 1");
+        $stmt->execute([$folderParam]);
+        $gRow = $stmt->fetch();
+        if ($gRow) {
+            $uStmt = $db->prepare("SELECT username FROM users WHERE id = ? LIMIT 1");
+            $uStmt->execute([$gRow['user_id']]);
+            $uName = $uStmt->fetchColumn();
+            $gallery = [
+                'id' => (string)$gRow['user_id'],
+                'username' => $uName ?: '',
+                'folder' => $gRow['folder'],
+                'imageCount' => (int)$gRow['image_count']
+            ];
+        }
+    }
+
+    // 2. Match by galleries table
+    if (!$gallery && $galleryId !== '') {
+        $stmt = $db->prepare("SELECT id, user_id, title, folder, image_count FROM galleries WHERE id = ? OR folder = ? LIMIT 1");
+        $stmt->execute([$galleryId, $galleryId]);
+        $gRow = $stmt->fetch();
+        if ($gRow) {
+            $uStmt = $db->prepare("SELECT username FROM users WHERE id = ? LIMIT 1");
+            $uStmt->execute([$gRow['user_id']]);
+            $uName = $uStmt->fetchColumn();
+            $gallery = [
+                'id' => (string)$gRow['user_id'],
+                'username' => $uName ?: '',
+                'folder' => $gRow['folder'],
+                'imageCount' => (int)$gRow['image_count']
+            ];
+        }
+    }
+
+    // 3. Match by users table
+    if (!$gallery && $galleryId !== '') {
+        $stmt = $db->prepare("SELECT id, username, folder, image_count FROM users WHERE id = ? OR username = ? LIMIT 1");
+        $stmt->execute([$galleryId, $galleryId]);
+        $uRow = $stmt->fetch();
+        if ($uRow) {
+            $gallery = [
+                'id' => (string)$uRow['id'],
+                'username' => $uRow['username'],
+                'folder' => $uRow['folder'],
+                'imageCount' => (int)$uRow['image_count']
+            ];
+        }
     }
 } catch (Exception $e) {}
 
@@ -148,7 +189,7 @@ if (!$gallery && file_exists($usersFile)) {
     if ($usersContent && preg_match('/window\.usersDatabase\s*=\s*({[\s\S]*?});/', $usersContent, $matches)) {
         $usersData = json_decode($matches[1], true) ?: ['users' => []];
         foreach ($usersData['users'] as &$user) {
-            if ($user['id'] === $galleryId || ($user['username'] ?? '') === $galleryId) {
+            if ($user['id'] === $galleryId || ($user['username'] ?? '') === $galleryId || ($folderParam !== '' && ($user['folder'] ?? '') === $folderParam)) {
                 $gallery = &$user;
                 break;
             }
@@ -170,34 +211,44 @@ if (!file_exists($targetDir)) {
     }
 }
 
-// Get current image count
-$currentCount = $gallery['imageCount'] ?? 0;
+// Get current image count from actual files on disk
+$existingFiles = 0;
+if (is_dir($targetDir)) {
+    foreach (scandir($targetDir) as $f) {
+        if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $f)) $existingFiles++;
+    }
+}
+$currentCount = max($existingFiles, (int)($gallery['imageCount'] ?? 0));
 $uploadedCount = 0;
 $errors = [];
 
 // Handle multiple file uploads
 $files = $_FILES['photos'];
-$fileCount = count($files['name']);
+$fileCount = is_array($files['name']) ? count($files['name']) : 1;
 
 for ($i = 0; $i < $fileCount; $i++) {
-    if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-        $errors[] = "File {$files['name'][$i]}: Upload error";
+    $err = is_array($files['error']) ? $files['error'][$i] : $files['error'];
+    $tmpName = is_array($files['tmp_name']) ? $files['tmp_name'][$i] : $files['tmp_name'];
+    $origName = is_array($files['name']) ? $files['name'][$i] : $files['name'];
+
+    if ($err !== UPLOAD_ERR_OK) {
+        $errors[] = "File {$origName}: Upload error";
         continue;
     }
     
     // Validate file type
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $files['tmp_name'][$i]);
+    $mimeType = finfo_file($finfo, $tmpName);
     finfo_close($finfo);
     
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     if (!in_array($mimeType, $allowedTypes)) {
-        $errors[] = "File {$files['name'][$i]}: Invalid type (only JPG/PNG allowed)";
+        $errors[] = "File {$origName}: Invalid type (only JPG/PNG/WEBP allowed)";
         continue;
     }
     
     // Determine file extension
-    $ext = ($mimeType === 'image/png') ? 'png' : 'jpg';
+    $ext = ($mimeType === 'image/png') ? 'png' : (($mimeType === 'image/webp') ? 'webp' : 'jpg');
     
     // New filename (auto-increment)
     $currentCount++;
@@ -205,19 +256,25 @@ for ($i = 0; $i < $fileCount; $i++) {
     $targetPath = $targetDir . $newFilename;
     
     // Move uploaded file
-    if (moveImage($files['tmp_name'][$i], $targetPath, $mimeType)) {
+    if (moveImage($tmpName, $targetPath, $mimeType)) {
         $uploadedCount++;
     } else {
-        $errors[] = "File {$files['name'][$i]}: Failed to compress or save";
+        $errors[] = "File {$origName}: Failed to compress or save";
         $currentCount--; // Rollback counter
     }
 }
 
-// Update user's image count in SQL database
+// Update image counts in SQL database
 if ($db) {
     try {
-        $upd = $db->prepare("UPDATE users SET image_count = ? WHERE id = ? OR username = ?");
-        $upd->execute([$currentCount, $gallery['id'], $gallery['username']]);
+        $updGal = $db->prepare("UPDATE galleries SET image_count = ? WHERE folder = ?");
+        $updGal->execute([$currentCount, $gallery['folder']]);
+
+        // Also update primary user record if matching
+        if (!empty($gallery['id'])) {
+            $updUsr = $db->prepare("UPDATE users SET image_count = (SELECT COALESCE(SUM(image_count), 0) FROM galleries WHERE user_id = ?) WHERE id = ?");
+            $updUsr->execute([$gallery['id'], $gallery['id']]);
+        }
         syncUsersJs($db);
     } catch (Exception $e) {}
 }

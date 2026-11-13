@@ -161,6 +161,28 @@ function initSchema(PDO $pdo) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 
+    // 10. Galleries table (Multi-gallery support per user)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS galleries (
+        id $autoInc,
+        user_id INT NOT NULL,
+        title VARCHAR(150) NOT NULL DEFAULT 'Hauptgalerie',
+        folder VARCHAR(150) NOT NULL UNIQUE,
+        image_count INT DEFAULT 0,
+        is_protected INT DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    // 11. Chat messages table (Client <-> Photographer communication)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_messages (
+        id $autoInc,
+        user_id INT NOT NULL,
+        sender VARCHAR(20) NOT NULL,
+        sender_name VARCHAR(100),
+        message $longText NOT NULL,
+        is_read INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
     // One-time initial migration from existing legacy JSON files
     migrateLegacyData($pdo);
 
@@ -365,6 +387,24 @@ function migrateLegacyData(PDO $pdo) {
             }
         }
     }
+
+    // --- Ensure every user has at least one gallery entry in `galleries` ---
+    $uStmt = $pdo->query("SELECT id, name, folder, image_count, is_protected FROM users");
+    $allUsers = $uStmt->fetchAll();
+    $gCheck = $pdo->prepare("SELECT COUNT(*) FROM galleries WHERE user_id = ?");
+    $gInsert = $pdo->prepare("INSERT OR IGNORE INTO galleries (user_id, title, folder, image_count, is_protected) VALUES (?, ?, ?, ?, ?)");
+    foreach ($allUsers as $u) {
+        $gCheck->execute([$u['id']]);
+        if ($gCheck->fetchColumn() == 0 && !empty($u['folder'])) {
+            $gInsert->execute([
+                $u['id'],
+                'Hauptgalerie',
+                $u['folder'],
+                (int)($u['image_count'] ?? 0),
+                (int)($u['is_protected'] ?? 1)
+            ]);
+        }
+    }
 }
 
 // Helper: sync SQL users table to gallery/data/users.js for frontend compatibility
@@ -372,8 +412,25 @@ function syncUsersJs(PDO $pdo) {
     $stmt = $pdo->query("SELECT id, username, password_hash, name, folder, image_count, is_protected FROM users ORDER BY id ASC");
     $rows = $stmt->fetchAll();
 
+    $galStmt = $pdo->prepare("SELECT id, title, folder, image_count, is_protected, created_at FROM galleries WHERE user_id = ? ORDER BY id ASC");
+
     $users = [];
     foreach ($rows as $r) {
+        $galStmt->execute([$r['id']]);
+        $userGalleries = $galStmt->fetchAll();
+
+        // If no galleries in DB yet, synthesize default from user record
+        if (empty($userGalleries) && !empty($r['folder'])) {
+            $userGalleries = [[
+                'id' => 0,
+                'title' => 'Hauptgalerie',
+                'folder' => $r['folder'],
+                'image_count' => (int)$r['image_count'],
+                'is_protected' => (bool)$r['is_protected'],
+                'created_at' => date('Y-m-d H:i:s')
+            ]];
+        }
+
         $users[] = [
             'id' => (string)$r['id'],
             'username' => $r['username'],
@@ -381,7 +438,16 @@ function syncUsersJs(PDO $pdo) {
             'name' => $r['name'],
             'folder' => $r['folder'],
             'imageCount' => (int)$r['image_count'],
-            'isProtected' => (bool)$r['is_protected']
+            'isProtected' => (bool)$r['is_protected'],
+            'galleries' => array_map(function($g) {
+                return [
+                    'id' => (int)$g['id'],
+                    'title' => $g['title'],
+                    'folder' => $g['folder'],
+                    'imageCount' => (int)$g['image_count'],
+                    'isProtected' => (bool)$g['is_protected']
+                ];
+            }, $userGalleries)
         ];
     }
 

@@ -41,7 +41,7 @@
         }
 
         /* Modal overlays */
-        #changePwOverlay, #restoreOverlay {
+        #changePwOverlay, #restoreOverlay, #addGalleryOverlay, #chatOverlay {
             display: none;
             position: fixed;
             inset: 0;
@@ -51,7 +51,7 @@
             justify-content: center;
             padding: 1.5rem;
         }
-        #changePwOverlay.open, #restoreOverlay.open {
+        #changePwOverlay.open, #restoreOverlay.open, #addGalleryOverlay.open, #chatOverlay.open {
             display: flex;
         }
         .modal-box {
@@ -156,6 +156,63 @@
             <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
                 <button onclick="changePassword()" class="btn" style="flex:1;">Speichern</button>
                 <button onclick="closeChangePw()" class="btn" style="flex:1; background: transparent; border: 1px solid var(--border);">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Gallery Modal -->
+    <div id="addGalleryOverlay">
+        <div class="modal-box" style="max-width: 480px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="margin: 0;">Neue Galerie für Kunden</h3>
+                <button onclick="closeAddGalleryModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <input type="hidden" id="addGalleryUserId">
+            <input type="hidden" id="addGalleryUsername">
+            <div class="form-group">
+                <label>Kunde</label>
+                <input type="text" id="addGalleryCustomerName" class="form-control" disabled style="opacity: 0.7;">
+            </div>
+            <div class="form-group">
+                <label>Titel der Galerie</label>
+                <input type="text" id="addGalleryTitle" class="form-control" placeholder="z. B. Standesamtliche Trauung" oninput="updateAutoFolderSuggestion()">
+            </div>
+            <div class="form-group">
+                <label>Ordnername (auf dem Server)</label>
+                <input type="text" id="addGalleryFolder" class="form-control" placeholder="z. B. mustermann-standesamt">
+                <small style="color: var(--text-secondary)">Ordner wird automatisch in <code>gallery/assets/</code> angelegt</small>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="addGalleryProtected" checked>
+                    <span>Wasserzeichen / Schutz aktivieren (Vorschau-Modus)</span>
+                </label>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button onclick="submitAddGallery()" class="btn" style="flex:1;">Galerie anlegen</button>
+                <button onclick="closeAddGalleryModal()" class="btn" style="flex:1; background: transparent; border: 1px solid var(--border);">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatOverlay">
+        <div class="modal-box" style="max-width: 650px; display: flex; flex-direction: column; height: 650px; max-height: 90vh; padding: 0; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;" id="chatModalTitle">Chat mit Kunde</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Direktnachrichten im Kundenportal</span>
+                </div>
+                <button onclick="closeChatModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div id="adminChatMessages" style="flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: rgba(0,0,0,0.25);">
+                <div style="text-align: center; color: var(--text-secondary); margin: auto;">Lade Chat...</div>
+            </div>
+
+            <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; background: var(--surface-dark);">
+                <textarea id="adminChatInput" class="form-control" placeholder="Antwort an den Kunden schreiben... (Enter zum Senden)" rows="1" style="resize: none;"></textarea>
+                <button onclick="sendAdminChatMessage()" class="btn" style="width: auto; padding: 0.6rem 1.25rem;">Senden</button>
             </div>
         </div>
     </div>
@@ -277,40 +334,88 @@
                 let favHtml = '';
 
                 if (favCount > 0) {
-                    favHtml = `<div style="margin-top: 0.5rem; color: var(--accent); font-size: 0.85rem; font-weight: 500;">
-                        ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg', '')).join(', ')}
+                    favHtml = `<div style="margin-top: 0.35rem; color: var(--accent); font-size: 0.82rem; font-weight: 500;">
+                        ⭐ ${favCount} Favorit${favCount !== 1 ? 'en' : ''}: ${userFavs.map(f => f.replace('.jpg', '')).join(', ')}
                     </div>`;
                 }
 
-                const isProtected = user.isProtected !== false; // Default to true if undefined
+                const galleries = (user.galleries && user.galleries.length > 0) ? user.galleries : [{
+                    id: 0,
+                    title: 'Hauptgalerie',
+                    folder: user.folder,
+                    imageCount: user.imageCount || 0,
+                    isProtected: user.isProtected !== false
+                }];
+
+                const totalPhotos = galleries.reduce((acc, g) => acc + (g.imageCount || 0), 0);
+                const unread = user.unreadChatCount || 0;
+
+                const galleriesHtml = galleries.map((g) => {
+                    const isProt = g.isProtected !== false;
+                    return `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <strong style="color: #fff; font-size: 0.95rem;">${escapeHtml(g.title)}</strong>
+                                <span class="badge" style="background: ${isProt ? 'rgba(255,152,0,0.1)' : 'rgba(76,175,80,0.1)'}; color: ${isProt ? '#ff9800' : '#4caf50'}; border: 1px solid currentColor; font-size: 0.7rem; padding: 0.1rem 0.45rem; border-radius: 4px;">
+                                    ${isProt ? '🔒 Wasserzeichen' : '🔓 Freigegeben'}
+                                </span>
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.2rem;">
+                                Ordner: <code>gallery/assets/${escapeHtml(g.folder)}/</code> • <span style="color: var(--accent); font-weight: 600;">${g.imageCount} Bilder</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <a href="manage-gallery.html?user=${encodeURIComponent(user.username)}&folder=${encodeURIComponent(g.folder)}" class="btn" style="width: auto; background: var(--accent); color: white; font-size: 0.75rem; padding: 0.35rem 0.75rem; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                📁 Fotos verwalten
+                            </a>
+                            <button onclick="toggleSingleGalleryProtection(${g.id || 0}, ${isProt ? 0 : 1}, '${escapeQuote(user.username)}')" class="btn" style="width: auto; background: ${isProt ? 'rgba(76,175,80,0.2)' : 'rgba(255,152,0,0.2)'}; color: ${isProt ? '#4caf50' : '#ff9800'}; font-size: 0.75rem; padding: 0.35rem 0.75rem; border: 1px solid currentColor;">
+                                ${isProt ? '🔓 Jetzt Freigeben' : '🔒 Watermark aktivieren'}
+                            </button>
+                            ${galleries.length > 1 ? `
+                            <button onclick="deleteSingleGallery(${g.id}, '${escapeQuote(g.folder)}', '${escapeQuote(g.title)}')" class="btn" style="width: auto; background: transparent; color: var(--danger); font-size: 0.75rem; padding: 0.35rem 0.6rem; border: 1px solid rgba(255, 77, 77, 0.3);" title="Galerie löschen">
+                                🗑️
+                            </button>` : ''}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
 
                 return `
-                <div class="user-card" style="border-left: 4px solid ${isProtected ? '#ff9800' : '#4caf50'}">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
-                            <h3 style="margin: 0;">${user.name}</h3>
-                            <span class="badge" style="background: ${isProtected ? 'rgba(255,152,0,0.1)' : 'rgba(76,175,80,0.1)'}; color: ${isProtected ? '#ff9800' : '#4caf50'}; border: 1px solid currentColor; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 4px;">
-                                ${isProtected ? '🔒 Geschützt (Watermark)' : '🔓 Freigegeben'}
-                            </span>
+                <div class="user-card" style="flex-direction: column; align-items: stretch; gap: 1.25rem;">
+                    <!-- User Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.25rem;">
+                                <h3 style="margin: 0; font-size: 1.2rem;">${escapeHtml(user.name)}</h3>
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Login: <strong>${escapeHtml(user.username)}</strong></span>
+                                <span style="color: var(--accent); font-weight: 600; font-size: 0.85rem;">• ${totalPhotos} Fotos gesamt</span>
+                            </div>
+                            ${favHtml}
                         </div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                            Username: <strong>${user.username}</strong> <br>
-                            Ordner: <code>gallery/assets/${user.folder}/</code>
-                        </div>
-                        ${favHtml}
-                    </div>
-                    <div style="text-align: right; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-                        <span style="display: block; color: var(--accent); font-weight: 600;">${user.imageCount} Bilder</span>
-                        
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <a href="manage-gallery.html?user=${encodeURIComponent(user.username)}" class="btn" style="width: auto; background: var(--accent); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                                📁 Galerie verwalten
-                            </a>
-                            <button onclick="toggleProtection(${index})" class="btn" style="width: auto; background: ${isProtected ? 'rgba(76,175,80,0.2)' : 'rgba(255,152,0,0.2)'}; color: ${isProtected ? '#4caf50' : '#ff9800'}; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid currentColor;">
-                                ${isProtected ? '🔓 Jetzt Freigeben' : '🔒 Watermark aktivieren'}
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                            <button onclick="openChatModal(${user.id}, '${escapeQuote(user.name)}')" class="btn" style="width: auto; background: ${unread > 0 ? 'var(--accent)' : 'rgba(255,255,255,0.08)'}; color: #fff; font-size: 0.8rem; padding: 0.4rem 0.85rem; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 0.4rem;">
+                                💬 Chat ${unread > 0 ? `<span style="background:#fff; color:var(--accent); border-radius:999px; padding:0.1rem 0.4rem; font-size:0.7rem; font-weight:700;">${unread} neu</span>` : ''}
                             </button>
-                            <button onclick="showChangePassword(${index})" class="btn" style="width: auto; background: rgba(100,149,237,0.15); color: #6495ed; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(100,149,237,0.35);">🔑 Passwort ändern</button>
-                            <button onclick="deleteUser(${index})" class="btn" style="width: auto; background: rgba(255, 77, 77, 0.1); color: var(--danger); font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(255, 77, 77, 0.2);">Löschen</button>
+                            <button onclick="showChangePassword(${index})" class="btn" style="width: auto; background: rgba(100,149,237,0.15); color: #6495ed; font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(100,149,237,0.35);">🔑 Passwort</button>
+                            <button onclick="deleteUser(${index})" class="btn" style="width: auto; background: rgba(255, 77, 77, 0.1); color: var(--danger); font-size: 0.75rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(255, 77, 77, 0.2);">Kunde löschen</button>
+                        </div>
+                    </div>
+
+                    <!-- Galleries Section -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 600;">
+                                Galerien (${galleries.length})
+                            </span>
+                            <button onclick="openAddGalleryModal(${user.id}, '${escapeQuote(user.name)}', '${escapeQuote(user.username)}')" class="btn" style="width: auto; font-size: 0.75rem; padding: 0.3rem 0.75rem; background: rgba(255,107,0,0.15); color: var(--accent); border: 1px solid var(--accent);">
+                                + Neue Galerie hinzufügen
+                            </button>
+                        </div>
+
+                        <div>
+                            ${galleriesHtml}
                         </div>
                     </div>
                 </div>
@@ -402,6 +507,222 @@
             document.getElementById('changePwOverlay').classList.remove('open');
             changePwIndex = -1;
         }
+
+        function escapeHtml(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function escapeQuote(str) {
+            return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // --- Single Gallery Management ---
+        function openAddGalleryModal(userId, userName, username) {
+            document.getElementById('addGalleryUserId').value = userId;
+            document.getElementById('addGalleryUsername').value = username;
+            document.getElementById('addGalleryCustomerName').value = userName;
+            document.getElementById('addGalleryTitle').value = '';
+            document.getElementById('addGalleryFolder').value = '';
+            document.getElementById('addGalleryProtected').checked = true;
+            document.getElementById('addGalleryOverlay').classList.add('open');
+            document.getElementById('addGalleryTitle').focus();
+        }
+
+        function closeAddGalleryModal() {
+            document.getElementById('addGalleryOverlay').classList.remove('open');
+        }
+
+        function updateAutoFolderSuggestion() {
+            const username = document.getElementById('addGalleryUsername').value;
+            const title = document.getElementById('addGalleryTitle').value.trim();
+            const slug = title.toLowerCase().replace(/[^a-z0-9_\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            document.getElementById('addGalleryFolder').value = slug ? `${username}-${slug}` : '';
+        }
+
+        async function submitAddGallery() {
+            const userId = document.getElementById('addGalleryUserId').value;
+            const username = document.getElementById('addGalleryUsername').value;
+            const title = document.getElementById('addGalleryTitle').value.trim();
+            const folder = document.getElementById('addGalleryFolder').value.trim();
+            const isProt = document.getElementById('addGalleryProtected').checked ? 1 : 0;
+
+            if (!title) {
+                alert('Bitte einen Titel für die Galerie eingeben.');
+                return;
+            }
+
+            try {
+                const res = await fetch('api/manage-user-galleries.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add',
+                        user_id: userId,
+                        username: username,
+                        title: title,
+                        folder: folder,
+                        is_protected: isProt
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAddGalleryModal();
+                    await loadUsers();
+                } else {
+                    alert('Fehler: ' + (data.error || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Netzwerkfehler beim Anlegen der Galerie: ' + e.message);
+            }
+        }
+
+        async function toggleSingleGalleryProtection(galleryId, newState, username) {
+            try {
+                const res = await fetch('api/manage-user-galleries.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'edit',
+                        gallery_id: galleryId,
+                        is_protected: newState
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadUsers();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteSingleGallery(galleryId, folder, title) {
+            if (!confirm(`Galerie "${title}" wirklich löschen?\n\nDie Verknüpfung zur Galerie wird entfernt.`)) return;
+            const delFiles = confirm(`Sollen auch die Fotos im Server-Ordner "gallery/assets/${folder}/" unwiderruflich gelöscht werden?`);
+
+            try {
+                const res = await fetch('api/manage-user-galleries.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        gallery_id: galleryId,
+                        delete_files: delFiles
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadUsers();
+                } else {
+                    alert('Fehler beim Löschen: ' + (data.error || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // --- Admin Chat Modal ---
+        let activeChatUserId = null;
+        let adminChatPollInterval = null;
+
+        function openChatModal(userId, userName) {
+            activeChatUserId = userId;
+            document.getElementById('chatModalTitle').textContent = `Chat mit ${userName}`;
+            document.getElementById('adminChatInput').value = '';
+            document.getElementById('chatOverlay').classList.add('open');
+            loadAdminChat();
+
+            if (!adminChatPollInterval) {
+                adminChatPollInterval = setInterval(loadAdminChat, 4000);
+            }
+        }
+
+        function closeChatModal() {
+            document.getElementById('chatOverlay').classList.remove('open');
+            activeChatUserId = null;
+            if (adminChatPollInterval) {
+                clearInterval(adminChatPollInterval);
+                adminChatPollInterval = null;
+            }
+            loadUsers(); // Refresh unread count badges
+        }
+
+        async function loadAdminChat() {
+            if (!activeChatUserId) return;
+            const container = document.getElementById('adminChatMessages');
+            try {
+                const res = await fetch(`api/chat.php?user_id=${activeChatUserId}&t=${Date.now()}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.messages)) {
+                    renderAdminChat(data.messages);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderAdminChat(messages) {
+            const container = document.getElementById('adminChatMessages');
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); margin: auto;">Noch keine Nachrichten in dieser Konversation.</div>';
+                return;
+            }
+
+            container.innerHTML = messages.map(m => {
+                const isAdmin = m.sender === 'admin';
+                return `
+                <div style="display: flex; flex-direction: column; align-items: ${isAdmin ? 'flex-end' : 'flex-start'}; max-width: 80%; align-self: ${isAdmin ? 'flex-end' : 'flex-start'};">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem; padding: 0 0.4rem;">
+                        ${isAdmin ? 'Du (Fotograf)' : (m.sender_name || 'Kunde')} • ${m.created_at || ''}
+                    </span>
+                    <div style="background: ${isAdmin ? 'var(--accent)' : 'var(--surface-dark)'}; color: #fff; padding: 0.65rem 1rem; border-radius: 12px; border: ${isAdmin ? 'none' : '1px solid var(--border)'}; font-size: 0.9rem; line-height: 1.45; word-break: break-word;">
+                        ${escapeHtml(m.message)}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendAdminChatMessage() {
+            if (!activeChatUserId) return;
+            const input = document.getElementById('adminChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            try {
+                const res = await fetch('api/chat.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: activeChatUserId,
+                        message: text
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAdminChat();
+                } else {
+                    alert('Fehler beim Senden: ' + (data.error || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Netzwerkfehler beim Senden: ' + e.message);
+            }
+        }
+
+        document.getElementById('adminChatInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAdminChatMessage();
+            }
+        });
 
         async function changePassword() {
             const pw  = document.getElementById('changePwInput').value.trim();
