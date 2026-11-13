@@ -38,13 +38,14 @@ if (!$found) {
 }
 
 // Delete file
-$targetPath = '../../assets/portfolio/' . $filename;
+$targetPath = __DIR__ . '/../../assets/portfolio/' . $filename;
 if (file_exists($targetPath)) {
-    unlink($targetPath);
+    @unlink($targetPath);
 }
 
 // Save json
 if (file_put_contents($portfolioFile, json_encode($portfolioData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+    @chmod($portfolioFile, 0777);
 }
 
 echo json_encode(['success' => true]);

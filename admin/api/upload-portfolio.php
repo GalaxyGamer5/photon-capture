@@ -106,13 +106,14 @@ if (!in_array($category, $allowedCategories)) {
     exit;
 }
 
-$targetDir = '../../assets/portfolio/';
+$targetDir = __DIR__ . '/../../assets/portfolio/';
 if (!file_exists($targetDir)) {
     if (!@mkdir($targetDir, 0775, true)) {
         echo json_encode(['success' => false, 'error' => 'Failed to create portfolio directory. Check permissions of assets/ folder.']);
         exit;
     }
 }
+@chmod($targetDir, 0775);
 
 $portfolioFile = __DIR__ . '/../../data/portfolio.json';
 $portfolioData = ['images' => []];
@@ -168,10 +169,17 @@ for ($i = 0; $i < $fileCount; $i++) {
 
 if ($uploadedCount > 0) {
     file_put_contents($portfolioFile, json_encode($portfolioData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    @chmod($portfolioFile, 0777);
+    echo json_encode([
+        'success' => true,
+        'uploaded' => $uploadedCount,
+        'errors' => $errors
+    ]);
+} else {
+    echo json_encode([
+        'success' => false,
+        'uploaded' => 0,
+        'error' => !empty($errors) ? implode('; ', $errors) : 'Fehler beim Speichern der Bilder.',
+        'errors' => $errors
+    ]);
 }
-
-echo json_encode([
-    'success' => true,
-    'uploaded' => $uploadedCount,
-    'errors' => $errors
-]);

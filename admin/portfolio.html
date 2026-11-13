@@ -129,7 +129,7 @@
 
         async function loadPortfolio() {
             try {
-                const response = await fetch('api/get-portfolio.php');
+                const response = await fetch('api/get-portfolio.php?t=' + Date.now());
                 const data = await response.json();
                 
                 if (data.success) {
@@ -200,13 +200,13 @@
                 
                 const result = await response.json();
                 
-                if (result.success) {
+                if (result.success && result.uploaded > 0) {
                     uploader.reset();
                     statusDiv.textContent = `Erfolgreich hochgeladen: ${result.uploaded} Bilder.`;
                     statusDiv.style.color = '#4caf50';
                     loadPortfolio();
                 } else {
-                    throw new Error(result.error || 'Fehler beim Hochladen');
+                    throw new Error(result.error || (result.errors && result.errors.join('; ')) || 'Fehler beim Hochladen');
                 }
             } catch (error) {
                 console.error(error);

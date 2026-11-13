@@ -1,24 +1,81 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Load Dynamic Portfolio ---
+    function renderEditorialGallery(images) {
+        const gallery = document.getElementById('editorialGallery');
+        if (!gallery || !images || images.length === 0) return;
+
+        const numCols = 4;
+        const cols = Array.from({ length: numCols }, (_, i) => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'gallery-col';
+            colDiv.dataset.col = i + 1;
+            return colDiv;
+        });
+
+        const colWeights = [0, 0, 0, 0];
+
+        images.forEach((img) => {
+            let targetCol = 0;
+            let minWeight = colWeights[0];
+            for (let c = 1; c < numCols; c++) {
+                if (colWeights[c] < minWeight) {
+                    minWeight = colWeights[c];
+                    targetCol = c;
+                }
+            }
+
+            let isTall = false;
+            if (colWeights[targetCol] === 0) {
+                isTall = (targetCol === 0 || targetCol === 3);
+            } else if (colWeights[targetCol] === 2) {
+                isTall = (targetCol === 1 || targetCol === 2);
+            } else {
+                isTall = false;
+            }
+
+            const card = document.createElement('div');
+            card.className = `gallery-card ${isTall ? 'tall' : 'square'}`;
+            card.setAttribute('data-category', img.category);
+            card.innerHTML = `
+                <div class="gallery-card-inner">
+                    <img src="assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
+                </div>
+            `;
+
+            cols[targetCol].appendChild(card);
+            colWeights[targetCol] += (isTall ? 2 : 1);
+        });
+
+        gallery.innerHTML = '';
+        cols.forEach(col => gallery.appendChild(col));
+    }
+
     const galleryGrid = document.querySelector('.gallery-grid');
-    if (galleryGrid) {
+    const editorialGrid = document.getElementById('editorialGallery');
+
+    if (galleryGrid || editorialGrid) {
         try {
-            const response = await fetch('api/get-portfolio.php');
+            const response = await fetch('api/get-portfolio.php?t=' + Date.now());
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.images && data.images.length > 0) {
-                    galleryGrid.innerHTML = '';
-                    data.images.forEach(img => {
-                        const div = document.createElement('div');
-                        div.className = 'gallery-item show';
-                        div.setAttribute('data-category', img.category);
-                        const image = document.createElement('img');
-                        image.src = `assets/portfolio/${img.filename}`;
-                        image.alt = img.category;
-                        image.loading = 'lazy';
-                        div.appendChild(image);
-                        galleryGrid.appendChild(div);
-                    });
+                    if (editorialGrid) {
+                        renderEditorialGallery(data.images);
+                    }
+                    if (galleryGrid) {
+                        galleryGrid.innerHTML = '';
+                        data.images.forEach(img => {
+                            const div = document.createElement('div');
+                            div.className = 'gallery-item show';
+                            div.setAttribute('data-category', img.category);
+                            const image = document.createElement('img');
+                            image.src = `assets/portfolio/${img.filename}`;
+                            image.alt = img.category;
+                            image.loading = 'lazy';
+                            div.appendChild(image);
+                            galleryGrid.appendChild(div);
+                        });
+                    }
                 }
             }
         } catch(e) { console.error("Error loading dynamic portfolio:", e); }
@@ -408,7 +465,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const activeBtns = document.querySelectorAll(`.filter-btn[data-filter="${filterValue}"], .filter-tab[data-filter="${filterValue}"]`);
         activeBtns.forEach(b => b.classList.add('active'));
 
-        galleryItems.forEach(item => {
+        const currentGalleryItems = document.querySelectorAll('.gallery-item, .editorial-gallery-grid .gallery-card');
+        currentGalleryItems.forEach(item => {
             const category = item.getAttribute('data-category');
 
             if (filterValue === 'all' || category === filterValue) {
@@ -624,11 +682,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update visible images based on current filter
     function updateVisibleImages() {
-        visibleImages = Array.from(galleryImages).filter(img => {
-            const item = img.closest('.gallery-item');
-            // Check if the item is currently displayed (not hidden by filter)
-            // Use class check instead of style.display for consistency
-            return !item.classList.contains('hide');
+        const allImgs = document.querySelectorAll('.gallery-item img, .editorial-gallery-grid .gallery-card img');
+        visibleImages = Array.from(allImgs).filter(img => {
+            const item = img.closest('.gallery-item, .gallery-card');
+            return item && !item.classList.contains('hide');
+        });
+    }
+
+    // Lightbox delegation for editorial gallery
+    const editorialGalEl = document.getElementById('editorialGallery');
+    if (editorialGalEl) {
+        editorialGalEl.addEventListener('click', (e) => {
+            const card = e.target.closest('.gallery-card');
+            if (!card) return;
+            const img = card.querySelector('img');
+            if (!img || !img.src) return;
+
+            updateVisibleImages();
+            currentImageIndex = visibleImages.indexOf(img);
+            clickedThumbnail = img;
+
+            if (lightbox && lightboxImg) {
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                lightboxImg.src = img.src;
+                if (lightboxCaption) lightboxCaption.textContent = img.alt || '';
+            }
         });
     }
 
