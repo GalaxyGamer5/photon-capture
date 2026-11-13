@@ -58,14 +58,47 @@ foreach ($input['photos'] as $item) {
     $newFilename = $id . '_' . time() . '.' . $ext;
     $targetPath = $portDir . $newFilename;
 
+    // Look up EXIF from gallery_photos using folder + filename (GD strips EXIF from file, so we use the DB)
+    $exif = ['focal_length' => null, 'aperture' => null, 'iso' => null,
+             'shutter_speed' => null, 'camera_model' => null];
+    if ($db) {
+        try {
+            $parts = explode('/', str_replace('\\', '/', $relPath));
+            if (count($parts) >= 2) {
+                $srcFolder   = $parts[count($parts) - 2];
+                $srcFilename = $parts[count($parts) - 1];
+                $gStmt = $db->prepare("SELECT id FROM galleries WHERE folder = ? LIMIT 1");
+                $gStmt->execute([$srcFolder]);
+                $gRow = $gStmt->fetch();
+                if ($gRow) {
+                    $eStmt = $db->prepare(
+                        "SELECT focal_length, aperture, iso, shutter_speed, camera_model
+                         FROM gallery_photos WHERE gallery_id = ? AND filename = ? LIMIT 1"
+                    );
+                    $eStmt->execute([$gRow['id'], $srcFilename]);
+                    $eRow = $eStmt->fetch();
+                    if ($eRow) $exif = $eRow;
+                }
+            }
+        } catch (Exception $e) {}
+    }
+
     if (@copy($fullSourcePath, $targetPath)) {
         @chmod($targetPath, 0666);
         $added++;
 
         if ($db) {
             try {
-                $ins = $db->prepare("INSERT INTO portfolio (id, filename, category, created_at) VALUES (?, ?, ?, ?)");
-                $ins->execute([$id, $newFilename, $category, $now]);
+                $ins = $db->prepare(
+                    "INSERT INTO portfolio (id, filename, category, created_at,
+                     focal_length, aperture, iso, shutter_speed, camera_model)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                );
+                $ins->execute([
+                    $id, $newFilename, $category, $now,
+                    $exif['focal_length'], $exif['aperture'],
+                    $exif['iso'], $exif['shutter_speed'], $exif['camera_model']
+                ]);
             } catch (Exception $e) {
                 $errors[] = "DB error for " . basename($relPath) . ": " . $e->getMessage();
             }
@@ -78,7 +111,7 @@ foreach ($input['photos'] as $item) {
 // Keep data/portfolio.json in sync
 if ($added > 0 && $db) {
     try {
-        $stmt = $db->query("SELECT id, filename, category, created_at AS date FROM portfolio ORDER BY created_at DESC");
+        $stmt = $db->query("SELECT id, filename, category, created_at AS date, focal_length, aperture, iso, shutter_speed, camera_model FROM portfolio ORDER BY created_at DESC");
         $all = $stmt->fetchAll();
         $jsonFile = $baseDir . 'data' . DIRECTORY_SEPARATOR . 'portfolio.json';
         @file_put_contents($jsonFile, json_encode(['images' => $all ?: []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
