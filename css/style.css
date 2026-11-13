@@ -2416,18 +2416,16 @@ body.viewfinder-active .photographer-frame:hover {
     box-shadow: 0 0 30px rgba(224, 90, 43, 0.8) !important;
 }
 
-/* Shutter Flash Pulse */
-.vf-shutter-flash {
-    position: absolute;
-    inset: 0;
-    background: #ffffff;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.12s ease-out;
+/* Autofocus Lock Confirmation (turns neon-green with slight snap) */
+.vf-af-brackets.is-locked .vf-b {
+    border-color: #00ff66 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.8) !important;
+    transform: scale(0.92);
 }
 
-.vf-shutter-flash.flash {
-    opacity: 0.38;
+.vf-af-brackets.is-locked .vf-crosshair {
+    color: #00ff66 !important;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.9);
 }
 
 @media (max-width: 768px) {

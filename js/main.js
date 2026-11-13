@@ -1150,12 +1150,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch(e) {}
     }
 
-    function triggerShutterEffect() {
-        playMechanicalShutterSound();
-        const flash = document.getElementById('vfShutterFlash');
-        if (flash) {
-            flash.classList.add('flash');
-            setTimeout(() => flash.classList.remove('flash'), 110);
+    function playCameraFocusBeep() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!window._vfAudioCtx) window._vfAudioCtx = new AudioCtx();
+            const ctx = window._vfAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const now = ctx.currentTime;
+            // Authentic camera AF confirmation dual-tone (880Hz -> 1760Hz)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.setValueAtTime(1760, now + 0.035);
+            gain.gain.setValueAtTime(0.07, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.085);
+        } catch(e) {}
+    }
+
+    function triggerFocusLock() {
+        playCameraFocusBeep();
+        const brackets = document.getElementById('vfAfBrackets');
+        if (brackets) {
+            brackets.classList.add('is-locked');
+            clearTimeout(window._vfAfLockTimer);
+            window._vfAfLockTimer = setTimeout(() => {
+                brackets.classList.remove('is-locked');
+            }, 350);
         }
     }
 
@@ -1210,21 +1237,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleViewfinder(false);
         });
 
-        // ESC key to close, Space to trigger shutter snapshot
+        // ESC key to close, Space to trigger autofocus confirmation lock
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && isViewfinderActive) {
                 toggleViewfinder(false);
             } else if (e.code === 'Space' && isViewfinderActive && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
-                triggerShutterEffect();
+                triggerFocusLock();
             }
         });
 
-        // Click anywhere while HUD is active triggers camera shutter audio & visual micro-flash
+        // Click while HUD is active triggers autofocus confirmation lock (no blinding screen flash)
         window.addEventListener('click', (e) => {
             if (!isViewfinderActive) return;
             if (e.target.closest('#vfCloseBtn') || e.target.closest('#viewfinderToggle') || e.target.closest('#rollHudBtn')) return;
-            triggerShutterEffect();
+            triggerFocusLock();
         }, true);
 
         // Gyroscope / Electronic Level Horizon tracking mouse
