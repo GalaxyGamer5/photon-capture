@@ -123,6 +123,20 @@
                 <p>Verwalte die "Häufig gestellten Fragen" für deine Besucher.</p>
             </a>
         </div>
+
+        <!-- Reviews Management Section -->
+        <section style="margin-top: 3rem; background: var(--surface-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                    <h2 style="font-size: 1.25rem; margin: 0; color: #fff;">⭐ Kundenbewertungen</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0;">Von Kunden im Kundenportal abgegebene Bewertungen (werden auf der Website angezeigt).</p>
+                </div>
+                <span id="reviews-count-badge" class="badge" style="background: rgba(255,193,7,0.12); color: #ffc107; border: 1px solid rgba(255,193,7,0.3); padding: 0.3rem 0.75rem; font-size: 0.8rem; border-radius: 999px;">0 Bewertungen</span>
+            </div>
+            <div id="reviews-list" style="display: grid; gap: 0.75rem;">
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Lade Bewertungen...</div>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -159,6 +173,70 @@
             }
         }
         fetchStats();
+
+        async function loadReviews() {
+            const listEl = document.getElementById('reviews-list');
+            const badge = document.getElementById('reviews-count-badge');
+            try {
+                const res = await fetch('api/get-testimonials.php');
+                const data = await res.json();
+                if (!data.success || !Array.isArray(data.testimonials) || data.testimonials.length === 0) {
+                    listEl.innerHTML = '<div style="color: var(--text-secondary); font-size: 0.85rem; padding: 0.5rem 0;">Noch keine Bewertungen vorhanden.</div>';
+                    badge.textContent = '0 Bewertungen';
+                    return;
+                }
+
+                badge.textContent = `${data.testimonials.length} Bewertung${data.testimonials.length === 1 ? '' : 'en'}`;
+
+                listEl.innerHTML = data.testimonials.map(t => {
+                    const rating = Math.max(1, Math.min(5, parseInt(t.rating) || 5));
+                    const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+                    const dateFormatted = t.date ? new Date(t.date).toLocaleDateString('de-DE') : '';
+                    return `
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                                    <strong style="color: #fff; font-size: 0.95rem;">${escapeHtml(t.name)}</strong>
+                                    <span style="color: #ffc107; font-size: 0.9rem; letter-spacing: 0.05em;">${stars}</span>
+                                    <span style="color: var(--text-secondary); font-size: 0.75rem;">${dateFormatted}</span>
+                                </div>
+                                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">"${escapeHtml(t.text)}"</p>
+                            </div>
+                            <button onclick="deleteReview('${escapeHtml(t.id)}')" class="btn" style="width: auto; background: rgba(255,77,77,0.1); color: #ff6b6b; border: 1px solid rgba(255,77,77,0.25); font-size: 0.75rem; padding: 0.4rem 0.8rem; cursor: pointer; border-radius: 6px; white-space: nowrap;">
+                                🗑 Löschen
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } catch(e) {
+                listEl.innerHTML = '<div style="color: #ff6b6b; font-size: 0.85rem;">Fehler beim Laden der Bewertungen.</div>';
+            }
+        }
+        loadReviews();
+
+        async function deleteReview(id) {
+            if (!confirm('Möchtest du diese Bewertung wirklich endgültig löschen?')) return;
+            try {
+                const res = await fetch('api/delete-testimonial.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadReviews();
+                } else {
+                    alert('Fehler: ' + (data.error || 'Unbekannt'));
+                }
+            } catch(e) {
+                alert('Netzwerkfehler: ' + e.message);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
 
         function logout() {
             sessionStorage.removeItem('photon_admin_auth');
