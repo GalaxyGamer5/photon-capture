@@ -1,21 +1,7 @@
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     // --- 3D Camera Roll / Dynamic Portfolio ---
     let portfolioImages = [];
     const cameraRollStage = document.getElementById('cameraRollStage');
-
-    if (cameraRollStage) {
-        try {
-            const response = await fetch('api/get-portfolio.php?t=' + Date.now());
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.images && data.images.length > 0) {
-                    portfolioImages = data.images;
-                }
-            }
-        } catch(e) {
-            console.error("Error loading dynamic portfolio:", e);
-        }
-    }
 
     // --- Load Dynamic Pricing ---
     const pricingListContainer = document.getElementById('pricing-list-container');
@@ -203,20 +189,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     fetchTestimonials();
-
-    // --- Randomize Gallery Items ---
-    if (galleryGrid) {
-        const items = Array.from(galleryGrid.children);
-
-        // Fisher-Yates shuffle algorithm
-        for (let i = items.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [items[i], items[j]] = [items[j], items[i]];
-        }
-
-        // Append shuffled items back to the gallery
-        items.forEach(item => galleryGrid.appendChild(item));
-    }
 
     // --- Scroll Progress Indicator ---
     const scrollProgressBar = document.querySelector('.scroll-progress-bar');
@@ -894,12 +866,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         activateFilter(filterValue);
     }
 
+    async function loadPortfolio() {
+        if (!cameraRollStage) return;
+        try {
+            const response = await fetch('api/get-portfolio.php?t=' + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && Array.isArray(data.images) && data.images.length > 0) {
+                    portfolioImages = data.images;
+                    renderCameraRoll(currentRollFilter);
+                }
+            }
+        } catch(e) {
+            console.error("Error loading dynamic portfolio:", e);
+        }
+    }
+
     // Initialize 3D Camera Roll on page load
     if (cameraRollStage) {
         renderCameraRoll('all');
         initCameraRollDrag();
         initCameraRollScrubber();
         initCameraRollControls();
+        loadPortfolio();
     }
 
 
