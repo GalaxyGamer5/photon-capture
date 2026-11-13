@@ -61,68 +61,17 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
     }
 }
 
-// Extract useful EXIF metadata from an image file
+// Extract useful EXIF metadata — uses pure-PHP reader (no exif extension needed)
 function extract_exif_meta($filePath, $mimeType) {
-    $meta = [
-        'focal_length'  => null,
-        'aperture'      => null,
-        'iso'           => null,
-        'shutter_speed' => null,
-        'camera_model'  => null,
+    require_once __DIR__ . '/../../includes/exif_reader.php';
+    $data = pure_php_read_exif($filePath);
+    return [
+        'focal_length'  => $data['focal_length'],
+        'aperture'      => $data['aperture'],
+        'iso'           => $data['iso'],
+        'shutter_speed' => $data['shutter_speed'],
+        'camera_model'  => $data['camera_model'],
     ];
-    if ($mimeType !== 'image/jpeg' && $mimeType !== 'image/jpg') return $meta;
-    if (!function_exists('exif_read_data')) return $meta;
-
-    $exif = @exif_read_data($filePath, 'EXIF,IFD0', true);
-    if (!$exif) return $meta;
-
-    // Camera model
-    if (!empty($exif['IFD0']['Model'])) {
-        $meta['camera_model'] = trim($exif['IFD0']['Model']);
-    }
-
-    // ISO
-    if (!empty($exif['EXIF']['ISOSpeedRatings'])) {
-        $iso = $exif['EXIF']['ISOSpeedRatings'];
-        $meta['iso'] = 'ISO ' . (is_array($iso) ? $iso[0] : $iso);
-    }
-
-    // Focal length
-    if (!empty($exif['EXIF']['FocalLength'])) {
-        $fl = $exif['EXIF']['FocalLength'];
-        if (strpos($fl, '/') !== false) {
-            [$num, $den] = explode('/', $fl);
-            $fl = $den != 0 ? round($num / $den) : $num;
-        }
-        $meta['focal_length'] = $fl . 'mm';
-    }
-
-    // Aperture (FNumber)
-    if (!empty($exif['EXIF']['FNumber'])) {
-        $fn = $exif['EXIF']['FNumber'];
-        if (strpos($fn, '/') !== false) {
-            [$num, $den] = explode('/', $fn);
-            $fn = $den != 0 ? round($num / $den, 1) : $num;
-        }
-        $meta['aperture'] = 'f/' . $fn;
-    }
-
-    // Shutter speed (ExposureTime)
-    if (!empty($exif['EXIF']['ExposureTime'])) {
-        $et = $exif['EXIF']['ExposureTime'];
-        if (strpos($et, '/') !== false) {
-            [$num, $den] = explode('/', $et);
-            if ($den != 0 && ($num / $den) < 1) {
-                $meta['shutter_speed'] = '1/' . round($den / $num) . 's';
-            } else {
-                $meta['shutter_speed'] = round($num / $den, 2) . 's';
-            }
-        } else {
-            $meta['shutter_speed'] = $et . 's';
-        }
-    }
-
-    return $meta;
 }
 
 // Move image and fix EXIF orientation for JPEGs

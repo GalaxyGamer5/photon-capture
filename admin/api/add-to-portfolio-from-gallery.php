@@ -4,6 +4,7 @@ session_start();
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/exif_reader.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -58,10 +59,10 @@ foreach ($input['photos'] as $item) {
     $newFilename = $id . '_' . time() . '.' . $ext;
     $targetPath = $portDir . $newFilename;
 
-    // Look up EXIF from gallery_photos using folder + filename (GD strips EXIF from file, so we use the DB)
-    $exif = ['focal_length' => null, 'aperture' => null, 'iso' => null,
-             'shutter_speed' => null, 'camera_model' => null];
-    if ($db) {
+    // Read EXIF: try file directly first (preserved if GD didn't process),
+    // then fall back to gallery_photos DB (saved before GD stripped it)
+    $exif = pure_php_read_exif($fullSourcePath);
+    if (!$exif['focal_length'] && !$exif['iso'] && $db) {
         try {
             $parts = explode('/', str_replace('\\', '/', $relPath));
             if (count($parts) >= 2) {
@@ -77,12 +78,11 @@ foreach ($input['photos'] as $item) {
                     );
                     $eStmt->execute([$gRow['id'], $srcFilename]);
                     $eRow = $eStmt->fetch();
-                    if ($eRow) $exif = $eRow;
+                    if ($eRow && ($eRow['focal_length'] || $eRow['iso'])) $exif = array_merge($exif, $eRow);
                 }
             }
         } catch (Exception $e) {}
     }
-
     if (@copy($fullSourcePath, $targetPath)) {
         @chmod($targetPath, 0666);
         $added++;

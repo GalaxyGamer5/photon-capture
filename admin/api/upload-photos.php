@@ -59,60 +59,11 @@ if (!function_exists('fallback_get_jpeg_orientation')) {
     }
 }
 
-// Extract useful EXIF metadata from an image file (before it is moved)
+// Extract useful EXIF metadata — uses pure-PHP reader (no exif extension needed)
 function extract_exif_meta($filePath, $mimeType) {
-    $meta = [
-        'focal_length'  => null,
-        'aperture'      => null,
-        'iso'           => null,
-        'shutter_speed' => null,
-        'camera_model'  => null,
-        'taken_at'      => null,
-    ];
-    if ($mimeType !== 'image/jpeg' && $mimeType !== 'image/jpg') return $meta;
-    if (!function_exists('exif_read_data')) return $meta;
-
-    $exif = @exif_read_data($filePath, 'EXIF,IFD0', true);
-    if (!$exif) return $meta;
-
-    if (!empty($exif['IFD0']['Model']))
-        $meta['camera_model'] = trim($exif['IFD0']['Model']);
-
-    if (!empty($exif['EXIF']['ISOSpeedRatings'])) {
-        $iso = $exif['EXIF']['ISOSpeedRatings'];
-        $meta['iso'] = 'ISO ' . (is_array($iso) ? $iso[0] : $iso);
-    }
-
-    if (!empty($exif['EXIF']['FocalLength'])) {
-        $fl = $exif['EXIF']['FocalLength'];
-        if (strpos($fl, '/') !== false) { [$n, $d] = explode('/', $fl); $fl = $d ? round($n/$d) : $n; }
-        $meta['focal_length'] = $fl . 'mm';
-    }
-
-    if (!empty($exif['EXIF']['FNumber'])) {
-        $fn = $exif['EXIF']['FNumber'];
-        if (strpos($fn, '/') !== false) { [$n, $d] = explode('/', $fn); $fn = $d ? round($n/$d, 1) : $n; }
-        $meta['aperture'] = 'f/' . $fn;
-    }
-
-    if (!empty($exif['EXIF']['ExposureTime'])) {
-        $et = $exif['EXIF']['ExposureTime'];
-        if (strpos($et, '/') !== false) {
-            [$n, $d] = explode('/', $et);
-            $meta['shutter_speed'] = ($d && ($n/$d) < 1) ? '1/' . round($d/$n) . 's' : round($n/$d, 2) . 's';
-        } else {
-            $meta['shutter_speed'] = $et . 's';
-        }
-    }
-
-    // Original date/time the shot was taken
-    $dateStr = $exif['EXIF']['DateTimeOriginal'] ?? $exif['IFD0']['DateTime'] ?? null;
-    if ($dateStr) {
-        // EXIF format: "YYYY:MM:DD HH:MM:SS" → SQL datetime
-        $meta['taken_at'] = preg_replace('/^(\d{4}):(\d{2}):(\d{2})/', '$1-$2-$3', $dateStr);
-    }
-
-    return $meta;
+    require_once __DIR__ . '/../../includes/exif_reader.php';
+    return pure_php_read_exif($filePath);
+}
 }
 
 // Move image and fix EXIF orientation for JPEGs
