@@ -25,7 +25,8 @@ $allowed = [
 
 $inAllowed = false;
 foreach ($allowed as $a) {
-    if (strpos($fullPath, realpath($a)) === 0) {
+    $realA = realpath($a);
+    if ($realA && strpos($fullPath, $realA) === 0) {
         $inAllowed = true;
         break;
     }
@@ -37,11 +38,17 @@ if (!$inAllowed || !is_file($fullPath)) {
 }
 
 // Determine MIME type
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mime = finfo_file($finfo, $fullPath);
-finfo_close($finfo);
+$mime = 'image/jpeg';
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $fullPath);
+    if (PHP_VERSION_ID < 80500) {
+        @finfo_close($finfo);
+    }
+}
 
-// Output the file directly (this avoids CORS since it's same-origin on the admin subdomain)
-header('Content-Type: ' . $mime);
+// Output the file directly (this avoids CORS and path issues on subdomains)
+header('Content-Type: ' . ($mime ?: 'image/jpeg'));
 header('Content-Length: ' . filesize($fullPath));
+header('Cache-Control: public, max-age=86400');
 readfile($fullPath);

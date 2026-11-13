@@ -159,7 +159,7 @@
                 const catText = catLabels[img.category] || img.category;
 
                 item.innerHTML = `
-                    <img src="../assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
+                    <img src="api/download-media.php?path=assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy" onerror="if(this.dataset.tried!=='1'){this.dataset.tried='1';this.src='../assets/portfolio/${img.filename}';}">
                     <div class="portfolio-info">
                         <span class="portfolio-category">${catText}</span>
                         <button class="delete-btn" onclick="deleteImage('${img.id}')" title="Löschen">
