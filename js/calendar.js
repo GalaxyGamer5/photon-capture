@@ -175,6 +175,100 @@ document.addEventListener('DOMContentLoaded', () => {
         renderExtras();
         updateDateTimeDisplays();
         updatePricing();
+        setupStepper();
+    }
+
+    // ─── Booking Stepper ─────────────────────────────────────────────────────
+
+    function setupStepper() {
+        const stepper = document.getElementById('bookingStepper');
+        if (!stepper) return;
+
+        const stepButtons = stepper.querySelectorAll('.step-item[data-step]');
+        const targets = {
+            '1': document.getElementById('step-1-termin'),
+            '2': document.getElementById('step-2-details'),
+            '3': document.getElementById('step-3-contact')
+        };
+
+        // Click / keyboard navigation
+        stepButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const step = btn.dataset.step;
+                scrollToStep(step, targets);
+            });
+        });
+
+        // Scroll-spy via IntersectionObserver
+        const observerOptions = {
+            root: null,
+            threshold: 0,
+            rootMargin: `-${(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76) + 60}px 0px -40% 0px`
+        };
+
+        const stepSections = [
+            { el: targets['1'], step: '1' },
+            { el: targets['2'], step: '2' },
+            { el: targets['3'], step: '3' }
+        ].filter(s => s.el);
+
+        if (stepSections.length) {
+            const observer = new IntersectionObserver((entries) => {
+                // Find the last section that is currently intersecting
+                let activeStep = null;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const found = stepSections.find(s => s.el === entry.target);
+                        if (found) activeStep = found.step;
+                    }
+                });
+                if (activeStep) {
+                    setActiveStep(activeStep, stepButtons);
+                }
+            }, observerOptions);
+
+            stepSections.forEach(s => observer.observe(s.el));
+        }
+
+        // Update step 1 completion when date + time are both chosen
+        updateStepCompletion(stepButtons);
+    }
+
+    function scrollToStep(step, targets) {
+        const el = targets[step];
+        if (!el) return;
+        const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
+        const stepperH = document.getElementById('bookingStepper')?.offsetHeight || 50;
+        const offset = el.getBoundingClientRect().top + window.scrollY - headerH - stepperH - 16;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
+    }
+
+    function setActiveStep(step, stepButtons) {
+        stepButtons.forEach(btn => {
+            if (btn.dataset.step === step) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function updateStepCompletion(stepButtons) {
+        // Step 1 is complete when both date and time are selected (they always are pre-selected)
+        // We re-check on any date/time update — called after any day or time-slot selection
+        const dateVal = elements.dateInput ? elements.dateInput.value : selectedDate;
+        const timeVal = elements.timeInput ? elements.timeInput.value : selectedTime;
+        const step1Btn = stepButtons
+            ? Array.from(stepButtons).find(b => b.dataset.step === '1')
+            : document.querySelector('#bookingStepper .step-item[data-step="1"]');
+
+        if (step1Btn) {
+            if (dateVal && timeVal) {
+                step1Btn.classList.add('completed');
+            } else {
+                step1Btn.classList.remove('completed');
+            }
+        }
     }
 
     // Fetch calendar availability
@@ -314,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
                     cell.classList.add('selected');
                     updateDateTimeDisplays();
+                    updateStepCompletion(null);
                 });
             }
 
@@ -335,6 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pill.classList.add('active');
                 selectedTime = pill.dataset.time || pill.textContent.replace(/[\[\]]/g, '').trim();
                 updateDateTimeDisplays();
+                updateStepCompletion(null);
             });
         });
     }

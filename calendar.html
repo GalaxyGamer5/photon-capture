@@ -65,16 +65,16 @@
             </div>
 
             <!-- Stepper Indicator -->
-            <div class="booking-stepper">
-                <span class="step-item active" data-i18n="cal.step1">01 TERMIN</span>
-                <span class="step-item" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</span>
-                <span class="step-item" data-i18n="cal.step3">03 KONTAKT</span>
+            <div class="booking-stepper" id="bookingStepper" role="navigation" aria-label="Buchungsschritte">
+                <button type="button" class="step-item active" data-step="1" id="stepBtn1" aria-controls="step-1-termin" data-i18n="cal.step1">01 TERMIN</button>
+                <button type="button" class="step-item" data-step="2" id="stepBtn2" aria-controls="step-2-details" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</button>
+                <button type="button" class="step-item" data-step="3" id="stepBtn3" aria-controls="step-3-contact" data-i18n="cal.step3">03 KONTAKT</button>
             </div>
 
             <!-- 2-Column Booking Layout (Matching Figma Mockup) -->
             <div class="booking-grid">
                 <!-- LEFT COLUMN: Calendar & Time Slots -->
-                <div class="booking-left-col">
+                <div class="booking-left-col" id="step-1-termin">
                     <!-- Selected Package Bar -->
                     <div class="selected-package-bar">
                         <div class="pkg-info-group">
@@ -134,7 +134,7 @@
                 <div class="booking-right-col">
                     <form id="booking-form" class="clean-form">
                         <!-- Step 02: Details & Extras -->
-                        <div class="form-step-group">
+                        <div class="form-step-group" id="step-2-details">
                             <span class="group-kicker" data-i18n="cal.step2dot">02 · DETAILS &amp; EXTRAS</span>
 
                             <div class="form-field">
@@ -210,7 +210,7 @@
                         </div>
 
                         <!-- Step 03: Contact -->
-                        <div class="form-step-group contact-step-group">
+                        <div class="form-step-group contact-step-group" id="step-3-contact">
                             <span class="group-kicker" data-i18n="cal.step3dot">03 · KONTAKT</span>
 
                             <div class="form-field">
