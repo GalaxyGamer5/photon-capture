@@ -1337,25 +1337,22 @@ body.viewfinder-active .site-header {
 }
 
 .booking-header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.75rem;
 }
 
 .booking-title {
     font-family: var(--font-heading);
-    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    font-size: clamp(1.6rem, 2.5vw, 2.5rem);
     font-weight: 700;
-    line-height: 1.08;
+    line-height: 1.1;
     letter-spacing: -0.03em;
     color: #ffffff;
     margin-top: 0.25rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
 }
 
 .booking-subtitle {
-    font-size: 15px;
-    color: var(--text-secondary);
-    line-height: 1.65;
-    max-width: 580px;
+    display: none;
 }
 
 /* ── Booking Stepper sub-bar (inside <header>) ── */
@@ -1465,12 +1462,24 @@ body.viewfinder-active .site-header {
     scroll-margin-top: calc(var(--header-height) + 44px + 1.5rem);
 }
 
-/* 2-Column Booking Layout */
+/* ── 3-Column Booking Grid: [Calendar] [Time] [Details] ── */
 .booking-grid {
     display: grid;
-    grid-template-columns: 520px 1fr;
-    gap: 5.5rem;
-    align-items: flex-start;
+    grid-template-columns: 1fr 185px minmax(270px, 360px);
+    gap: 1.5rem 3.5rem;
+    align-items: start;
+}
+
+/* Calendar column — sticky so it stays visible as right col scrolls */
+.booking-left-col {
+    position: sticky;
+    top: calc(var(--header-height) + 44px + 1rem);
+}
+
+/* Time column — also sticky */
+.booking-time-col {
+    position: sticky;
+    top: calc(var(--header-height) + 44px + 1rem);
 }
 
 /* Selected Package Bar */
@@ -1651,51 +1660,56 @@ body.viewfinder-active .site-header {
     background: var(--accent-orange);
 }
 
-/* Time Slots Section */
+/* Time Slots Section — vertical middle column */
 .time-slots-section {
-    margin-top: 1rem;
+    margin-top: 0;
 }
 
 .slot-date-kicker {
     display: block;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #ffffff;
-    margin-bottom: 0.4rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
 }
 
 .slot-heading {
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-family: var(--font-body);
+    font-size: 11px;
     font-weight: 700;
     color: #ffffff;
-    letter-spacing: -0.01em;
-    margin-bottom: 1.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
 }
 
 .slots-pill-group {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .slot-pill {
     background: transparent;
     border: 1px solid #2a2a2a;
     border-radius: var(--radius-pill);
-    padding: 0.65rem 1.4rem;
+    padding: 0.7rem 1rem;
     color: #ffffff;
     font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
+    width: 100%;
+    text-align: center;
+    display: block;
 }
 
 .slot-pill:hover {
-    border-color: #666666;
+    border-color: #555555;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .slot-pill.active {
@@ -1705,16 +1719,49 @@ body.viewfinder-active .site-header {
     font-weight: 600;
 }
 
-.slot-helper-note {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.5;
+/* Selection confirmation below pills */
+.slot-confirm-row {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-hairline);
 }
 
-/* RIGHT COLUMN: Steps 2 & 3 */
+.slot-confirm-date {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+    line-height: 1.6;
+}
+
+.slot-confirm-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-orange);
+}
+
+.slot-helper-note {
+    display: none;
+}
+
+/* RIGHT COLUMN: Details & Extras */
 .booking-right-col {
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Full-width contact section below the grid */
+.booking-contact-section {
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border-hairline);
+}
+
+.contact-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0 3.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-step-group {

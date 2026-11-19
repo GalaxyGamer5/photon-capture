@@ -67,187 +67,187 @@
 
     <main class="booking-page">
         <div class="container">
-            <!-- Header Section -->
+
+            <!-- Compact page header -->
             <div class="booking-header">
                 <span class="section-kicker" data-i18n="cal.kicker">BUCHUNG</span>
                 <h1 class="booking-title" data-i18n="cal.title">Wähle deinen Termin.</h1>
-                <p class="booking-subtitle" data-i18n="cal.subtitle">Such dir einen freien Tag aus und sichere dir deine Session. Die Verfügbarkeit wird in Echtzeit angezeigt.</p>
             </div>
 
-            <!-- 2-Column Booking Layout (Matching Figma Mockup) -->
-            <div class="booking-grid">
-                <!-- LEFT COLUMN: Calendar & Time Slots -->
-                <div class="booking-left-col" id="step-1-termin">
-                    <!-- Selected Package Bar -->
-                    <div class="selected-package-bar">
-                        <div class="pkg-info-group">
-                            <span class="pkg-kicker" data-i18n="cal.selectedPkg">GEWÄHLTES PAKET</span>
-                            <span class="selected-pkg-name" id="packageName">Event-Begleitung</span>
+            <form id="booking-form" class="clean-form">
+
+                <!-- 3-Column Grid: [Calendar] [Time Slots] [Details & Extras] -->
+                <div class="booking-grid">
+
+                    <!-- COL 1: Calendar -->
+                    <div class="booking-left-col" id="step-1-termin">
+
+                        <!-- Selected Package Bar -->
+                        <div class="selected-package-bar">
+                            <div class="pkg-info-group">
+                                <span class="pkg-kicker" data-i18n="cal.selectedPkg">GEWÄHLTES PAKET</span>
+                                <span class="selected-pkg-name" id="packageName">Event-Begleitung</span>
+                            </div>
+                            <a href="index.html#pricing" class="change-pkg-link" id="changePackageBtn" data-i18n="cal.change">Ändern</a>
                         </div>
-                        <a href="index.html#pricing" class="change-pkg-link" id="changePackageBtn" data-i18n="cal.change">Ändern</a>
+
+                        <!-- Month Navigation -->
+                        <div class="calendar-month-bar">
+                            <button id="prevMonth" class="month-arrow-btn" aria-label="Vorheriger Monat">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <h2 id="currentMonth" class="current-month-heading">November 2026</h2>
+                            <button id="nextMonth" class="month-arrow-btn" aria-label="Nächster Monat">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div class="calendar-widget">
+                            <div class="weekday-labels" id="weekdayLabels">
+                                <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+                            </div>
+                            <div class="days-grid" id="daysGrid">
+                                <!-- Populated by calendar.js -->
+                            </div>
+                        </div>
+
+                        <!-- Calendar Legend -->
+                        <div class="calendar-legend">
+                            <span class="legend-item"><span class="legend-dot dot-available"></span> <span data-i18n="calendar.available">Verfügbar</span></span>
+                            <span class="legend-item"><span class="legend-dot dot-unavailable"></span> <span data-i18n="cal.unavailable">Nicht verfügbar</span></span>
+                            <span class="legend-item"><span class="legend-dot dot-selected"></span> <span data-i18n="calendar.selected">Ausgewählt</span></span>
+                        </div>
                     </div>
 
-                    <!-- Month Navigation -->
-                    <div class="calendar-month-bar">
-                        <button id="prevMonth" class="month-arrow-btn" aria-label="Vorheriger Monat">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <h2 id="currentMonth" class="current-month-heading">November 2026</h2>
-                        <button id="nextMonth" class="month-arrow-btn" aria-label="Nächster Monat">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
+                    <!-- COL 2: Time Slot Picker -->
+                    <div class="booking-time-col">
+                        <div class="time-slots-section" id="timeSlotsSection">
+                            <span class="slot-date-kicker" id="slotDateKicker">SAMSTAG, 21. NOVEMBER</span>
+                            <h3 class="slot-heading" data-i18n="cal.slotsHeading">Verfügbare Zeitfenster</h3>
+                            <div class="slots-pill-group" id="slotsPillGroup">
+                                <button type="button" class="slot-pill active" data-time="10:00">10:00</button>
+                                <button type="button" class="slot-pill" data-time="12:00">12:00</button>
+                                <button type="button" class="slot-pill" data-time="14:00">14:00</button>
+                                <button type="button" class="slot-pill" data-time="16:00">16:00</button>
+                            </div>
+                            <!-- Selection confirmation (updated by JS) -->
+                            <div class="slot-confirm-row">
+                                <div id="displaySelectedDate" class="slot-confirm-date"></div>
+                                <div id="displaySelectedTime" class="slot-confirm-time"></div>
+                            </div>
+                            <p class="slot-helper-note" id="slotHelperNote" aria-live="polite"></p>
+                        </div>
+                        <!-- Hidden form inputs for selected date/time -->
+                        <input type="hidden" id="date" name="date" value="2026-11-21">
+                        <input type="hidden" id="time" name="time" value="10:00">
                     </div>
 
-                    <!-- Calendar Grid -->
-                    <div class="calendar-widget">
-                        <div class="weekday-labels" id="weekdayLabels">
-                            <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+                    <!-- COL 3: Details & Extras -->
+                    <div class="booking-right-col" id="step-2-details">
+                        <span class="group-kicker" data-i18n="cal.step2dot">02 · DETAILS &amp; EXTRAS</span>
+
+                        <div class="form-field">
+                            <label for="service" data-i18n="cal.serviceLabel">WORUM GEHT ES?</label>
+                            <div class="select-wrapper">
+                                <select id="service" name="service" class="underline-input">
+                                    <option value="event" selected>Event-Begleitung</option>
+                                    <option value="portrait">Porträt-Session</option>
+                                    <option value="pet">Tierfotografie</option>
+                                    <option value="other">Sonstiges / Individuell</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="days-grid" id="daysGrid">
-                            <!-- Populated by calendar.js -->
+
+                        <div class="form-field" id="durationField" style="display: none;">
+                            <label for="event_duration" data-i18n="cal.durationLabel">DAUER / STUNDEN</label>
+                            <div class="select-wrapper">
+                                <select id="event_duration" name="event_duration" class="underline-input">
+                                    <option value="2h" selected>2 Stunden (Mindestdauer)</option>
+                                    <option value="3h">3 Stunden</option>
+                                    <option value="4h">4 Stunden</option>
+                                    <option value="5h">5 Stunden</option>
+                                    <option value="6h">6 Stunden</option>
+                                    <option value="8h">8 Stunden</option>
+                                    <option value="10h">10 Stunden</option>
+                                    <option value="open">Open End (ab 8 Stunden)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Extras (Optional) -->
+                        <div class="extras-section">
+                            <span class="extras-kicker" data-i18n="cal.extrasKicker">EXTRAS (OPTIONAL)</span>
+                            <div id="extras-container" class="extras-list">
+                                <!-- Injected by calendar.js or fallback -->
+                            </div>
+                        </div>
+
+                        <!-- Price Summary Card -->
+                        <div class="price-summary-card" id="price-summary">
+                            <span class="summary-kicker" data-i18n="cal.priceSummary">PREISÜBERSICHT</span>
+                            <div class="summary-row">
+                                <span id="summaryPackageLabel">Event-Begleitung</span>
+                                <span id="summaryPackagePrice">[Preis]</span>
+                            </div>
+                            <div class="summary-row" id="summaryExtrasRow">
+                                <span data-i18n="booking.price_summary.extras">Extras</span>
+                                <span id="summaryExtrasPrice">[Preis]</span>
+                            </div>
+                            <div class="summary-row discount-row" id="summaryDiscountRow" style="display: none; color: #d9531e; font-weight: 600;">
+                                <span id="summaryDiscountLabel">Rabatt</span>
+                                <span id="summaryDiscountPrice">- 0 €</span>
+                            </div>
+                            <div class="summary-divider"></div>
+                            <div class="summary-row total-row">
+                                <span data-i18n="booking.price_summary.total">Gesamt</span>
+                                <span id="summaryTotalPrice">[Preis]</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Calendar Legend -->
-                    <div class="calendar-legend">
-                        <span class="legend-item"><span class="legend-dot dot-available"></span> <span data-i18n="calendar.available">Verfügbar</span></span>
-                        <span class="legend-item"><span class="legend-dot dot-unavailable"></span> <span data-i18n="cal.unavailable">Nicht verfügbar</span></span>
-                        <span class="legend-item"><span class="legend-dot dot-selected"></span> <span data-i18n="calendar.selected">Ausgewählt</span></span>
+                </div><!-- /booking-grid -->
+
+                <!-- Full-width Contact Section (Step 03) -->
+                <div class="booking-contact-section" id="step-3-contact">
+                    <span class="group-kicker" data-i18n="cal.step3dot">03 · KONTAKT</span>
+
+                    <div class="contact-fields-grid">
+                        <div class="form-field">
+                            <label for="name" data-i18n="contact.form.name">DEIN NAME</label>
+                            <input type="text" id="name" name="name" required class="underline-input" data-i18n="contact.form.name.placeholder" placeholder="Wie heißt du?">
+                        </div>
+                        <div class="form-field">
+                            <label for="email" data-i18n="contact.form.email">DEINE E-MAIL</label>
+                            <input type="email" id="email" name="email" required class="underline-input" data-i18n="contact.form.email.placeholder" placeholder="Wie kann ich dich erreichen?">
+                        </div>
+                        <div class="form-field">
+                            <label for="message" data-i18n="contact.form.message">DEINE NACHRICHT</label>
+                            <textarea id="message" name="message" rows="2" class="underline-input" data-i18n="contact.form.message.placeholder" placeholder="Erzähl mir ein bisschen von deinen Plänen..."></textarea>
+                        </div>
                     </div>
 
-                    <!-- Time Slots Section -->
-                    <div class="time-slots-section" id="timeSlotsSection">
-                        <span class="slot-date-kicker" id="slotDateKicker">SAMSTAG, 21. NOVEMBER</span>
-                        <h3 class="slot-heading" data-i18n="cal.slotsHeading">Verfügbare Zeitfenster</h3>
-                        <div class="slots-pill-group" id="slotsPillGroup">
-                            <button type="button" class="slot-pill active" data-time="10:00">10:00</button>
-                            <button type="button" class="slot-pill" data-time="12:00">12:00</button>
-                            <button type="button" class="slot-pill" data-time="14:00">14:00</button>
-                            <button type="button" class="slot-pill" data-time="16:00">16:00</button>
-                        </div>
-                        <p class="slot-helper-note" id="slotHelperNote" data-i18n="cal.slotNote">Dieser Tag ist verfügbar. Rechts kannst du deine Buchung abschließen.</p>
+                    <p class="booking-legal-disclaimer" data-i18n="cal.legal">Mit dem Absenden akzeptierst du die <a href="agb.html" target="_blank">AGB</a>. Deine Anfrage ist unverbindlich, ich melde mich zur Bestätigung bei dir.</p>
+
+                    <div class="booking-btn-row">
+                        <a href="index.html#pricing" class="pill-btn pill-btn-dark" data-i18n="cal.back">Zurück</a>
+                        <button type="submit" class="pill-btn pill-btn-light" data-i18n="cal.submit">Buchung anfragen</button>
                     </div>
-                </div>
 
-                <!-- RIGHT COLUMN: Details & Extras + Summary + Contact Form -->
-                <div class="booking-right-col">
-                    <form id="booking-form" class="clean-form">
-                        <!-- Step 02: Details & Extras -->
-                        <div class="form-step-group" id="step-2-details">
-                            <span class="group-kicker" data-i18n="cal.step2dot">02 · DETAILS &amp; EXTRAS</span>
+                    <!-- Hidden Inputs for Calculations & Backend -->
+                    <input type="hidden" id="total_price_input" name="total_price">
+                    <input type="hidden" id="price_details_input" name="price_details">
+                    <input type="hidden" id="base_price_input" name="base_price">
+                    <input type="hidden" id="extras_breakdown_input" name="extras_breakdown">
+                    <input type="hidden" id="discount_breakdown_input" name="discount_breakdown">
+                </div><!-- /booking-contact-section -->
 
-                            <div class="form-field">
-                                <label for="service" data-i18n="cal.serviceLabel">WORUM GEHT ES?</label>
-                                <div class="select-wrapper">
-                                    <select id="service" name="service" class="underline-input">
-                                        <option value="event" selected>Event-Begleitung</option>
-                                        <option value="portrait">Porträt-Session</option>
-                                        <option value="pet">Tierfotografie</option>
-                                        <option value="other">Sonstiges / Individuell</option>
-                                    </select>
-                                </div>
-                            </div>
+            </form><!-- /booking-form -->
 
-                            <div class="form-field" id="durationField" style="display: none;">
-                                <label for="event_duration" data-i18n="cal.durationLabel">DAUER / STUNDEN</label>
-                                <div class="select-wrapper">
-                                    <select id="event_duration" name="event_duration" class="underline-input">
-                                        <option value="2h" selected>2 Stunden (Mindestdauer)</option>
-                                        <option value="3h">3 Stunden</option>
-                                        <option value="4h">4 Stunden</option>
-                                        <option value="5h">5 Stunden</option>
-                                        <option value="6h">6 Stunden</option>
-                                        <option value="8h">8 Stunden</option>
-                                        <option value="10h">10 Stunden</option>
-                                        <option value="open">Open End (ab 8 Stunden)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="date-time-row">
-                                <div class="form-field">
-                                    <label data-i18n="cal.dateLabel">DATUM</label>
-                                    <div class="display-value" id="displaySelectedDate">Sa, 21. November 2026</div>
-                                    <input type="hidden" id="date" name="date" value="2026-11-21">
-                                </div>
-                                <div class="form-field">
-                                    <label data-i18n="cal.timeLabel">UHRZEIT</label>
-                                    <div class="display-value" id="displaySelectedTime">10:00 Uhr</div>
-                                    <input type="hidden" id="time" name="time" value="10:00">
-                                </div>
-                            </div>
-
-                            <!-- Extras (Optional) -->
-                            <div class="extras-section">
-                                <span class="extras-kicker" data-i18n="cal.extrasKicker">EXTRAS (OPTIONAL)</span>
-                                <div id="extras-container" class="extras-list">
-                                    <!-- Injected by calendar.js or fallback -->
-                                </div>
-                            </div>
-
-                            <!-- Cream Price Summary Card -->
-                            <div class="price-summary-card" id="price-summary">
-                                <span class="summary-kicker" data-i18n="cal.priceSummary">PREISÜBERSICHT</span>
-                                <div class="summary-row">
-                                    <span id="summaryPackageLabel">Event-Begleitung</span>
-                                    <span id="summaryPackagePrice">[Preis]</span>
-                                </div>
-                                <div class="summary-row" id="summaryExtrasRow">
-                                    <span data-i18n="booking.price_summary.extras">Extras</span>
-                                    <span id="summaryExtrasPrice">[Preis]</span>
-                                </div>
-                                <div class="summary-row discount-row" id="summaryDiscountRow" style="display: none; color: #d9531e; font-weight: 600;">
-                                    <span id="summaryDiscountLabel">Rabatt</span>
-                                    <span id="summaryDiscountPrice">- 0 €</span>
-                                </div>
-                                <div class="summary-divider"></div>
-                                <div class="summary-row total-row">
-                                    <span data-i18n="booking.price_summary.total">Gesamt</span>
-                                    <span id="summaryTotalPrice">[Preis]</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Step 03: Contact -->
-                        <div class="form-step-group contact-step-group" id="step-3-contact">
-                            <span class="group-kicker" data-i18n="cal.step3dot">03 · KONTAKT</span>
-
-                            <div class="form-field">
-                                <label for="name" data-i18n="contact.form.name">DEIN NAME</label>
-                                <input type="text" id="name" name="name" required class="underline-input" data-i18n="contact.form.name.placeholder" placeholder="Wie heißt du?">
-                            </div>
-
-                            <div class="form-field">
-                                <label for="email" data-i18n="contact.form.email">DEINE E-MAIL</label>
-                                <input type="email" id="email" name="email" required class="underline-input" data-i18n="contact.form.email.placeholder" placeholder="Wie kann ich dich erreichen?">
-                            </div>
-
-                            <div class="form-field">
-                                <label for="message" data-i18n="contact.form.message">DEINE NACHRICHT</label>
-                                <textarea id="message" name="message" rows="2" class="underline-input" data-i18n="contact.form.message.placeholder" placeholder="Erzähl mir ein bisschen von deinen Plänen..."></textarea>
-                            </div>
-
-                            <p class="booking-legal-disclaimer" data-i18n="cal.legal">Mit dem Absenden akzeptierst du die <a href="agb.html" target="_blank">AGB</a>. Deine Anfrage ist unverbindlich, ich melde mich zur Bestätigung bei dir.</p>
-
-                            <div class="booking-btn-row">
-                                <a href="index.html#pricing" class="pill-btn pill-btn-dark" data-i18n="cal.back">Zurück</a>
-                                <button type="submit" class="pill-btn pill-btn-light" data-i18n="cal.submit">Buchung anfragen</button>
-                            </div>
-                        </div>
-
-                        <!-- Hidden Inputs for Calculations & Backend Handling -->
-                        <input type="hidden" id="total_price_input" name="total_price">
-                        <input type="hidden" id="price_details_input" name="price_details">
-                        <input type="hidden" id="base_price_input" name="base_price">
-                        <input type="hidden" id="extras_breakdown_input" name="extras_breakdown">
-                        <input type="hidden" id="discount_breakdown_input" name="discount_breakdown">
-                    </form>
-                </div>
-            </div>
         </div>
     </main>
 
