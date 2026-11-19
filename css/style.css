@@ -1330,7 +1330,7 @@ body.viewfinder-active .site-header {
    ========================================================================== */
 
 .booking-page {
-    padding-top: calc(var(--header-height) + 3.5rem);
+    padding-top: calc(var(--header-height) + 44px + 3rem);
     padding-bottom: 7rem;
     min-height: 100vh;
     background-color: #0b0b0b;
@@ -1358,20 +1358,42 @@ body.viewfinder-active .site-header {
     max-width: 580px;
 }
 
-/* Stepper Tabs */
+/* ── Booking Stepper sub-bar (inside <header>) ── */
 .booking-stepper {
-    position: sticky;
+    position: fixed;
     top: var(--header-height);
-    z-index: 40;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    display: none;               /* hidden on non-booking pages */
+    align-items: center;
+    padding: 0;
+    background: rgba(10, 10, 10, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-hairline);
+}
+
+/* Only show on the booking page (calendar.html adds .has-stepper to <body>) */
+.has-stepper .booking-stepper {
+    display: flex;
+}
+
+.stepper-inner {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    padding: 0.85rem 0;
-    margin-bottom: 2.5rem;
-    background: rgba(11, 11, 11, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-hairline);
+    gap: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    height: 44px;
+}
+
+.stepper-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border-hairline);
+    flex-shrink: 0;
+    margin: 0 0.25rem;
 }
 
 .step-item {
@@ -1440,7 +1462,7 @@ body.viewfinder-active .site-header {
 #step-1-termin,
 #step-2-details,
 #step-3-contact {
-    scroll-margin-top: calc(var(--header-height) + 5rem);
+    scroll-margin-top: calc(var(--header-height) + 44px + 1.5rem);
 }
 
 /* 2-Column Booking Layout */
@@ -2240,7 +2262,7 @@ body.viewfinder-active .site-header {
     }
 
     .booking-page {
-        padding-top: calc(64px + 1.5rem);
+        padding-top: calc(64px + 44px + 2rem);
         padding-bottom: 4rem;
     }
 
@@ -2249,23 +2271,29 @@ body.viewfinder-active .site-header {
     }
 
     .booking-stepper {
-        gap: 0.75rem;
+        top: 64px;
+    }
+
+    .stepper-inner {
+        gap: 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        padding-top: 0.6rem;
-        padding-bottom: 0.75rem;
-        margin-bottom: 2rem;
+        height: 44px;
     }
 
-    .booking-stepper::-webkit-scrollbar {
+    .stepper-inner::-webkit-scrollbar {
         display: none;
     }
 
     .step-item {
         font-size: 10px;
-        padding: 0.45rem 0.65rem;
+        padding: 0.4rem 0.6rem;
         white-space: nowrap;
+    }
+
+    .stepper-sep {
+        display: none;
     }
 
     .booking-grid {

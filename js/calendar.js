@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const observerOptions = {
             root: null,
             threshold: 0,
-            rootMargin: `-${(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76) + 60}px 0px -40% 0px`
+            rootMargin: `-${(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76) + 44 + 20}px 0px -40% 0px`
         };
 
         const stepSections = [
@@ -238,8 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = targets[step];
         if (!el) return;
         const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
-        const stepperH = document.getElementById('bookingStepper')?.offsetHeight || 50;
-        const offset = el.getBoundingClientRect().top + window.scrollY - headerH - stepperH - 16;
+        const stepperH = 44; // fixed stepper sub-bar height
+        const extra = 20;
+        const offset = el.getBoundingClientRect().top + window.scrollY - headerH - stepperH - extra;
         window.scrollTo({ top: offset, behavior: 'smooth' });
     }
 

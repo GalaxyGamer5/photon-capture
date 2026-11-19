@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="has-stepper">
     <!-- Site Navigation -->
     <header class="site-header">
         <div class="container">
@@ -53,6 +53,16 @@
                 </button>
             </nav>
         </div>
+        <!-- Booking Progress Stepper (sub-bar) -->
+        <div class="booking-stepper" id="bookingStepper" role="navigation" aria-label="Buchungsschritte">
+            <div class="container stepper-inner">
+                <button type="button" class="step-item active" data-step="1" id="stepBtn1" aria-controls="step-1-termin" data-i18n="cal.step1">01 TERMIN</button>
+                <span class="stepper-sep" aria-hidden="true"></span>
+                <button type="button" class="step-item" data-step="2" id="stepBtn2" aria-controls="step-2-details" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</button>
+                <span class="stepper-sep" aria-hidden="true"></span>
+                <button type="button" class="step-item" data-step="3" id="stepBtn3" aria-controls="step-3-contact" data-i18n="cal.step3">03 KONTAKT</button>
+            </div>
+        </div>
     </header>
 
     <main class="booking-page">
@@ -62,13 +72,6 @@
                 <span class="section-kicker" data-i18n="cal.kicker">BUCHUNG</span>
                 <h1 class="booking-title" data-i18n="cal.title">Wähle deinen Termin.</h1>
                 <p class="booking-subtitle" data-i18n="cal.subtitle">Such dir einen freien Tag aus und sichere dir deine Session. Die Verfügbarkeit wird in Echtzeit angezeigt.</p>
-            </div>
-
-            <!-- Stepper Indicator -->
-            <div class="booking-stepper" id="bookingStepper" role="navigation" aria-label="Buchungsschritte">
-                <button type="button" class="step-item active" data-step="1" id="stepBtn1" aria-controls="step-1-termin" data-i18n="cal.step1">01 TERMIN</button>
-                <button type="button" class="step-item" data-step="2" id="stepBtn2" aria-controls="step-2-details" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</button>
-                <button type="button" class="step-item" data-step="3" id="stepBtn3" aria-controls="step-3-contact" data-i18n="cal.step3">03 KONTAKT</button>
             </div>
 
             <!-- 2-Column Booking Layout (Matching Figma Mockup) -->
