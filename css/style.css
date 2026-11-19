@@ -2119,7 +2119,29 @@ body.viewfinder-active .site-header {
 
     .booking-grid {
         grid-template-columns: 1fr;
-        gap: 4rem;
+        gap: 3rem;
+    }
+
+    .booking-left-col,
+    .booking-time-col {
+        position: static;
+    }
+
+    .slots-pill-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .slot-pill {
+        width: auto;
+        flex: 1 1 calc(25% - 0.75rem);
+        min-width: 70px;
+    }
+
+    .contact-fields-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 }
 
