@@ -1061,18 +1061,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    const serviceCards = document.querySelectorAll(".service-card");
-    serviceCards.forEach(card => {
-        card.addEventListener("click", () => {
-            const category = card.getAttribute("data-category");
+    // --- Service Row & Service Card Click Handlers -> Auto-filter & Scroll to Gallery ---
+    const serviceItems = document.querySelectorAll(".service-row, .service-card");
+    serviceItems.forEach(item => {
+        const handleServiceClick = () => {
+            const category = item.getAttribute("data-category");
+            if (!category) return;
+
+            // 1. Activate the corresponding gallery filter tab and re-render camera roll
             activateFilter(category);
 
+            // 2. Smoothly scroll to the gallery section with proper header offset
             const gallerySection = document.getElementById("gallery");
             if (gallerySection) {
-                gallerySection.scrollIntoView({ behavior: "smooth", block: "start" });
+                const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
+                const elementTop = gallerySection.getBoundingClientRect().top + window.pageYOffset;
+                window.scrollTo({
+                    top: Math.max(0, elementTop - headerHeight - 20),
+                    behavior: "smooth"
+                });
+            }
+        };
+
+        item.addEventListener("click", handleServiceClick);
+        item.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleServiceClick();
             }
         });
-        card.style.cursor = "pointer";
     });
 
     // Compatibility alias

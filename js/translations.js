@@ -53,6 +53,7 @@ const translations = {
         "services.event.desc": "Firmenfeiern, Geburtstage oder Jubiläen. Ich sorge dafür, dass die Stimmung und die besonderen Momente unvergessen bleiben.",
         "services.pet.title": "Tierfotografie",
         "services.pet.desc": "Charakterstarke Porträts deiner Vierbeiner. Mit viel Geduld und Ruhe fange ich das Wesen deines Tieres ein.",
+        "services.viewInGallery": "In Galerie ansehen",
 
         "pricing.title": "Pakete & Preise",
         "pricing.portrait.title": "Porträt-Session",
@@ -303,6 +304,7 @@ const translations = {
         "services.event.desc": "Company parties, birthdays, or anniversaries. I ensure that the atmosphere and special moments remain unforgettable.",
         "services.pet.title": "Pet Photography",
         "services.pet.desc": "Character-strong portraits of your four-legged friends. With lots of patience and calm, I capture the essence of your pet.",
+        "services.viewInGallery": "View in Gallery",
 
         "pricing.title": "Packages & Pricing",
         "pricing.portrait.title": "Portrait Session",
