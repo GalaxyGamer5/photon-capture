@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Guided Multi-Step Wizard & Stepper Controller ──────────────────────
 
     let currentStep = 1;
+    let userHasClickedDate = false;
 
     function setupStepper() {
         // Step buttons in top bar
@@ -206,6 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function goToStep(step) {
         if (step < 1 || step > 3) return;
 
+        // Advancing past Step 1 marks the date selection confirmed
+        if (step > 1) {
+            userHasClickedDate = true;
+        }
+
         currentStep = step;
 
         // Switch panels
@@ -225,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateRecapDisplays();
 
         // Smooth scroll to top of booking page
-        const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
@@ -234,9 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateWizardState() {
         const stepButtons = document.querySelectorAll('#bookingStepper .step-item[data-step]');
-        const dateVal = elements.dateInput ? elements.dateInput.value : selectedDate;
-        const timeVal = elements.timeInput ? elements.timeInput.value : selectedTime;
-        const isStep1Done = Boolean(dateVal && timeVal);
 
         stepButtons.forEach(btn => {
             const stepNum = parseInt(btn.dataset.step, 10);
@@ -244,16 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (stepNum === currentStep) {
                 btn.classList.add('active');
-                if (stepNum === 1 && isStep1Done) {
+                if (stepNum === 1 && userHasClickedDate) {
                     btn.classList.add('completed');
                 }
             } else if (stepNum < currentStep) {
                 btn.classList.add('completed');
-            } else if (stepNum === 2 && currentStep === 1 && isStep1Done) {
-                // Step 2 glows with "NÄCHSTER SCHRITT →" prompt
+            } else if (stepNum === 2 && currentStep === 1 && userHasClickedDate) {
                 btn.classList.add('is-next-prompt');
             } else if (stepNum === 3 && currentStep === 2) {
-                // Step 3 glows when on step 2
                 btn.classList.add('is-next-prompt');
             }
         });
@@ -424,10 +424,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('available');
                 cell.addEventListener('click', () => {
                     selectedDate = dateStr;
+                    userHasClickedDate = true;
                     document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
                     cell.classList.add('selected');
                     updateDateTimeDisplays();
-                    updateStepCompletion(null);
+                    updateStepCompletion();
                 });
             }
 
@@ -448,8 +449,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 pills.forEach(p => p.classList.remove('active'));
                 pill.classList.add('active');
                 selectedTime = pill.dataset.time || pill.textContent.replace(/[\[\]]/g, '').trim();
+                userHasClickedDate = true;
                 updateDateTimeDisplays();
-                updateStepCompletion(null);
+                updateStepCompletion();
             });
         });
     }
