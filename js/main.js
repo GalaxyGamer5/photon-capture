@@ -1071,13 +1071,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 1. Activate the corresponding gallery filter tab and re-render camera roll
             activateFilter(category);
 
-            // 2. Smoothly scroll to the gallery section with proper header offset
+            // 2. Smoothly scroll directly to the 3D Camera Roll so the photos are fully framed in view
+            const stage = document.getElementById("cameraRollStage");
             const gallerySection = document.getElementById("gallery");
-            if (gallerySection) {
+            if (stage) {
+                const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
+                const stageRect = stage.getBoundingClientRect();
+                const stageTop = stageRect.top + window.pageYOffset;
+                const stageHeight = stage.offsetHeight || 520;
+                const windowHeight = window.innerHeight;
+                const visibleHeight = windowHeight - headerHeight;
+
+                // Center the 3D stage vertically within the visible area below the header,
+                // while leaving enough room at the top so the active filter tabs stay visible.
+                const idealOffset = Math.max(30, Math.min(120, (visibleHeight - stageHeight) / 2));
+                const targetScroll = stageTop - headerHeight - idealOffset;
+
+                window.scrollTo({
+                    top: Math.max(0, Math.round(targetScroll)),
+                    behavior: "smooth"
+                });
+            } else if (gallerySection) {
                 const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
                 const elementTop = gallerySection.getBoundingClientRect().top + window.pageYOffset;
                 window.scrollTo({
-                    top: Math.max(0, elementTop - headerHeight - 20),
+                    top: Math.max(0, elementTop - headerHeight + 80),
                     behavior: "smooth"
                 });
             }
