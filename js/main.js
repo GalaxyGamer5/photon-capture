@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.setAttribute('data-category', img.category);
                 card.innerHTML = `
                 <div class="gallery-card-inner">
-                    <img src="assets/portfolio/${img.filename}" alt="${img.category}" loading="lazy">
+                    <img src="assets/portfolio/${img.filename}" alt="Photon Capture Fotografie Dresden – ${img.category}" loading="lazy">
                 </div>
             `;
 
@@ -566,8 +566,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let frameContent = "";
         if (item.filename) {
+            const photoAlt = `Photon Capture Dresden – ${catLabel} Fotografie`;
             frameContent = `
-                <img src="assets/portfolio/${item.filename}" alt="${catLabel}" loading="lazy" draggable="false">
+                <img src="assets/portfolio/${item.filename}" alt="${photoAlt}" title="${photoAlt}" loading="lazy" draggable="false">
             `;
         } else {
             frameContent = `

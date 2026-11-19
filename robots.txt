@@ -1,8 +1,11 @@
 User-agent: *
 Allow: /
+Allow: /assets/
 Disallow: /admin/
-Disallow: /payment/
+Disallow: /gallery/
 Disallow: /data/
 Disallow: /customers/
+Disallow: /api/
+Disallow: /includes/
 
 Sitemap: https://photon-capture.de/sitemap.xml

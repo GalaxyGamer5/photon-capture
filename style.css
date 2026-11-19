@@ -2,7 +2,7 @@
    PHOTON CAPTURE - MODERN MINIMALIST DESIGN SYSTEM (VARIANTE B)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Fonts preconnected and loaded directly in HTML <head> for Core Web Vitals optimization */
 
 :root {
     /* Core Palette - Exact Sampled Hex Colors from Figma Mockups */
