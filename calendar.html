@@ -56,11 +56,29 @@
         <!-- Booking Progress Stepper (sub-bar) -->
         <div class="booking-stepper" id="bookingStepper" role="navigation" aria-label="Buchungsschritte">
             <div class="container stepper-inner">
-                <button type="button" class="step-item active" data-step="1" id="stepBtn1" aria-controls="step-1-termin" data-i18n="cal.step1">01 TERMIN</button>
-                <span class="stepper-sep" aria-hidden="true"></span>
-                <button type="button" class="step-item" data-step="2" id="stepBtn2" aria-controls="step-2-details" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</button>
-                <span class="stepper-sep" aria-hidden="true"></span>
-                <button type="button" class="step-item" data-step="3" id="stepBtn3" aria-controls="step-3-contact" data-i18n="cal.step3">03 KONTAKT</button>
+                <button type="button" class="step-item active" data-step="1" id="stepBtn1">
+                    <span class="step-num">01</span>
+                    <span class="step-title" data-i18n="cal.step1">01 TERMIN</span>
+                    <span class="step-check" aria-hidden="true">✓</span>
+                </button>
+                <div class="stepper-arrow-divider" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+                <button type="button" class="step-item is-next-prompt" data-step="2" id="stepBtn2">
+                    <span class="step-num">02</span>
+                    <span class="step-title" data-i18n="cal.step2">02 DETAILS &amp; EXTRAS</span>
+                    <span class="step-check" aria-hidden="true">✓</span>
+                    <span class="step-next-indicator" data-i18n="cal.nextBadge">NÄCHSTER SCHRITT →</span>
+                </button>
+                <div class="stepper-arrow-divider" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+                <button type="button" class="step-item" data-step="3" id="stepBtn3">
+                    <span class="step-num">03</span>
+                    <span class="step-title" data-i18n="cal.step3">03 KONTAKT</span>
+                    <span class="step-check" aria-hidden="true">✓</span>
+                    <span class="step-next-indicator" data-i18n="cal.nextBadge">NÄCHSTER SCHRITT →</span>
+                </button>
             </div>
         </div>
     </header>
@@ -68,174 +86,237 @@
     <main class="booking-page">
         <div class="container">
 
-            <!-- Compact page header -->
-            <div class="booking-header">
-                <span class="section-kicker" data-i18n="cal.kicker">BUCHUNG</span>
-                <h1 class="booking-title" data-i18n="cal.title">Wähle deinen Termin.</h1>
-            </div>
-
             <form id="booking-form" class="clean-form">
 
-                <!-- 3-Column Grid: [Calendar] [Time Slots] [Details & Extras] -->
-                <div class="booking-grid">
+                <!-- STEP 1: TERMIN (Date & Time Picker) -->
+                <div class="booking-step-panel active" id="stepPanel1" data-panel="1">
+                    <div class="step-panel-header">
+                        <span class="step-counter-tag">SCHRITT 01 / 03</span>
+                        <h1 class="step-main-title" data-i18n="cal.step1Title">Wähle deinen Wunschtermin.</h1>
+                        <p class="step-sub-desc" data-i18n="cal.step1Desc">Such dir einen freien Tag aus und wähle dein passendes Zeitfenster.</p>
+                    </div>
 
-                    <!-- COL 1: Calendar -->
-                    <div class="booking-left-col" id="step-1-termin">
-
-                        <!-- Selected Package Bar -->
-                        <div class="selected-package-bar">
-                            <div class="pkg-info-group">
-                                <span class="pkg-kicker" data-i18n="cal.selectedPkg">GEWÄHLTES PAKET</span>
-                                <span class="selected-pkg-name" id="packageName">Event-Begleitung</span>
+                    <div class="step1-columns">
+                        <!-- Left: Calendar Widget -->
+                        <div class="step1-calendar-box" id="step-1-termin">
+                            <div class="selected-package-bar">
+                                <div class="pkg-info-group">
+                                    <span class="pkg-kicker" data-i18n="cal.selectedPkg">GEWÄHLTES PAKET</span>
+                                    <span class="selected-pkg-name" id="packageName">Event-Begleitung</span>
+                                </div>
+                                <a href="index.html#pricing" class="change-pkg-link" id="changePackageBtn" data-i18n="cal.change">Ändern</a>
                             </div>
-                            <a href="index.html#pricing" class="change-pkg-link" id="changePackageBtn" data-i18n="cal.change">Ändern</a>
+
+                            <!-- Month Navigation -->
+                            <div class="calendar-month-bar">
+                                <button id="prevMonth" class="month-arrow-btn" aria-label="Vorheriger Monat" type="button">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                </button>
+                                <h2 id="currentMonth" class="current-month-heading">November 2026</h2>
+                                <button id="nextMonth" class="month-arrow-btn" aria-label="Nächster Monat" type="button">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Calendar Grid -->
+                            <div class="calendar-widget">
+                                <div class="weekday-labels" id="weekdayLabels">
+                                    <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
+                                </div>
+                                <div class="days-grid" id="daysGrid"></div>
+                            </div>
+
+                            <!-- Calendar Legend -->
+                            <div class="calendar-legend">
+                                <span class="legend-item"><span class="legend-dot dot-available"></span> <span data-i18n="calendar.available">Verfügbar</span></span>
+                                <span class="legend-item"><span class="legend-dot dot-unavailable"></span> <span data-i18n="cal.unavailable">Nicht verfügbar</span></span>
+                                <span class="legend-item"><span class="legend-dot dot-selected"></span> <span data-i18n="calendar.selected">Ausgewählt</span></span>
+                            </div>
                         </div>
 
-                        <!-- Month Navigation -->
-                        <div class="calendar-month-bar">
-                            <button id="prevMonth" class="month-arrow-btn" aria-label="Vorheriger Monat">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
+                        <!-- Right: Time Slots Selection & Confirmation -->
+                        <div class="step1-time-box">
+                            <div class="time-slots-card" id="timeSlotsSection">
+                                <span class="slot-date-kicker" id="slotDateKicker">SAMSTAG, 21. NOVEMBER</span>
+                                <h3 class="slot-card-heading" data-i18n="cal.slotsHeading">Verfügbare Zeitfenster</h3>
+                                <div class="slots-pill-group" id="slotsPillGroup">
+                                    <button type="button" class="slot-pill active" data-time="10:00">10:00</button>
+                                    <button type="button" class="slot-pill" data-time="12:00">12:00</button>
+                                    <button type="button" class="slot-pill" data-time="14:00">14:00</button>
+                                    <button type="button" class="slot-pill" data-time="16:00">16:00</button>
+                                </div>
+
+                                <div class="slot-selection-summary">
+                                    <span class="selection-check-icon">✓</span>
+                                    <div class="selection-summary-text">
+                                        <span class="selection-summary-label">Ausgewählter Termin:</span>
+                                        <span class="selection-summary-val"><span id="displaySelectedDate">Sa, 21. November 2026</span> um <span id="displaySelectedTime">10:00 Uhr</span></span>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="pill-btn pill-btn-light wizard-next-btn" data-goto="2">
+                                    <span data-i18n="cal.continueDetails">Weiter zu Details &amp; Extras</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for date & time -->
+                <input type="hidden" id="date" name="date" value="2026-11-21">
+                <input type="hidden" id="time" name="time" value="10:00">
+
+                <!-- STEP 2: DETAILS & EXTRAS -->
+                <div class="booking-step-panel" id="stepPanel2" data-panel="2">
+                    <div class="step-panel-header">
+                        <span class="step-counter-tag">SCHRITT 02 / 03</span>
+                        <h1 class="step-main-title" data-i18n="cal.step2Title">Details &amp; Extras.</h1>
+                        <p class="step-sub-desc" data-i18n="cal.step2Desc">Passe dein Paket an deine individuellen Wünsche an.</p>
+                    </div>
+
+                    <!-- Selected Date Recap Banner -->
+                    <div class="step-recap-banner">
+                        <div class="recap-info">
+                            <span class="recap-icon">📅</span>
+                            <span class="recap-label">Gewählter Termin:</span>
+                            <strong id="recapDateTime">Sa, 21. November 2026 um 10:00 Uhr</strong>
+                        </div>
+                        <button type="button" class="recap-change-btn" data-goto="1" data-i18n="cal.changeDate">Termin ändern</button>
+                    </div>
+
+                    <div class="step2-columns" id="step-2-details">
+                        <!-- Left: Service, Duration, Extras -->
+                        <div class="step2-form-box">
+                            <div class="form-field">
+                                <label for="service" data-i18n="cal.serviceLabel">WORUM GEHT ES?</label>
+                                <div class="select-wrapper">
+                                    <select id="service" name="service" class="underline-input">
+                                        <option value="event" selected>Event-Begleitung</option>
+                                        <option value="portrait">Porträt-Session</option>
+                                        <option value="pet">Tierfotografie</option>
+                                        <option value="other">Sonstiges / Individuell</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-field" id="durationField" style="display: none;">
+                                <label for="event_duration" data-i18n="cal.durationLabel">DAUER / STUNDEN</label>
+                                <div class="select-wrapper">
+                                    <select id="event_duration" name="event_duration" class="underline-input">
+                                        <option value="2h" selected>2 Stunden (Mindestdauer)</option>
+                                        <option value="3h">3 Stunden</option>
+                                        <option value="4h">4 Stunden</option>
+                                        <option value="5h">5 Stunden</option>
+                                        <option value="6h">6 Stunden</option>
+                                        <option value="8h">8 Stunden</option>
+                                        <option value="10h">10 Stunden</option>
+                                        <option value="open">Open End (ab 8 Stunden)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Extras (Optional) -->
+                            <div class="extras-section">
+                                <span class="extras-kicker" data-i18n="cal.extrasKicker">EXTRAS (OPTIONAL)</span>
+                                <div id="extras-container" class="extras-list">
+                                    <!-- Injected by calendar.js or fallback -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Price Summary & Navigation -->
+                        <div class="step2-summary-box">
+                            <div class="price-summary-card" id="price-summary">
+                                <span class="summary-kicker" data-i18n="cal.priceSummary">PREISÜBERSICHT</span>
+                                <div class="summary-row">
+                                    <span id="summaryPackageLabel">Event-Begleitung</span>
+                                    <span id="summaryPackagePrice">[Preis]</span>
+                                </div>
+                                <div class="summary-row" id="summaryExtrasRow">
+                                    <span data-i18n="booking.price_summary.extras">Extras</span>
+                                    <span id="summaryExtrasPrice">[Preis]</span>
+                                </div>
+                                <div class="summary-row discount-row" id="summaryDiscountRow" style="display: none; color: #d9531e; font-weight: 600;">
+                                    <span id="summaryDiscountLabel">Rabatt</span>
+                                    <span id="summaryDiscountPrice">- 0 €</span>
+                                </div>
+                                <div class="summary-divider"></div>
+                                <div class="summary-row total-row">
+                                    <span data-i18n="booking.price_summary.total">Gesamt</span>
+                                    <span id="summaryTotalPrice">[Preis]</span>
+                                </div>
+                            </div>
+
+                            <div class="step-action-buttons">
+                                <button type="button" class="pill-btn pill-btn-light wizard-next-btn" data-goto="3">
+                                    <span data-i18n="cal.continueContact">Weiter zu Kontaktdaten</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                                <button type="button" class="pill-btn pill-btn-dark wizard-prev-btn" data-goto="1">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                    <span data-i18n="cal.backToDate">Zurück zum Termin</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: KONTAKT -->
+                <div class="booking-step-panel" id="stepPanel3" data-panel="3">
+                    <div class="step-panel-header">
+                        <span class="step-counter-tag">SCHRITT 03 / 03</span>
+                        <h1 class="step-main-title" data-i18n="cal.step3Title">Deine Kontaktdaten.</h1>
+                        <p class="step-sub-desc" data-i18n="cal.step3Desc">Fast geschafft! Gib mir deine Kontaktdaten, damit ich deine Anfrage bestätigen kann.</p>
+                    </div>
+
+                    <!-- Booking Recap Card in Step 3 -->
+                    <div class="step3-recap-card">
+                        <div class="step3-recap-item">
+                            <span class="recap-label" data-i18n="cal.selectedPkg">PAKET</span>
+                            <strong id="recap3Package">Event-Begleitung</strong>
+                        </div>
+                        <div class="step3-recap-item">
+                            <span class="recap-label" data-i18n="cal.dateLabel">TERMIN</span>
+                            <strong id="recap3Date">Sa, 21. November 2026 um 10:00 Uhr</strong>
+                        </div>
+                        <div class="step3-recap-item">
+                            <span class="recap-label" data-i18n="booking.price_summary.total">GESAMTPREIS</span>
+                            <strong id="recap3Price" class="recap-highlight-price">100 €</strong>
+                        </div>
+                    </div>
+
+                    <div class="step3-form-container" id="step-3-contact">
+                        <div class="contact-fields-grid">
+                            <div class="form-field">
+                                <label for="name" data-i18n="contact.form.name">DEIN NAME</label>
+                                <input type="text" id="name" name="name" required class="underline-input" data-i18n="contact.form.name.placeholder" placeholder="Wie heißt du?">
+                            </div>
+                            <div class="form-field">
+                                <label for="email" data-i18n="contact.form.email">DEINE E-MAIL</label>
+                                <input type="email" id="email" name="email" required class="underline-input" data-i18n="contact.form.email.placeholder" placeholder="Wie kann ich dich erreichen?">
+                            </div>
+                            <div class="form-field full-width">
+                                <label for="message" data-i18n="contact.form.message">DEINE NACHRICHT</label>
+                                <textarea id="message" name="message" rows="3" class="underline-input" data-i18n="contact.form.message.placeholder" placeholder="Erzähl mir ein bisschen von deinen Plänen..."></textarea>
+                            </div>
+                        </div>
+
+                        <p class="booking-legal-disclaimer" data-i18n="cal.legal">Mit dem Absenden akzeptierst du die <a href="agb.html" target="_blank">AGB</a>. Deine Anfrage ist unverbindlich, ich melde mich zur Bestätigung bei dir.</p>
+
+                        <div class="step-action-buttons horizontal">
+                            <button type="button" class="pill-btn pill-btn-dark wizard-prev-btn" data-goto="2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <span data-i18n="cal.backToDetails">Zurück zu Details</span>
                             </button>
-                            <h2 id="currentMonth" class="current-month-heading">November 2026</h2>
-                            <button id="nextMonth" class="month-arrow-btn" aria-label="Nächster Monat">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6"></polyline>
-                                </svg>
+                            <button type="submit" class="pill-btn pill-btn-light submit-booking-btn" data-i18n="cal.submit">
+                                Buchung anfragen
                             </button>
                         </div>
-
-                        <!-- Calendar Grid -->
-                        <div class="calendar-widget">
-                            <div class="weekday-labels" id="weekdayLabels">
-                                <div>MO</div><div>DI</div><div>MI</div><div>DO</div><div>FR</div><div>SA</div><div>SO</div>
-                            </div>
-                            <div class="days-grid" id="daysGrid">
-                                <!-- Populated by calendar.js -->
-                            </div>
-                        </div>
-
-                        <!-- Calendar Legend -->
-                        <div class="calendar-legend">
-                            <span class="legend-item"><span class="legend-dot dot-available"></span> <span data-i18n="calendar.available">Verfügbar</span></span>
-                            <span class="legend-item"><span class="legend-dot dot-unavailable"></span> <span data-i18n="cal.unavailable">Nicht verfügbar</span></span>
-                            <span class="legend-item"><span class="legend-dot dot-selected"></span> <span data-i18n="calendar.selected">Ausgewählt</span></span>
-                        </div>
-                    </div>
-
-                    <!-- COL 2: Time Slot Picker -->
-                    <div class="booking-time-col">
-                        <div class="time-slots-section" id="timeSlotsSection">
-                            <span class="slot-date-kicker" id="slotDateKicker">SAMSTAG, 21. NOVEMBER</span>
-                            <h3 class="slot-heading" data-i18n="cal.slotsHeading">Verfügbare Zeitfenster</h3>
-                            <div class="slots-pill-group" id="slotsPillGroup">
-                                <button type="button" class="slot-pill active" data-time="10:00">10:00</button>
-                                <button type="button" class="slot-pill" data-time="12:00">12:00</button>
-                                <button type="button" class="slot-pill" data-time="14:00">14:00</button>
-                                <button type="button" class="slot-pill" data-time="16:00">16:00</button>
-                            </div>
-                            <!-- Selection confirmation (updated by JS) -->
-                            <div class="slot-confirm-row">
-                                <div id="displaySelectedDate" class="slot-confirm-date"></div>
-                                <div id="displaySelectedTime" class="slot-confirm-time"></div>
-                            </div>
-                            <p class="slot-helper-note" id="slotHelperNote" aria-live="polite"></p>
-                        </div>
-                        <!-- Hidden form inputs for selected date/time -->
-                        <input type="hidden" id="date" name="date" value="2026-11-21">
-                        <input type="hidden" id="time" name="time" value="10:00">
-                    </div>
-
-                    <!-- COL 3: Details & Extras -->
-                    <div class="booking-right-col" id="step-2-details">
-                        <span class="group-kicker" data-i18n="cal.step2dot">02 · DETAILS &amp; EXTRAS</span>
-
-                        <div class="form-field">
-                            <label for="service" data-i18n="cal.serviceLabel">WORUM GEHT ES?</label>
-                            <div class="select-wrapper">
-                                <select id="service" name="service" class="underline-input">
-                                    <option value="event" selected>Event-Begleitung</option>
-                                    <option value="portrait">Porträt-Session</option>
-                                    <option value="pet">Tierfotografie</option>
-                                    <option value="other">Sonstiges / Individuell</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-field" id="durationField" style="display: none;">
-                            <label for="event_duration" data-i18n="cal.durationLabel">DAUER / STUNDEN</label>
-                            <div class="select-wrapper">
-                                <select id="event_duration" name="event_duration" class="underline-input">
-                                    <option value="2h" selected>2 Stunden (Mindestdauer)</option>
-                                    <option value="3h">3 Stunden</option>
-                                    <option value="4h">4 Stunden</option>
-                                    <option value="5h">5 Stunden</option>
-                                    <option value="6h">6 Stunden</option>
-                                    <option value="8h">8 Stunden</option>
-                                    <option value="10h">10 Stunden</option>
-                                    <option value="open">Open End (ab 8 Stunden)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Extras (Optional) -->
-                        <div class="extras-section">
-                            <span class="extras-kicker" data-i18n="cal.extrasKicker">EXTRAS (OPTIONAL)</span>
-                            <div id="extras-container" class="extras-list">
-                                <!-- Injected by calendar.js or fallback -->
-                            </div>
-                        </div>
-
-                        <!-- Price Summary Card -->
-                        <div class="price-summary-card" id="price-summary">
-                            <span class="summary-kicker" data-i18n="cal.priceSummary">PREISÜBERSICHT</span>
-                            <div class="summary-row">
-                                <span id="summaryPackageLabel">Event-Begleitung</span>
-                                <span id="summaryPackagePrice">[Preis]</span>
-                            </div>
-                            <div class="summary-row" id="summaryExtrasRow">
-                                <span data-i18n="booking.price_summary.extras">Extras</span>
-                                <span id="summaryExtrasPrice">[Preis]</span>
-                            </div>
-                            <div class="summary-row discount-row" id="summaryDiscountRow" style="display: none; color: #d9531e; font-weight: 600;">
-                                <span id="summaryDiscountLabel">Rabatt</span>
-                                <span id="summaryDiscountPrice">- 0 €</span>
-                            </div>
-                            <div class="summary-divider"></div>
-                            <div class="summary-row total-row">
-                                <span data-i18n="booking.price_summary.total">Gesamt</span>
-                                <span id="summaryTotalPrice">[Preis]</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div><!-- /booking-grid -->
-
-                <!-- Full-width Contact Section (Step 03) -->
-                <div class="booking-contact-section" id="step-3-contact">
-                    <span class="group-kicker" data-i18n="cal.step3dot">03 · KONTAKT</span>
-
-                    <div class="contact-fields-grid">
-                        <div class="form-field">
-                            <label for="name" data-i18n="contact.form.name">DEIN NAME</label>
-                            <input type="text" id="name" name="name" required class="underline-input" data-i18n="contact.form.name.placeholder" placeholder="Wie heißt du?">
-                        </div>
-                        <div class="form-field">
-                            <label for="email" data-i18n="contact.form.email">DEINE E-MAIL</label>
-                            <input type="email" id="email" name="email" required class="underline-input" data-i18n="contact.form.email.placeholder" placeholder="Wie kann ich dich erreichen?">
-                        </div>
-                        <div class="form-field">
-                            <label for="message" data-i18n="contact.form.message">DEINE NACHRICHT</label>
-                            <textarea id="message" name="message" rows="2" class="underline-input" data-i18n="contact.form.message.placeholder" placeholder="Erzähl mir ein bisschen von deinen Plänen..."></textarea>
-                        </div>
-                    </div>
-
-                    <p class="booking-legal-disclaimer" data-i18n="cal.legal">Mit dem Absenden akzeptierst du die <a href="agb.html" target="_blank">AGB</a>. Deine Anfrage ist unverbindlich, ich melde mich zur Bestätigung bei dir.</p>
-
-                    <div class="booking-btn-row">
-                        <a href="index.html#pricing" class="pill-btn pill-btn-dark" data-i18n="cal.back">Zurück</a>
-                        <button type="submit" class="pill-btn pill-btn-light" data-i18n="cal.submit">Buchung anfragen</button>
                     </div>
 
                     <!-- Hidden Inputs for Calculations & Backend -->
@@ -244,9 +325,9 @@
                     <input type="hidden" id="base_price_input" name="base_price">
                     <input type="hidden" id="extras_breakdown_input" name="extras_breakdown">
                     <input type="hidden" id="discount_breakdown_input" name="discount_breakdown">
-                </div><!-- /booking-contact-section -->
+                </div>
 
-            </form><!-- /booking-form -->
+            </form>
 
         </div>
     </main>

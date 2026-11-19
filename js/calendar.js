@@ -178,98 +178,116 @@ document.addEventListener('DOMContentLoaded', () => {
         setupStepper();
     }
 
-    // ─── Booking Stepper ─────────────────────────────────────────────────────
+    // ─── Guided Multi-Step Wizard & Stepper Controller ──────────────────────
+
+    let currentStep = 1;
 
     function setupStepper() {
-        const stepper = document.getElementById('bookingStepper');
-        if (!stepper) return;
-
-        const stepButtons = stepper.querySelectorAll('.step-item[data-step]');
-        const targets = {
-            '1': document.getElementById('step-1-termin'),
-            '2': document.getElementById('step-2-details'),
-            '3': document.getElementById('step-3-contact')
-        };
-
-        // Click / keyboard navigation
+        // Step buttons in top bar
+        const stepButtons = document.querySelectorAll('#bookingStepper .step-item[data-step]');
         stepButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const step = btn.dataset.step;
-                scrollToStep(step, targets);
+                const targetStep = parseInt(btn.dataset.step, 10);
+                goToStep(targetStep);
             });
         });
 
-        // Scroll-spy via IntersectionObserver
-        const observerOptions = {
-            root: null,
-            threshold: 0,
-            rootMargin: `-${(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76) + 44 + 20}px 0px -40% 0px`
-        };
+        // "Weiter" & "Zurück" navigation buttons
+        document.querySelectorAll('[data-goto]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetStep = parseInt(btn.dataset.goto, 10);
+                goToStep(targetStep);
+            });
+        });
 
-        const stepSections = [
-            { el: targets['1'], step: '1' },
-            { el: targets['2'], step: '2' },
-            { el: targets['3'], step: '3' }
-        ].filter(s => s.el);
-
-        if (stepSections.length) {
-            const observer = new IntersectionObserver((entries) => {
-                // Find the last section that is currently intersecting
-                let activeStep = null;
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const found = stepSections.find(s => s.el === entry.target);
-                        if (found) activeStep = found.step;
-                    }
-                });
-                if (activeStep) {
-                    setActiveStep(activeStep, stepButtons);
-                }
-            }, observerOptions);
-
-            stepSections.forEach(s => observer.observe(s.el));
-        }
-
-        // Update step 1 completion when date + time are both chosen
-        updateStepCompletion(stepButtons);
+        updateWizardState();
     }
 
-    function scrollToStep(step, targets) {
-        const el = targets[step];
-        if (!el) return;
-        const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
-        const stepperH = 44; // fixed stepper sub-bar height
-        const extra = 20;
-        const offset = el.getBoundingClientRect().top + window.scrollY - headerH - stepperH - extra;
-        window.scrollTo({ top: offset, behavior: 'smooth' });
-    }
+    function goToStep(step) {
+        if (step < 1 || step > 3) return;
 
-    function setActiveStep(step, stepButtons) {
-        stepButtons.forEach(btn => {
-            if (btn.dataset.step === step) {
-                btn.classList.add('active');
+        currentStep = step;
+
+        // Switch panels
+        const panels = document.querySelectorAll('.booking-step-panel');
+        panels.forEach(panel => {
+            if (parseInt(panel.dataset.panel, 10) === currentStep) {
+                panel.classList.add('active');
             } else {
-                btn.classList.remove('active');
+                panel.classList.remove('active');
+            }
+        });
+
+        // Update stepper top bar & prompts
+        updateWizardState();
+
+        // Update recap texts for Step 2 and Step 3
+        updateRecapDisplays();
+
+        // Smooth scroll to top of booking page
+        const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 76;
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    function updateWizardState() {
+        const stepButtons = document.querySelectorAll('#bookingStepper .step-item[data-step]');
+        const dateVal = elements.dateInput ? elements.dateInput.value : selectedDate;
+        const timeVal = elements.timeInput ? elements.timeInput.value : selectedTime;
+        const isStep1Done = Boolean(dateVal && timeVal);
+
+        stepButtons.forEach(btn => {
+            const stepNum = parseInt(btn.dataset.step, 10);
+            btn.classList.remove('active', 'completed', 'is-next-prompt');
+
+            if (stepNum === currentStep) {
+                btn.classList.add('active');
+                if (stepNum === 1 && isStep1Done) {
+                    btn.classList.add('completed');
+                }
+            } else if (stepNum < currentStep) {
+                btn.classList.add('completed');
+            } else if (stepNum === 2 && currentStep === 1 && isStep1Done) {
+                // Step 2 glows with "NÄCHSTER SCHRITT →" prompt
+                btn.classList.add('is-next-prompt');
+            } else if (stepNum === 3 && currentStep === 2) {
+                // Step 3 glows when on step 2
+                btn.classList.add('is-next-prompt');
             }
         });
     }
 
-    function updateStepCompletion(stepButtons) {
-        // Step 1 is complete when both date and time are selected (they always are pre-selected)
-        // We re-check on any date/time update — called after any day or time-slot selection
-        const dateVal = elements.dateInput ? elements.dateInput.value : selectedDate;
-        const timeVal = elements.timeInput ? elements.timeInput.value : selectedTime;
-        const step1Btn = stepButtons
-            ? Array.from(stepButtons).find(b => b.dataset.step === '1')
-            : document.querySelector('#bookingStepper .step-item[data-step="1"]');
+    function updateRecapDisplays() {
+        if (!selectedDate) return;
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dayOfWeek = dt.getDay();
+        const monthName = (currentLanguage === 'en' ? monthNamesEn : monthNamesDe)[m - 1];
+        const dayName = (currentLanguage === 'en' ? weekdayNamesEn : weekdayNamesDe)[dayOfWeek];
 
-        if (step1Btn) {
-            if (dateVal && timeVal) {
-                step1Btn.classList.add('completed');
-            } else {
-                step1Btn.classList.remove('completed');
-            }
-        }
+        const dateStr = currentLanguage === 'en'
+            ? `${dayName}, ${monthName} ${d}, ${y} at ${selectedTime}`
+            : `${dayName}, ${d}. ${monthName} ${y} um ${selectedTime} Uhr`;
+
+        // Step 2 recap
+        const recapDateTime = document.getElementById('recapDateTime');
+        if (recapDateTime) recapDateTime.textContent = dateStr;
+
+        // Step 3 recap
+        const recap3Package = document.getElementById('recap3Package');
+        const recap3Date = document.getElementById('recap3Date');
+        const recap3Price = document.getElementById('recap3Price');
+
+        if (recap3Package && elements.packageName) recap3Package.textContent = elements.packageName.textContent;
+        if (recap3Date) recap3Date.textContent = dateStr;
+        if (recap3Price && elements.summaryTotalPrice) recap3Price.textContent = elements.summaryTotalPrice.textContent;
+    }
+
+    function updateStepCompletion() {
+        updateWizardState();
+        updateRecapDisplays();
     }
 
     // Fetch calendar availability
@@ -690,6 +708,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `Base: ${basePrice}€ (${hours} ${hLabel} à ${unitRate}€), Extras: ${extrasTotal}€${discountAmount > 0 ? `, ${rLabel}: -${discountAmount}€ (${discountPercent}%)` : ''}`
                 : `Base: ${basePrice}€, Extras: ${extrasTotal}€${discountAmount > 0 ? `, ${rLabel}: -${discountAmount}€ (${discountPercent}%)` : ''}`;
         }
+
+        updateRecapDisplays();
     }
 
     // Re-render when language changes
