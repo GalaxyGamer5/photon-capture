@@ -7,7 +7,10 @@ require_once __DIR__ . '/../../includes/db.php';
 
 try {
     $db = getDB();
-    $stmt = $db->query("SELECT id, name, email, service, message, unread, created_at AS date FROM inquiries ORDER BY created_at DESC");
+    try { $db->exec("ALTER TABLE inquiries ADD COLUMN phone VARCHAR(100) DEFAULT NULL"); } catch (Exception $e) {}
+    try { $db->exec("ALTER TABLE inquiries ADD COLUMN contact_pref VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+
+    $stmt = $db->query("SELECT id, name, email, phone, contact_pref, service, message, unread, created_at AS date FROM inquiries ORDER BY created_at DESC");
     $rows = $stmt->fetchAll();
 
     $inquiries = [];
@@ -17,6 +20,8 @@ try {
             'date' => $r['date'],
             'name' => $r['name'],
             'email' => $r['email'],
+            'phone' => $r['phone'] ?? '',
+            'contact_pref' => $r['contact_pref'] ?? 'email',
             'service' => $r['service'],
             'message' => $r['message'],
             'unread' => (bool)$r['unread']

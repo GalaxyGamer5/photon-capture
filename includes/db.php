@@ -115,11 +115,15 @@ function initSchema(PDO $pdo) {
         id VARCHAR(100) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
+        phone VARCHAR(100) DEFAULT NULL,
+        contact_pref VARCHAR(50) DEFAULT 'email',
         service VARCHAR(255),
         message $longText,
         unread INT DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    try { $pdo->exec("ALTER TABLE inquiries ADD COLUMN phone VARCHAR(100) DEFAULT NULL"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE inquiries ADD COLUMN contact_pref VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
 
     // 5. Orders table
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (

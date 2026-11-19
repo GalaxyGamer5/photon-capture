@@ -24,6 +24,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
 
+            const phoneInput = bookingForm.querySelector('input[name="phone"]');
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+
+            const prefInput = bookingForm.querySelector('input[name="contact_pref"]:checked');
+            const contactPref = prefInput ? prefInput.value : 'email';
+            const contactPrefText = contactPref === 'phone' ? 'Telefon' : 'E-Mail';
+
+            // If phone preferred, ensure phone is provided
+            if (contactPref === 'phone' && !phone) {
+                const phoneError = currentLang === 'en'
+                    ? 'Please enter your phone number so I can call you.'
+                    : 'Bitte gib deine Telefonnummer an, damit ich dich telefonisch kontaktieren kann.';
+                alert(phoneError);
+                if (phoneInput) phoneInput.focus();
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                return;
+            }
+
             const orderId = generateOrderId();
             const serviceSelect = document.getElementById('service');
             let serviceName = serviceSelect.options[serviceSelect.selectedIndex].text;
@@ -67,8 +86,11 @@ Uhrzeit: ${time}
 Preis: ${totalPriceStr}
 Extras: ${extrasString}
 
+Telefon: ${phone || 'Nicht angegeben'}
+Bevorzugter Kontaktweg: ${contactPrefText}
+
 Nachricht vom Kunden:
-${message}`;
+${message || 'Keine zusätzliche Nachricht'}`;
 
             try {
                 const res = await fetch('api/save-inquiry.php', {
@@ -77,6 +99,8 @@ ${message}`;
                     body: JSON.stringify({ 
                         name, 
                         email, 
+                        phone,
+                        contactPref,
                         service: serviceName + (durationText ? ` (${durationText})` : ''),
                         duration: duration,
                         message: fullMessage,
@@ -85,9 +109,11 @@ ${message}`;
                 });
 
                 if (res.ok) {
+                    const viaTextDe = contactPref === 'phone' ? 'telefonisch' : 'per E-Mail';
+                    const viaTextEn = contactPref === 'phone' ? 'by phone' : 'via email';
                     const successMsg = currentLang === 'en'
-                        ? `Thank you! Your booking request has been sent successfully. I will get back to you shortly via email.`
-                        : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet. Ich werde mich zeitnah per Mail bei dir melden.`;
+                        ? `Thank you! Your booking request has been sent successfully. I will get back to you shortly ${viaTextEn}.`
+                        : `Vielen Dank! Deine Buchungsanfrage wurde erfolgreich gesendet. Ich werde mich zeitnah ${viaTextDe} bei dir melden.`;
                     alert(successMsg);
                     bookingForm.reset();
                     // If there's a back button to reset the UI, trigger it
@@ -123,23 +149,56 @@ ${message}`;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
 
+            const phoneInput = contactForm.querySelector('input[name="phone"]');
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+
+            const prefInput = contactForm.querySelector('input[name="contact_pref"]:checked');
+            const contactPref = prefInput ? prefInput.value : 'email';
+            const contactPrefText = contactPref === 'phone' ? 'Telefon' : 'E-Mail';
+
+            if (contactPref === 'phone' && !phone) {
+                const phoneError = currentLang === 'en'
+                    ? 'Please enter your phone number so I can call you.'
+                    : 'Bitte gib deine Telefonnummer an, damit ich dich telefonisch kontaktieren kann.';
+                alert(phoneError);
+                if (phoneInput) phoneInput.focus();
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                return;
+            }
+
             const serviceSelect = document.getElementById('service');
             let serviceName = serviceSelect.options[serviceSelect.selectedIndex].text;
             if (serviceSelect.value === 'other') serviceName = "Sonstiges / Allgemeine Frage";
+
+            const fullContactMessage = `${message || 'Keine Nachricht'}
+
+---
+Telefon: ${phone || 'Nicht angegeben'}
+Bevorzugter Kontaktweg: ${contactPrefText}`;
 
             try {
                 const res = await fetch('api/save-inquiry.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, service: serviceName, message })
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        phone, 
+                        contactPref, 
+                        service: serviceName, 
+                        message: fullContactMessage 
+                    })
                 });
 
                 const currentLang = localStorage.getItem('preferredLang') || 'de';
                 
                 if (res.ok) {
+                    const viaTextDe = contactPref === 'phone' ? 'telefonisch' : 'per E-Mail';
+                    const viaTextEn = contactPref === 'phone' ? 'by phone' : 'via email';
                     const successMsg = currentLang === 'en'
-                        ? 'Thank you! Your message has been sent successfully. I will get back to you shortly via email.'
-                        : 'Vielen Dank! Deine Nachricht wurde erfolgreich gesendet. Ich werde mich zeitnah per Mail bei dir melden.';
+                        ? `Thank you! Your message has been sent successfully. I will get back to you shortly ${viaTextEn}.`
+                        : `Vielen Dank! Deine Nachricht wurde erfolgreich gesendet. Ich werde mich zeitnah ${viaTextDe} bei dir melden.`;
                     alert(successMsg);
                     contactForm.reset();
                 } else {

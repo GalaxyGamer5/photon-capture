@@ -18,12 +18,23 @@ try {
     $inquiryId = uniqid('inq_');
     $name = htmlspecialchars($data['name'] ?? 'Unknown');
     $email = htmlspecialchars($data['email'] ?? 'Unknown');
+    $phone = htmlspecialchars($data['phone'] ?? '');
+    $contactPref = htmlspecialchars($data['contactPref'] ?? 'email');
     $service = htmlspecialchars($data['service'] ?? 'Unknown');
     $message = htmlspecialchars($data['message'] ?? '');
     $now = date('Y-m-d H:i:s');
 
-    $stmt = $db->prepare("INSERT INTO inquiries (id, name, email, service, message, unread, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)");
-    $stmt->execute([$inquiryId, $name, $email, $service, $message, $now]);
+    // Ensure phone and contact_pref columns exist in inquiries table
+    try { $db->exec("ALTER TABLE inquiries ADD COLUMN phone VARCHAR(100) DEFAULT NULL"); } catch (Exception $e) {}
+    try { $db->exec("ALTER TABLE inquiries ADD COLUMN contact_pref VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+
+    try {
+        $stmt = $db->prepare("INSERT INTO inquiries (id, name, email, phone, contact_pref, service, message, unread, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)");
+        $stmt->execute([$inquiryId, $name, $email, $phone, $contactPref, $service, $message, $now]);
+    } catch (Exception $e) {
+        $stmt = $db->prepare("INSERT INTO inquiries (id, name, email, service, message, unread, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)");
+        $stmt->execute([$inquiryId, $name, $email, $service, $message, $now]);
+    }
 
     // Automated Calendar Reservation if requested
     if (!empty($data['bookingDate'])) {

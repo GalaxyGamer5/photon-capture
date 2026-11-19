@@ -1993,6 +1993,60 @@ body.viewfinder-active .site-header {
     grid-column: 1 / -1;
 }
 
+/* Contact Preference Toggle Pills */
+.contact-pref-group {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    padding-top: 0.35rem;
+}
+
+.pref-pill-label {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    flex: 1;
+}
+
+.pref-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pref-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid #282828;
+    background: rgba(255, 255, 255, 0.02);
+    color: #888888;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.pref-pill:hover {
+    border-color: #555555;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.pref-radio:checked + .pref-pill {
+    border-color: var(--accent-orange);
+    color: var(--accent-orange);
+    background: rgba(255, 77, 0, 0.08);
+    font-weight: 600;
+}
+
+.pref-radio:focus-visible + .pref-pill {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 77, 0, 0.3);
+}
+
 .submit-booking-btn {
     padding: 0.85rem 2rem;
     font-size: 14px;
