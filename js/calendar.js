@@ -182,6 +182,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentStep = 1;
     let userHasClickedDate = false;
+    let userHasClickedTime = false;
+    let autoAdvanceTimer = null;
+
+    function checkAndAutoAdvance() {
+        if (userHasClickedDate && userHasClickedTime && currentStep === 1) {
+            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+            autoAdvanceTimer = setTimeout(() => {
+                if (currentStep === 1) {
+                    goToStep(2);
+                }
+            }, 380);
+        }
+    }
 
     function setupStepper() {
         // Step buttons in top bar
@@ -207,9 +220,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function goToStep(step) {
         if (step < 1 || step > 3) return;
 
+        if (autoAdvanceTimer) {
+            clearTimeout(autoAdvanceTimer);
+            autoAdvanceTimer = null;
+        }
+
         // Advancing past Step 1 marks the date selection confirmed
         if (step > 1) {
             userHasClickedDate = true;
+            userHasClickedTime = true;
+        } else if (step === 1) {
+            // Returning to Step 1 allows selecting a new date before advancing
+            userHasClickedTime = false;
         }
 
         currentStep = step;
@@ -429,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cell.classList.add('selected');
                     updateDateTimeDisplays();
                     updateStepCompletion();
+                    checkAndAutoAdvance();
                 });
             }
 
@@ -450,8 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 pill.classList.add('active');
                 selectedTime = pill.dataset.time || pill.textContent.replace(/[\[\]]/g, '').trim();
                 userHasClickedDate = true;
+                userHasClickedTime = true;
                 updateDateTimeDisplays();
                 updateStepCompletion();
+                checkAndAutoAdvance();
             });
         });
     }
